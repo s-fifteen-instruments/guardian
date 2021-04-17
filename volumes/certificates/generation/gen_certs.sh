@@ -227,8 +227,7 @@ cd ${ca_dir}
 #VAULTSERVERKEY
 openssl genrsa \
     -out intermediate/private/${VAULT_SERVER_FQDN}.key.pem 2048
-# Vault expects permissions of 0440 to be in the vault group
-chmod 0440 intermediate/private/${VAULT_SERVER_FQDN}.key.pem
+chmod 0400 intermediate/private/${VAULT_SERVER_FQDN}.key.pem
 
 # Create a VAULT server CSR for the intermediate CA to sign
 cd ${ca_dir}
@@ -354,11 +353,13 @@ cp --archive \
     intermediate/private/${VAULT_SERVER_FQDN}.key.pem \
     intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
+chown -R vault:vault ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 cp --archive \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
     intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
+chown -R vaultinit:vault ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
 
 exit 0
 
