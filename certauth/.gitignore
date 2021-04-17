@@ -1,0 +1,6 @@
+SECRETS
+root/
+*.bak/
+*.pem
+*.key
+*.crt
