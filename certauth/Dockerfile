@@ -18,9 +18,14 @@
 FROM alpine:latest
 LABEL author="Cyrus Proctor"
 
-RUN mkdir /certificates
-RUN apk add --no-cache \
-    openssl \
+# Create a vault user and group plus a vault client first so the IDs get
+# set the same way, even as the rest of this may change over time.
+RUN addgroup vault                && \
+    adduser -S -G vault vault     && \
+    adduser -S -G vault vaultinit && \
+    mkdir -p /certificates        && \
+    apk add --no-cache               \
+    openssl                          \
     make
 
 VOLUME /certificates

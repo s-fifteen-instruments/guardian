@@ -25,12 +25,43 @@ services:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities
     command: ["clean", "certs", "install"]
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
     networks:
       - internal-private
     volumes:
       - ./volumes/certificates:/certificates
       - ./certauth/SECRETS:/SECRETS
 
+  vault:
+    # Use the latest Hashicorp Vault v1.7.x image available
+    image: vault:${VAULT_TAG:-latest}
+    ports:
+      # Listen on port 8200
+      - 8200:8200
+    cap_add:
+      # With this priviledged Linux capability, the container will attempt to
+      # lock memory to prevent sensitive values from being swapped to disk.
+      - IPC_LOCK
+    volumes:
+      # Mount a volume that stores the Vault @file configurations
+      - ./volumes/vault/config:/vault/config
+      # Mount a volume that stores any persistent data
+      - ./vault/data:/vault/data
+      # Mount a volume to store persistent logs
+      - ./volumes/vault/logs:/vault/logs
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/certificates/production:/certificates
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    # Server Configuration: /vault/config/vault-config.hcl
+    command: ["server"]
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
 
 networks:
 
