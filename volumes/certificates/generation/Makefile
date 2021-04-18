@@ -16,8 +16,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Generate certs/keys
+# Generate root CA certs/keys
+certs: export ACTION = CAGEN
 certs:
+	@echo Making Target $@
+	date
+	@sh gen_certs.sh
+
+# Generate certs for CSR
+csr: export ACTION = CSR
+csr:
 	@echo Making Target $@
 	date
 	@sh gen_certs.sh

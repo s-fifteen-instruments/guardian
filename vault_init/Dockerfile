@@ -15,23 +15,24 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM alpine:latest
+FROM python:3-alpine
 LABEL author="Cyrus Proctor"
+
+COPY ["./requirements.txt", "./"]
 
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.
-RUN addgroup vault                          && \
-    adduser -S vault -G vault --uid 100     && \
-    adduser -S vaultinit -G vault --uid 101 && \
-    mkdir -p /certificates                  && \
-    apk add --no-cache                         \
-    openssl                                    \
-    make
+RUN addgroup vault                                       && \
+    adduser --system vaultinit --ingroup vault --uid 101 && \
+    mkdir -p /certificates                               && \
+    pip install --no-cache-dir -r ./requirements.txt
 
 VOLUME /certificates
 
-# Do not "make clean" unless to remove
-# root CA and intermediate CA entirely
-CMD ["certs", "install"]
+USER vaultinit
 
-ENTRYPOINT ["make"]
+COPY ["./vault_init.py", "./"]
+
+CMD ["vault_init.py"]
+
+ENTRYPOINT ["python"]

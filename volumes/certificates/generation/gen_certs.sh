@@ -61,8 +61,8 @@ export int_ca_dir=${ca_dir}/intermediate
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
-# Only invoke certificate generation if NOT in INSTALL mode
-if [ "${ACTION}" != "INSTALL" ]; then
+# Only invoke root certificate generation if in CAGEN mode
+if [ "${ACTION}" == "CAGEN" ]; then
 
 # Only invoke certificate generation if
 # root CA dir does NOT already exist
@@ -86,8 +86,8 @@ fi
 # Set as necessary
 export CA_COUNTRY_CODE="US"
 export CA_STATE="Texas"
-export CA_LOCALITY="AUSTIN"
-export CA_ORGANIZATION="Quantum Internet Technologies, LLC"
+export CA_LOCALITY="Austin"
+export CA_ORGANIZATION="Quantum Internet Technologies LLC"
 export CA_UNIT="Quantum Hacking Division"
 export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA"
 export CA_EMAIL="admin@example.com"
@@ -342,24 +342,76 @@ exit 0
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
-# Only invoke if in INSTALL mode
-else
+# Only invoke certificate generation if in CSR mode
+elif [ "${ACTION}" == "CSR" ]; then
+
+
+cd ${ca_dir}
+cp --archive \
+    ${PRODUCTION_DIR}/vault_init/${VAULT_PKI_INT}.csr.pem \
+    intermediate/csr
+
+#With the CSR, use root CA to create Vault intermediate CA certificate
+openssl ca -config openssl.cnf -extensions v3_intermediate_ca \
+    -days 3650 -notext -md sha256 \
+    -in intermediate/csr/${VAULT_PKI_INT}.csr.pem \
+    -out intermediate/certs/${VAULT_PKI_INT}.cert.pem \
+    -passin stdin << INTCA
+${ROOT_CA_PASSWORD}
+y
+y
+INTCA
+chmod 0444 intermediate/certs/${VAULT_PKI_INT}.cert.pem
+
+# Inspect and verify the intermediate CA certificate
+openssl x509 -noout -text \
+    -in intermediate/certs/${VAULT_PKI_INT}.cert.pem
+openssl verify -CAfile certs/ca.cert.pem \
+    intermediate/certs/${VAULT_PKI_INT}.cert.pem
+# Create the CA certificate chain file
+cat intermediate/certs/${VAULT_PKI_INT}.cert.pem \
+    certs/ca.cert.pem > intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
+chmod 0444 intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
+
+cp --archive \
+    intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem \
+    ${PRODUCTION_DIR}/vault_init
+
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+# Only copy certificates into production if in INSTALL mode
+elif [ "${ACTION}" == "INSTALL" ]; then
 
 
 mkdir -p ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 mkdir -p ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
+mkdir -p ${PRODUCTION_DIR}/admin
 cd ${ca_dir}
 cp --archive \
     intermediate/private/${VAULT_SERVER_FQDN}.key.pem \
     intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem \
+    intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 chown -R vault:vault ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 cp --archive \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
     intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
+    intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
 chown -R vaultinit:vault ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
+cp --archive \
+    ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN} \
+    ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME} \
+    ${PRODUCTION_DIR}/admin
+chown -R root:root ${PRODUCTION_DIR}/admin
+chmod -R 0444 ${PRODUCTION_DIR}/admin/${VAULT_SERVER_FQDN}/*
+chmod -R 0444 ${PRODUCTION_DIR}/admin/${VAULT_INIT_CLIENT_NAME}/*
+touch ${PRODUCTION_DIR}/admin/${VAULT_SERVER_FQDN}/SECRETS
+chmod -R 0666 ${PRODUCTION_DIR}/admin/${VAULT_SERVER_FQDN}/SECRETS
 
 exit 0
 

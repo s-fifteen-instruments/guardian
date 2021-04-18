@@ -14,5 +14,5 @@ listener "tcp" {
   tls_require_and_verify_client_cert = true
   tls_cert_file = "/certificates/vault/vault.ca-chain.cert.pem"
   tls_key_file = "/certificates/vault/vault.key.pem"
-  tls_client_ca_file = "/certificates/vault_init/vault_init.ca-chain.cert.pem"
+  tls_client_ca_file = "/certificates/vault/vault_init.ca-chain.cert.pem"
 }

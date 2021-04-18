@@ -18,7 +18,7 @@
 
 services:
 
-  certauth:
+  certauth: &certauth_label
     build: ./certauth
     working_dir: /certificates/generation
     # WARNING:
@@ -34,6 +34,10 @@ services:
       - ./volumes/certificates:/certificates
       - ./certauth/SECRETS:/SECRETS
 
+  certauth_csr:
+    <<: *certauth_label
+    command: ["csr"]
+
   vault:
     # Use the latest Hashicorp Vault v1.7.x image available
     image: vault:${VAULT_TAG:-latest}
@@ -48,7 +52,7 @@ services:
       # Mount a volume that stores the Vault @file configurations
       - ./volumes/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - ./vault/data:/vault/data
+      - ./volumes/vault/data:/vault/data
       # Mount a volume to store persistent logs
       - ./volumes/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
@@ -62,6 +66,17 @@ services:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
       - internal-private
+
+  vault_init:
+    build: ./vault_init
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    networks:
+      - internal-private
+    volumes:
+      - ./volumes/certificates:/certificates
+
 
 networks:
 
