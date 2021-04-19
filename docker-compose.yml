@@ -67,8 +67,9 @@ services:
       # by any backend service that needs to communicate amongst internal services
       - internal-private
 
-  vault_init:
+  vault_init: &vault_init_label
     build: ./vault_init
+    command: ["vault_init.py", "--first"]
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -76,6 +77,10 @@ services:
       - internal-private
     volumes:
       - ./volumes/certificates:/certificates
+
+  vault_init_phase_2:
+    <<: *vault_init_label
+    command: ["vault_init.py", "--second"]
 
 
 networks:

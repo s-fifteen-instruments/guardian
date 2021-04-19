@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import logging as logger
 import hvac
@@ -33,6 +34,24 @@ class vaultClient:
     def __init__(self) -> None:
         """foo
         """
+        self.parse_args()
+        self.start_connection()
+        if self.args.first:
+            self.phase_1_startup()
+        if self.args.second:
+            self.phase_2_startup()
+
+    def parse_args(self):
+        """foo
+        """
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--first", action="store_true", help="First stage of initialization")
+        parser.add_argument("--second", action="store_true", help="Second stage of initialization")
+        self.args = parser.parse_args()
+
+    def start_connection(self):
+        """foo
+        """
         self.vclient: hvac.Client = \
             hvac.Client(url=vaultClient.VAULT_URI,
                         cert=(vaultClient.CLIENT_CERT_FILEPATH,
@@ -41,13 +60,24 @@ class vaultClient:
         self.connection_loop(self.vault_init)
         self.connection_loop(self.vault_unseal)
         self.connection_loop(self.vault_auth)
+
+    def phase_1_startup(self):
+        """foo
+        """
+        logger.debug("Begin first phase initialization")
         self.connection_loop(self.vault_enable_audit_file)
         self.connection_loop(self.vault_enable_auth_method)
         # self.connection_loop(self.vault_enable_pki_secrets_engine)
         # self.connection_loop(self.vault_setup_ca_certs)
         self.connection_loop(self.vault_enable_pki_int_secrets_engine)
-        self.connection_loop(self.vault_setup_int_ca_certs)
+        self.connection_loop(self.vault_write_int_ca_csr)
         # self.connection_loop(self.vault_create_acl_policy)
+
+    def phase_2_startup(self):
+        """foo
+        """
+        logger.info("Begin second phase initialization")
+        self.connection_loop(self.vault_setup_int_ca_certs)
 
     def connection_loop(self, connection_callback) -> None:
         """foo
@@ -174,8 +204,12 @@ class vaultClient:
         """
         if not self.vclient.is_authenticated():
             # TODO: Secret Exposure
-            if self.root_token:
-                self.vclient.token = self.root_token
+            if not hasattr(self, "root_token"):
+                self.root_token = \
+                    json.loads(open(vaultClient.VAULT_SECRETS_FILEPATH,
+                                    "r").read())["root_token"]
+
+            self.vclient.token = self.root_token
             if self.vclient.is_authenticated():
                 logger.debug("Client has authenticated with Vault instance")
             else:
@@ -317,7 +351,7 @@ class vaultClient:
         with open(vaultClient.PKI_INT_CSR_PEM_FILEPATH, "w") as f:
             f.write(self.int_ca_csr)
 
-    def vault_setup_int_ca_certs(self):
+    def vault_write_int_ca_csr(self):
         """foo
         """
         mount_point = "pki_int"
@@ -347,23 +381,18 @@ class vaultClient:
         logger.debug("Intermediate CA Certificate Signing Request (CSR):")
         self._dump_response(self.int_ca_csr)
         self.write_pki_int_csr_pem_file()
+
+    def vault_setup_int_ca_certs(self):
+        """foo
         """
-        logger.debug("Attempt to sign intermediate CA CSR with root CA")
-        root_ca_mount_point = "pki"
-        self.sign_int_ca_csr_response = \
-            self.vclient.secrets.pki.sign_intermediate(csr=self.int_ca_csr,
-                                                       common_name=common_name,
-                                                       mount_point=root_ca_mount_point,
-                                                       extra_params=extra_param_dict)
-        logger.debug("Sign intermediate CA response:")
-        self._dump_response(self.sign_int_ca_csr_response)
-        int_ca_cert = self.sign_int_ca_csr_response["data"]["certificate"]
-        logger.debug("Attempt to set signed intermediate CA certificate")
-        set_int_ca_cert_response = \
-            self.vclient.secrets.pki.set_signed_intermediate(certificate=int_ca_cert,
-                                                             mount_point=mount_point)
-        logger.debug("Set signed intermediate CA certificate response okay:")
-        self._dump_response(set_int_ca_cert_response.ok)
+        logger.debug("Attempt to read in signed intermediate CA CSR")
+        self.int_ca_cert = open(vaultClient.PKI_INT_CERT_PEM_FILEPATH, "r").read()
+        mount_point = "pki_int"
+        self.set_int_ca_cert_response = self.vclient.secrets.pki.\
+            set_signed_intermediate(certificate=self.int_ca_cert,
+                                    mount_point=mount_point)
+        logger.debug("Intermediate CA cert response:")
+        self._dump_response(self.set_int_ca_cert_response.ok)
         params_dict = {
             "issuing_certificates": f"https://vault:8200/v1/{mount_point}/ca",
             "crl_distribution_points": f"https://vault:8200/v1/{mount_point}/crl",
@@ -395,8 +424,6 @@ class vaultClient:
             "locality": "Austin",
             "ttl": "8760h",
             "max_ttl": "87600h",
-            # "allowed_domains": "vault,vault.localhost,localhost",
-            # "not_before_duration": "96h"
         }
         logger.debug("Attempting to create intermediate CA role for cert issuing")
         create_role_response = \
@@ -411,7 +438,6 @@ class vaultClient:
                                                mount_point=mount_point)
         logger.debug("Read newly created role:")
         self._dump_response(read_role_resposne)
-        """
 
     def vault_setup_int_ca_certs_internal_ca(self):
         """foo
