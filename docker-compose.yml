@@ -97,6 +97,30 @@ services:
     volumes:
       - ./volumes/qkd/epoch_files:/root/code/qsim/epoch_files
 
+  notifier:
+    build: ./notifier
+    command: ["notifier.py"]
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    networks:
+      - internal-private
+    volumes:
+      - ./volumes/qkd/epoch_files:/epoch_files
+  
+  watcher:
+    build: ./watcher
+    depends_on:
+      - notifier
+    command: ["/epoch_files/notify.pipe"]
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    networks:
+      - internal-private
+    volumes:
+      - ./volumes/qkd/epoch_files:/epoch_files
+
 
 networks:
 

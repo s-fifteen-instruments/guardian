@@ -16,3 +16,6 @@ docker-compose logs certauth_csr
 docker-compose up -d --build vault_init_phase_2
 sleep 2
 docker-compose logs vault_init_phase_2
+docker-compose up -d --build qkd
+sleep 1
+docker-compose logs -f qkd
