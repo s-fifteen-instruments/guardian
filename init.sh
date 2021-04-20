@@ -14,5 +14,5 @@ docker-compose up -d --build certauth_csr
 sleep 1
 docker-compose logs certauth_csr
 docker-compose up -d --build vault_init_phase_2
-sleep 1
+sleep 2
 docker-compose logs vault_init_phase_2

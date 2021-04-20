@@ -29,9 +29,9 @@ RUN addgroup vault                                       && \
 
 VOLUME /certificates
 
-USER vaultinit
+# USER vaultinit
 
-COPY ["./vault_init.py", "./"]
+COPY ["./vault_init.py", "./vault_auth.py", "./"]
 
 CMD ["vault_init.py"]
 

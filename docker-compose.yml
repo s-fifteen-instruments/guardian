@@ -82,6 +82,10 @@ services:
     <<: *vault_init_label
     command: ["vault_init.py", "--second"]
 
+  vault_init_phase_3:
+    <<: *vault_init_label
+    command: ["vault_auth.py"]
+
 
 networks:
 

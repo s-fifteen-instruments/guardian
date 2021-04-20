@@ -146,9 +146,11 @@ subjectAltName = @alt_names
 # Extension for domains/IPs beyond CN
 DNS.1 = localhost
 DNS.2 = vault
-DNS.3 = vault_int
-DNS.4 = 172.16.192.*
+DNS.3 = vault_init
+DNS.4 = rest
+DNS.5 = 172.16.192.*
 IP.1 = 127.0.0.1
+IP.2 = 172.16.192.1
 
 [ crl_ext ]
 # Extension for CRLs (`man x509v3_config`).

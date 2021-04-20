@@ -4,6 +4,8 @@ import argparse
 import json
 import logging as logger
 import hvac
+import os
+import pathlib
 import sys
 import time
 import requests
@@ -19,7 +21,13 @@ class vaultClient:
     CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.ca-chain.cert.pem"
     CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.key.pem"
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault.ca-chain.cert.pem"
+    REST_DIRPATH: str = f"{CERT_DIRPATH}/rest"
+    REST_CLIENT_CA_CHAIN_FILEPATH: str = f"{REST_DIRPATH}/rest.ca-chain.cert.pem"
+    REST_CLIENT_KEY_FILEPATH: str = f"{REST_DIRPATH}/rest.key.pem"
     ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
+    ADMIN_REST_DIRPATH: str = f"{ADMIN_DIRPATH}/rest"
+    ADMIN_REST_CLIENT_CA_CHAIN_FILEPATH: str = f"{ADMIN_REST_DIRPATH}/rest.ca-chain.cert.pem"
+    ADMIN_REST_CLIENT_KEY_FILEPATH: str = f"{ADMIN_REST_DIRPATH}/rest.key.pem"
     VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/vault/SECRETS"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.csr.pem"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.ca-chain.cert.pem"
@@ -71,13 +79,14 @@ class vaultClient:
         # self.connection_loop(self.vault_setup_ca_certs)
         self.connection_loop(self.vault_enable_pki_int_secrets_engine)
         self.connection_loop(self.vault_write_int_ca_csr)
-        # self.connection_loop(self.vault_create_acl_policy)
 
     def phase_2_startup(self):
         """foo
         """
         logger.info("Begin second phase initialization")
         self.connection_loop(self.vault_setup_int_ca_certs)
+        self.connection_loop(self.vault_create_acl_policy)
+        self.connection_loop(self.vault_generate_rest_client_cert)
 
     def connection_loop(self, connection_callback) -> None:
         """foo
@@ -243,8 +252,13 @@ class vaultClient:
         auth_methods = self.vclient.sys.list_auth_methods()
         logger.debug("Currently enabled auth methods:")
         self._dump_response(auth_methods)
+        method_type_str = "cert"
+        description_str = "TLS Authentication"
         logger.debug("Attempt to enable cert auth method")
-        self.enable_cert_response = self.vclient.sys.enable_auth_method("cert")
+        self.enable_cert_response = \
+            self.vclient.sys.enable_auth_method(method_type=method_type_str,
+                                                description=description_str)
+        # TODO: Need policies, display_name, certificate, ttl https://www.vaultproject.io/api/auth/cert
         logger.debug("Enable cert response okay:")
         self._dump_response(self.enable_cert_response.ok)
         auth_methods = self.vclient.sys.list_auth_methods()
@@ -386,6 +400,7 @@ class vaultClient:
         """foo
         """
         logger.debug("Attempt to read in signed intermediate CA CSR")
+        # TODO: handle FileNotFoundError exception
         self.int_ca_cert = open(vaultClient.PKI_INT_CERT_PEM_FILEPATH, "r").read()
         mount_point = "pki_int"
         self.set_int_ca_cert_response = self.vclient.secrets.pki.\
@@ -515,8 +530,6 @@ class vaultClient:
             "locality": "Austin",
             "ttl": "8760h",
             "max_ttl": "87600h",
-            # "allowed_domains": "vault,vault.localhost,localhost",
-            # "not_before_duration": "96h"
         }
         logger.debug("Attempting to create intermediate CA role for cert issuing")
         create_role_response = \
@@ -537,12 +550,20 @@ class vaultClient:
         """
         policy_name_str = "policy_int_ca_cert_issuer"
         policy_json = """
-            path "pki_int/issue" {
+            path "pki_int/ca" {
                 capabilities = ["create", "update"]
             }
 
-            path "pki/cert/ca" {
-                capabilities = ["read"]
+            path "pki_int/certs" {
+                capabilities = ["list"]
+            }
+
+            path "pki_int/revoke" {
+                capabilities = ["create", "update"]
+            }
+
+            path "pki_int/tidy" {
+                capabilities = ["create", "update"]
             }
 
             path "auth/token/renew" {
@@ -565,6 +586,47 @@ class vaultClient:
             self.vclient.sys.read_policy(name=policy_name_str)
         logger.debug("Read policy response:")
         self._dump_response(read_policy_response)
+
+    def vault_generate_rest_client_cert(self):
+        """foo
+        """
+        role_str = "role_int_ca_cert_issuer"
+        common_name = "rest"
+        mount_point = "pki_int"
+        extra_param_dict = {
+            "alt_names": "172.16.192.*,127.0.0.1",
+            "format_str": "pem",
+            "private_key_format_str": "pem",
+            "exclude_cn_from_sans": "false"
+        }
+        logger.debug("Attempt to issue rest client certificate")
+        self.gen_rest_cert_response = \
+            self.vclient.secrets.pki.generate_certificate(name=role_str,
+                                                          common_name=common_name,
+                                                          mount_point=mount_point,
+                                                          extra_params=extra_param_dict)
+        logger.debug("rest client cert response:")
+        self._dump_response(self.gen_rest_cert_response)
+        self.rest_ca_chain = self.gen_rest_cert_response["data"]["ca_chain"]
+        self.rest_cert = self.gen_rest_cert_response["data"]["certificate"]
+        self.rest_private_key = self.gen_rest_cert_response["data"]["private_key"]
+        # Create rest client dir under the admin dir
+        pathlib.Path(vaultClient.ADMIN_REST_DIRPATH).mkdir(parents=True, exist_ok=True)
+        with open(vaultClient.ADMIN_REST_CLIENT_CA_CHAIN_FILEPATH, "w") as f:
+            f.write(self.rest_cert + "\n")
+            for cert in self.rest_ca_chain:
+                f.write(cert + "\n")
+        with open(vaultClient.ADMIN_REST_CLIENT_KEY_FILEPATH, 'w') as f:
+            f.write(self.rest_private_key)
+        # Create rest client dir for rest client
+        pathlib.Path(vaultClient.REST_DIRPATH).mkdir(parents=True, exist_ok=True)
+        with open(vaultClient.REST_CLIENT_CA_CHAIN_FILEPATH, "w") as f:
+            f.write(self.rest_cert + "\n")
+            for cert in self.rest_ca_chain:
+                f.write(cert + "\n")
+        with open(os.open(vaultClient.REST_CLIENT_KEY_FILEPATH,
+                  os.O_CREAT | os.O_WRONLY, 0o400), 'w') as f:
+            f.write(self.rest_private_key)
 
 
 if __name__ == "__main__":
