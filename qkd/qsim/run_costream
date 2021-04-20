@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+set -x
+
+export override=true
+source config
+
+# -d All type-2 packets saved in dir
+# -D All type-1 packets saved in dir
+# -f All type-3 packets saved in dir
+# -F All type-4 packets saved in dir
+# -e epoch to start with
+# -k remove type-2 streams
+# -K remote type-1 streams
+# -t initial time difference between clocks in multiples of 125 ps
+# -p protocol
+# -T zero policy; what do with epoch files if no coincidences present
+# -l type-1 log
+# -L type-2 log
+# -m type-3 log
+# -M type-4 log
+# -n general log
+# -V verbosity
+# -G flush policy
+# -w coincidence time window in 1/8 nsec
+# -u coincidence time window for tracking in 1/8 nsec
+# -Q tracking filter constant; + events; - time constants in usec
+# -R servo constant; larger = longer memory
+# -h number of epochs to include in histogram
+# -q number of epochs to process
+
+export pfind_time_diff=`cat ${data_dir}/timediff.out` 
+
+# Find second common epoch
+export start_epoch=`comm -12 <(ls ${hec_data_dir}/t1.hec) <(ls ${lec_data_dir}/t2.lec) | head -n 2| tail -1`
+
+# Count the number of shared epochs
+# Do not count the first or last shared epoch (-2)
+export num_shared_epochs=$((`comm -12 <(ls ${hec_data_dir}/t1.hec) <(ls ${lec_data_dir}/t2.lec) | wc -l` - 2))
+
+mkdir -p ${hec_data_dir}/rawkey.hec
+mkdir -p ${hec_data_dir}/t4.hec
+
+
+${base_dir}/costream            \
+-d ${lec_data_dir}/t2.lec       \
+-D ${hec_data_dir}/t1.hec       \
+-f ${hec_data_dir}/rawkey.hec   \
+-F ${hec_data_dir}/t4.hec       \
+-e "0x${start_epoch}"           \
+-q ${num_shared_epochs}         \
+-t ${pfind_time_diff}           \
+-p 1                            \
+-T 2                            \
+-l ${hec_data_dir}/t1.hec.log   \
+-L ${hec_data_dir}/t2.hec.log   \
+-m ${hec_data_dir}/t3.hec.log   \
+-M ${hec_data_dir}/t4.hec.log   \
+-n ${hec_data_dir}/costream.log \
+-V 5                            \
+-G 3                            \
+-w 16                           \
+-u 30                           \
+-Q -2000000                     \
+-R 5                            \
+-h 10
+

@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Based of original EC script from Christian Kurtsiefer.
+
+set -x
+
+export override=true
+source config
+
+# This code is to test the operation of the error correction deamon. It runs
+# two copies of the error correction deamon, and assumes that raw keys are
+# stored in directories rawkeydir1 and rawkeydir2, respectively.
+
+# First, some definitions where to find code
+
+# This points to the error correction code
+ERRCD=${base_dir}/errcd
+
+# This is the code that tells you how many bits are stored in a raw key file
+DIAGCODE=${base_dir}/diagbb84
+
+# source- and target directories
+SRCA=${hec_data_dir}/rawkey.hec ; SRCB=${lec_data_dir}/rawkey.lec
+FKEYA=${hec_data_dir}/finalkey.hec ; FKEYB=${lec_data_dir}/finalkey.lec
+
+# then, some parameters for the error correction process
+ECMINBITS=1000; # minimal number of raw bits to process in error correction
+
+# generate the communication pipes
+mkfifo AtoB.pipe BtoA.pipe Acmd.pipe Bcmd.pipe Alog.pipe Blog.pipe
+mkfifo Aecquery.pipe Aecresp.pipe Becquery.pipe Becresp.pipe
+
+# make target directories
+mkdir -p ${FKEYA} ${FKEYB}
+
+# start processes and remember their PIDs. First side A, then side B
+${ERRCD}         \
+-c Acmd.pipe     \
+-s AtoB.pipe     \
+-r BtoA.pipe     \
+-d ${SRCA}       \
+-f ${FKEYA}      \
+-l Alog.pipe     \
+-q Aecresp.pipe  \
+-Q Aecquery.pipe \
+-E 0.05          \
+-V 1             \
+-I               &
+Apid=$!
+
+${ERRCD}         \
+-c Bcmd.pipe     \
+-s BtoA.pipe     \
+-r AtoB.pipe     \
+-d ${SRCB}       \
+-f ${FKEYB}      \
+-l Blog.pipe     \
+-q Becresp.pipe  \
+-Q Becquery.pipe \
+-E 0.05          \
+-V 1             \
+-I               &
+Bpid=$!
+
+# now, loop through all raw key files on A side, and package them until
+# there are enough raw bits to run the error correction process on
+bits=0; packets=0;
+rawpackets=$(ls $SRCA) ; # these are already sorted numerically (I hope)
+
+# send stuff from log pipes both to files and to the output of this script
+# use if there is not a notification program monitoring the notify pipes
+# cat Alog.pipe |tee hec.ec.log &
+# tapid=$!
+# cat Blog.pipe |tee lec.ec.log &
+# tbpid=$!
+
+for epoch in $rawpackets
+do
+  echo "e: $epoch"
+  # if we have counted no raw bits so far, declare this as first ep
+  if (($bits==0))
+  then
+    startepoch=$epoch
+    packets=0
+  fi
+  # extract the number of raw bits in the current epoch...
+  resp=($($DIAGCODE $SRCA/$epoch))
+  bitsthisround=${resp[2]}
+  # echo "bits this round: $bitsthisround"
+  # ... and add them to the accumulated num for processing
+  bits=$((bits + bitsthisround))
+  packets=$((packets + 1))
+  # Check if we can send a number of epochs for error correction
+  if (($bits >= $ECMINBITS))
+  then
+    # start processing of a number of epochs into command pipe
+    echo "found $bits bits from epoch $startepoch onwards"
+    echo $startepoch $packets >Acmd.pipe
+    bits=0;
+    lastpackage=$startepoch; # for checking if we are done
+  fi
+done
+
+echo "Last raw key cluster: $lastpackage"
+
+# now we need to wait, as the error correction takes some time.
+# Ideally, one would realize that at some point, all final key files are
+# generated, then kill the error correction processes
+while [[ ! -f $FKEYB/$lastpackage ]]
+do
+  echo "sleeping"
+  sleep 1; # wait until the last final key file shows up
+done
+
+# now kill the deamons and processes
+kill -9 $Apid ; kill -9 $Bpid
+# use if there is not a notification program monitoring the notify pipes
+# kill -9 $tapid ; kill -9 $tbpid ; 
+
+# clean up existing fifos
+rm -f ./*.pipe

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#
+# Run the event simulator to produce photon
+# events similar to output of S-15 timestamp
+# cards. Output is generated for both HEC and
+# LEC parties to then be ingested by the
+# chopper(2) programs.
+
+set -x
+
+export override=true
+source config
+
+mkdir -p ${data_dir}/hec
+mkdir -p ${data_dir}/lec
+
+
+export           num_events=5E4       # Total number of events to simulate
+export source_emission_rate=1E3       # Event rate [events/second]
+export      lec_time_offset=1E0       # LEC party time offset [nanoseconds]
+export        lec_loss_frac=0.0       # LEC Loss Fraction [0(no loss)<=fraction<=1(all loss)]
+export           error_rate=0.0       # Simulated QBER [0<=fraction<=1]
+export  relative_freq_drift=0.0
+
+./esim                            \
+-n ${num_events}                  \
+-e ${source_emission_rate}        \
+-c ${relative_freq_drift}         \
+-o ${lec_time_offset}             \
+-l ${lec_loss_frac}               \
+-m ${error_rate}                  \
+-F ${data_dir}/hec/events.hec.out \
+-f ${data_dir}/lec/events.lec.out \
+-v
+

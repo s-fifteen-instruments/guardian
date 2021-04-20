@@ -86,6 +86,17 @@ services:
     <<: *vault_init_label
     command: ["vault_auth.py"]
 
+  qkd:
+    build: ./qkd
+    command: ["distclean", "ctest"]
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    networks:
+      - internal-private
+    volumes:
+      - ./volumes/qkd/epoch_files:/root/code/qsim/epoch_files
+
 
 networks:
 

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#
+# getrate takes a rawevents stream from either party
+# and returns count rate information per epoch. It is further
+# broken down by detector event.
+
+set -x
+
+source config
+
+if [ ${2:-x} = "full" ]; then
+  export full_run="-s"
+else
+  export full_run=""
+fi
+
+# Count the number of epochs; ignore first and last in directory
+export num_epochs=$(( $(ls ${data_dir}/t{1,2}.${count_type} | wc -l) - 2))
+
+echo "Number of epochs found: ${num_epochs}"
+
+if [ "${num_epochs}" -le "0" ]; then
+  echo "Error: No epochs found. Defaulting to 1."
+  export num_epochs=1
+fi
+
+echo "Count Rates Per Epoch"
+echo "Total D1    D2    D3    D4"
+
+export rate_output_full=$(\
+${base_dir}/getrate                     \
+-i ${data_dir}/events.${count_type}.out \
+-n ${num_epochs}                        \
+${full_run})
+
+export rate_output=$(printf ${rate_output_full} | tail -1)
+
+if [ "${2:-x}" != "full" ]; then
+  echo "${count_type} Rate (events/s): ${rate_output}"
+  echo "${rate_output}" > ${data_dir}/getrate.${count_type}.out
+else
+  printf ${rate_output_full}
+fi

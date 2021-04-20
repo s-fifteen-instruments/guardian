@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#
+
+set -x
+
+export override=true
+source config
+
+# Find second common epoch
+export start_epoch=`comm -12 <(ls ${hec_data_dir}/t1.hec) <(ls ${lec_data_dir}/t2.lec) | head -n 2 | tail -n 1`
+
+# Count the number of shared epochs
+# Do not count the first or last shared epoch (-2)
+export num_shared_epochs=$((`comm -12 <(ls ${hec_data_dir}/t1.hec) <(ls ${lec_data_dir}/t2.lec) | wc -l` - 2))
+
+mkdir -p ${lec_data_dir}/rawkey.lec
+
+
+${base_dir}/splicer            \
+-d ${lec_data_dir}/t3.lec      \
+-D ${hec_data_dir}/t4.hec      \
+-f ${lec_data_dir}/rawkey.lec  \
+-e "0x${start_epoch}"          \
+-q ${num_shared_epochs}        \
+-p 1                           \
+-l ${lec_data_dir}/t3.lec.log  \
+-L ${lec_data_dir}/t4.lec.log  \
+-m ${lec_data_dir}/splicer.log
+
