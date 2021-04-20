@@ -110,9 +110,7 @@ services:
   
   watcher:
     build: ./watcher
-    depends_on:
-      - notifier
-    command: ["/epoch_files/notify.pipe"]
+    command: ["watcher.py"]
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false

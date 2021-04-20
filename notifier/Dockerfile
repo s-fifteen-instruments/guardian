@@ -28,15 +28,15 @@ VOLUME /epoch_files
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
-    && mkdir -p ${HOME}/code/watchdog \
-    && cd ${HOME}/code/watchdog
+    && mkdir -p ${HOME}/code/notifier \
+    && cd ${HOME}/code/notifier
 
-COPY ["./notifier.py", "${HOME}/code/watchdog/"]
+COPY ["./notifier.py", "${HOME}/code/notifier/"]
 
 # Set a working directory into the image
-WORKDIR ${HOME}/code/watchdog
+WORKDIR ${HOME}/code/notifier
 
-# Set the targets for the watchdog python entrypoint to run
+# Set the script for the python entrypoint to run
 CMD ["notifier.py"]
 
 ENTRYPOINT ["python3", "-u"] 

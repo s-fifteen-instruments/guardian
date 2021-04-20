@@ -18,10 +18,25 @@
 FROM alpine:latest
 LABEL author="Cyrus Proctor"
 
+# NOTE: 0 does not imply buffering
+ENV PYTHONUNBUFFERED=1
+ENV HOME=/root
+
 # Set a volume to the epoch file directory to process
 VOLUME /epoch_files
 
-# Set the targets for the watchdog python entrypoint to run
-CMD ["/epoch_files/notify.pipe"]
+RUN apk update --no-cache \
+    && apk add --no-cache \
+        python3 \
+    && mkdir -p ${HOME}/code/watcher \
+    && cd ${HOME}/code/watcher
 
-ENTRYPOINT ["cat"] 
+COPY ["./watcher.py", "${HOME}/code/watcher/"]
+
+# Set a working directory into the image
+WORKDIR ${HOME}/code/watcher
+
+# Set the scripts for the python entrypoint to run
+CMD ["watcher.py"]
+
+ENTRYPOINT ["python3", "-u"] 
