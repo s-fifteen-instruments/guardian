@@ -48,7 +48,7 @@ class notifierClient:
                     current_file_hex = int(epoch_file_name, 16)
                     if last_file_hex == hex(0):
                         last_file_hex = current_file_hex
-                    num_epoch_delay = 1  # int(current_file_hex - last_file_hex)
+                    num_epoch_delay = 0  # int(current_file_hex - last_file_hex)
                     print(num_epoch_delay, epoch_file_name, file=sys.stderr)
                     FIFO.write(epoch_file_name + "\n")
                     FIFO.flush()
