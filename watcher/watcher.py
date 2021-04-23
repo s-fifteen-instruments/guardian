@@ -22,29 +22,29 @@
 import concurrent.futures as cf
 import errno
 import logging as logger
-import getpass
+# import getpass
 import multiprocessing
 import os
 import signal
-import socket
+# import socket
 import sys
 import struct
 import time
 import traceback
 
 # Consider https://documentation.solarwinds.com/en/success_center/papertrail/content/kb/configuration/configuring-centralized-logging-from-python-apps.htm?cshid=pt-configuration-configuring-centralized-logging-from-python-apps
-hostname = socket.gethostname()
-user = user = getpass.getuser()
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG,
-                   format="%(levelname)s " +
-                   "%(threadName)s " +
-                   f"{hostname}: " +
-                   f"{user}: " +
-                   "%(asctime)s: " +
-                   "%(filename)s;" +
-                   "%(funcName)s();" +
-                   "%(lineno)d: " +
-                   "%(message)s")
+# hostname = socket.gethostname()
+# user = user = getpass.getuser()
+logger.basicConfig(stream=sys.stdout, level=logger.INFO)  # ,
+#                    format="%(levelname)s " +
+#                    "%(threadName)s " +
+#                    f"{hostname}: " +
+#                    f"{user}: " +
+#                    "%(asctime)s: " +
+#                    "%(filename)s;" +
+#                    "%(funcName)s();" +
+#                    "%(lineno)d: " +
+#                    "%(message)s")
 
 
 class watcherClient:
@@ -195,6 +195,7 @@ class watcherClient:
                 # Attempt to open the notify pipe read-only, non-blocking
                 with open(os.open(watcherClient.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
+                    logger.debug(f"{watcherClient.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
                     # Notify pipe was successfully opened; iterate until otherwise
                     while not self.KILL_NOW:
                         # Break out of inner loop if notify pipe no longer exists

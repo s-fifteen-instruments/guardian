@@ -26,11 +26,12 @@ import logging as logger
 import hvac
 import os
 import pathlib
+import stat
 import sys
 import time
 import requests
 
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
+logger.basicConfig(stream=sys.stdout, level=logger.INFO)
 
 
 class vaultClient:
@@ -38,26 +39,21 @@ class vaultClient:
     """
     VAULT_URI: str = "https://vault:8200"
     CERT_DIRPATH: str = "/certificates/production"
+    ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
+    VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/vault/SECRETS"
     CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.ca-chain.cert.pem"
     CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.key.pem"
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault.ca-chain.cert.pem"
-    REST_DIRPATH: str = f"{CERT_DIRPATH}/rest"
-    REST_CLIENT_CA_CHAIN_FILEPATH: str = f"{REST_DIRPATH}/rest.ca-chain.cert.pem"
-    REST_CLIENT_KEY_FILEPATH: str = f"{REST_DIRPATH}/rest.key.pem"
-    ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
-    ADMIN_REST_DIRPATH: str = f"{ADMIN_DIRPATH}/rest"
-    ADMIN_REST_CLIENT_CA_CHAIN_FILEPATH: str = f"{ADMIN_REST_DIRPATH}/rest.ca-chain.cert.pem"
-    ADMIN_REST_CLIENT_KEY_FILEPATH: str = f"{ADMIN_REST_DIRPATH}/rest.key.pem"
-    VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/vault/SECRETS"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.csr.pem"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.ca-chain.cert.pem"
-    CERT_GEN_DIRPATH: str = "/certificates/generation"
+    CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
+    KEY_SUFFIX: str = ".key.pem"
     LOG_DIRPATH: str = "/vault/logs"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     MAX_CONN_ATTEMPTS: int = 10
     BACKOFF_FACTOR: float = 1.0
-    BACKOFF_MAX: float = 64.0
+    BACKOFF_MAX: float = 64.0  # seconds
 
     def __init__(self) -> None:
         """foo
@@ -87,16 +83,14 @@ class vaultClient:
                         verify=vaultClient.SERVER_CERT_FILEPATH)
         self.connection_loop(self.vault_init)
         self.connection_loop(self.vault_unseal)
-        self.connection_loop(self.vault_auth)
+        self.connection_loop(self.vault_root_token_auth)
 
     def phase_1_startup(self):
         """foo
         """
         logger.debug("Begin first phase initialization")
         self.connection_loop(self.vault_enable_audit_file)
-        self.connection_loop(self.vault_enable_auth_method)
-        # self.connection_loop(self.vault_enable_pki_secrets_engine)
-        # self.connection_loop(self.vault_setup_ca_certs)
+        self.connection_loop(self.vault_enable_cert_auth_method)
         self.connection_loop(self.vault_enable_pki_int_secrets_engine)
         self.connection_loop(self.vault_write_int_ca_csr)
 
@@ -106,9 +100,10 @@ class vaultClient:
         logger.info("Begin second phase initialization")
         self.connection_loop(self.vault_setup_int_ca_certs)
         self.connection_loop(self.vault_create_acl_policy)
-        self.connection_loop(self.vault_generate_rest_client_cert)
+        self.connection_loop(self.vault_generate_client_cert, common_name="watcher")
+        self.connection_loop(self.vault_generate_client_cert, common_name="rest")
 
-    def connection_loop(self, connection_callback) -> None:
+    def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
         """
         self.max_attempts: int = vaultClient.MAX_CONN_ATTEMPTS
@@ -119,20 +114,24 @@ class vaultClient:
         total_stall_time: float = 0.0
         while attempt_num < self.max_attempts:
             attempt_num = attempt_num + 1
-            logger.info(f"Connection Attempt #: {attempt_num}")
+            logger.debug(f"Connection Attempt #: {attempt_num}")
             try:
                 logger.debug("Read Vault instance health status")
                 health_response = self.vclient.sys.read_health_status(method="GET")
                 logger.debug("Vault server status:")
                 logger.debug(f"Health response type {type(health_response)}")
                 if isinstance(health_response, dict):
-                    self._dump_response(health_response)
+                    self._dump_response(health_response, secret=False)
                 else:
-                    self._dump_response(health_response.json())
+                    self._dump_response(health_response.json(), secret=False)
 
                 if callable(connection_callback):
-                    logger.debug(f"Attempting function callback: {connection_callback.__name__}()")
-                    connection_callback()
+                    logger.info(f"Attempting function callback: {connection_callback.__name__}()")
+                    for arg in args:
+                        logger.info(f"Arguments: \"{arg}\"")
+                    for key, value in kwargs.items():
+                        logger.info(f"Keyword Arguments: \"{key}\"=\"{value}\"")
+                    connection_callback(*args, **kwargs)
                 else:
                     logger.debug("No connection callback function given")
 
@@ -149,8 +148,10 @@ class vaultClient:
         else:
             logger.warning(f"Max {attempt_num} connection attempts over {total_stall_time} seconds")
 
-    @classmethod
-    def _is_json(cls, response):
+    @staticmethod
+    def _is_json(response):
+        """foo
+        """
         try:
             json.loads(response)
         except ValueError:
@@ -160,19 +161,22 @@ class vaultClient:
                 return True
         return True
 
-    @classmethod
-    def _dump_response(cls, response):
+    @staticmethod
+    def _dump_response(response, secret: bool = True):
         """foo
         """
-        if response:
-            if cls._is_json(response):
-                logger.debug(f"""{json.dumps(response,
-                                             indent=2,
-                                             sort_keys=True)}""")
+        if not secret:
+            if response:
+                if vaultClient._is_json(response):
+                    logger.debug(f"""{json.dumps(response,
+                                                 indent=2,
+                                                 sort_keys=True)}""")
+                else:
+                    logger.debug(f"{response}")
             else:
-                logger.debug(f"{response}")
+                logger.debug("No response")
         else:
-            logger.debug("No response")
+            logger.debug("REDACTED")
 
     def write_secrets(self):
         """foo
@@ -202,10 +206,10 @@ class vaultClient:
                 self.unseal_keys = self.init_response["keys"]
                 self.write_secrets()
                 logger.info("Vault instance initialization successful")
-                self._dump_response(self.init_response)
+                self._dump_response(self.init_response, secret=True)
             else:
                 logger.error("Vault instance initialization failed")
-                self._dump_response(self.init_response)
+                self._dump_response(self.init_response, secret=False)
         else:
             logger.info("Vault instance already initialized")
 
@@ -221,14 +225,14 @@ class vaultClient:
                 self.vclient.sys.submit_unseal_keys(self.unseal_keys)
             if not self.vclient.sys.is_sealed():
                 logger.debug("Vault instance unsealing successful")
-                self._dump_response(self.unseal_response)
+                self._dump_response(self.unseal_response, secret=False)
             else:
                 logger.error("Vault instance unseal failed")
-                self._dump_response(self.unseal_response)
+                self._dump_response(self.unseal_response, secret=False)
         else:
             logger.info("Vault instance already unsealed")
 
-    def vault_auth(self):
+    def vault_root_token_auth(self):
         """foo
         """
         if not self.vclient.is_authenticated():
@@ -251,7 +255,7 @@ class vaultClient:
         """
         audit_devices = self.vclient.sys.list_enabled_audit_devices()
         logger.debug("Currently enabled audit devices:")
-        self._dump_response(audit_devices)
+        self._dump_response(audit_devices, secret=False)
         logger.debug("Attempt to enable file audit device")
         device_type_str = "file"
         description_str = "File to hold audit events"
@@ -261,104 +265,34 @@ class vaultClient:
                                                  description=description_str,
                                                  options=options_dict)
         logger.debug("Enable audit response okay:")
-        self._dump_response(self.enable_audit_response.ok)
+        self._dump_response(self.enable_audit_response.ok, secret=False)
         audit_devices = self.vclient.sys.list_enabled_audit_devices()
         logger.debug("Currently enabled audit devices:")
-        self._dump_response(audit_devices)
+        self._dump_response(audit_devices, secret=False)
 
-    def vault_enable_auth_method(self):
+    def vault_enable_cert_auth_method(self):
         """foo
         """
         auth_methods = self.vclient.sys.list_auth_methods()
         logger.debug("Currently enabled auth methods:")
-        self._dump_response(auth_methods)
+        self._dump_response(auth_methods, secret=False)
         method_type_str = "cert"
         description_str = "TLS Authentication"
         logger.debug("Attempt to enable cert auth method")
         self.enable_cert_response = \
             self.vclient.sys.enable_auth_method(method_type=method_type_str,
                                                 description=description_str)
-        # TODO: Need policies, display_name, certificate, ttl https://www.vaultproject.io/api/auth/cert
         logger.debug("Enable cert response okay:")
-        self._dump_response(self.enable_cert_response.ok)
+        self._dump_response(self.enable_cert_response.ok, secret=False)
         auth_methods = self.vclient.sys.list_auth_methods()
         logger.debug("Currently enabled auth methods:")
-
-    def vault_enable_pki_secrets_engine(self):
-        """foo
-        """
-        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
-        logger.debug("Currently enabled secrets engines:")
-        self._dump_response(secrets_backends)
-        backend_type_str = "pki"
-        mount_point = "pki"
-        description_str = "Root CA Certificate Store to be used in Authenication"
-        config_dict = {
-            "default_lease_ttl": "87600h",
-            "max_lease_ttl": "87600h"
-        }
-        logger.debug("Attempt to enable pki secrets engine")
-        self.enable_pki_response = \
-            self.vclient.sys.enable_secrets_engine(backend_type_str,
-                                                   path=mount_point,
-                                                   description=description_str,
-                                                   config=config_dict)
-        logger.debug("Enable pki secrets egine response okay:")
-        self._dump_response(self.enable_pki_response.ok)
-        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
-        logger.debug("Currently enabled secrets engines:")
-        self._dump_response(secrets_backends)
-
-    def vault_setup_ca_certs(self):
-        """foo
-        """
-        mount_point = "pki"
-        type_str = "exported"
-        common_name = "Vault Root CA pki mount point"
-        extra_param_dict = {
-            "format": "pem",
-            "key_type": "rsa",
-            "key_bits": "4096",
-            "ou": "Quantum Hacking",
-            "organization": "Quantum Internet Technologies LLC",
-            "country": "US",
-            "province": "Texas",
-            "locality": "Austin",
-            # "valt_names": "vault,vault.localhost,localhost",
-            # "ip_sans": "127.0.0.1"
-        }
-        logger.debug("Attempting to generate root CA certificate/private key")
-        # TODO: Secret Exposure
-        self.gen_root_ca_response = \
-            self.vclient.secrets.pki.generate_root(type_str,
-                                                   common_name=common_name,
-                                                   mount_point=mount_point,
-                                                   extra_params=extra_param_dict)
-        logger.debug("Generate root CA response:")
-        self._dump_response(self.gen_root_ca_response)
-        cert_list_reponse = \
-            self.vclient.secrets.pki.list_certificates(mount_point=mount_point)
-        logger.debug("Current pki certificates:")
-        self._dump_response(cert_list_reponse)
-        mount_point = "pki"
-        params_dict = {
-            "issuing_certificates": f"https://vault:8200/v1/{mount_point}/ca",
-            "crl_distribution_points": f"https://vault:8200/v1/{mount_point}/crl",
-            "ocsp_servers": ""
-        }
-        logger.debug("Attempting to set root CA URLs")
-        url_response = \
-            self.vclient.secrets.pki.set_urls(params=params_dict,
-                                              mount_point=mount_point)
-        logger.debug("Set root CA URLs response okay:")
-        self._dump_response(url_response.ok)
 
     def vault_enable_pki_int_secrets_engine(self):
         """foo
         """
         secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
         logger.debug("Currently enabled secrets engines:")
-        self._dump_response(secrets_backends)
+        self._dump_response(secrets_backends, secret=False)
         backend_type_str = "pki"
         mount_point = "pki_int"
         description_str = "Intermediate CA Certificate Store to be used in Authenication"
@@ -373,10 +307,10 @@ class vaultClient:
                                                    description=description_str,
                                                    config=config_dict)
         logger.debug("Enable pki_int secrets egine response okay:")
-        self._dump_response(self.enable_pki_response.ok)
+        self._dump_response(self.enable_pki_response.ok, secret=False)
         secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
         logger.debug("Currently enabled secrets engines:")
-        self._dump_response(secrets_backends)
+        self._dump_response(secrets_backends, secret=False)
 
     def write_pki_int_csr_pem_file(self):
         """foo
@@ -405,15 +339,16 @@ class vaultClient:
         logger.debug("Attempting to generate intermediate CA certificate/private key")
         # TODO: Secret Exposure
         self.gen_int_ca_response = \
-            self.vclient.secrets.pki.generate_intermediate(type_str,
-                                                           common_name=common_name,
-                                                           mount_point=mount_point,
-                                                           extra_params=extra_param_dict)
+            self.vclient.secrets.pki.\
+            generate_intermediate(type_str,
+                                  common_name=common_name,
+                                  mount_point=mount_point,
+                                  extra_params=extra_param_dict)
         logger.debug("Generate intermediate CA response:")
-        self._dump_response(self.gen_int_ca_response)
+        self._dump_response(self.gen_int_ca_response, secret=True)
         self.int_ca_csr = self.gen_int_ca_response["data"]["csr"]
         logger.debug("Intermediate CA Certificate Signing Request (CSR):")
-        self._dump_response(self.int_ca_csr)
+        self._dump_response(self.int_ca_csr, secret=False)
         self.write_pki_int_csr_pem_file()
 
     def vault_setup_int_ca_certs(self):
@@ -421,13 +356,14 @@ class vaultClient:
         """
         logger.debug("Attempt to read in signed intermediate CA CSR")
         # TODO: handle FileNotFoundError exception
-        self.int_ca_cert = open(vaultClient.PKI_INT_CERT_PEM_FILEPATH, "r").read()
+        self.int_ca_cert = \
+            open(vaultClient.PKI_INT_CERT_PEM_FILEPATH, "r").read()
         mount_point = "pki_int"
         self.set_int_ca_cert_response = self.vclient.secrets.pki.\
             set_signed_intermediate(certificate=self.int_ca_cert,
                                     mount_point=mount_point)
         logger.debug("Intermediate CA cert response:")
-        self._dump_response(self.set_int_ca_cert_response.ok)
+        self._dump_response(self.set_int_ca_cert_response.ok, secret=False)
         params_dict = {
             "issuing_certificates": f"https://vault:8200/v1/{mount_point}/ca",
             "crl_distribution_points": f"https://vault:8200/v1/{mount_point}/crl",
@@ -438,7 +374,7 @@ class vaultClient:
             self.vclient.secrets.pki.set_urls(params=params_dict,
                                               mount_point=mount_point)
         logger.debug("Set intermediate CA URLs response okay:")
-        self._dump_response(url_response.ok)
+        self._dump_response(url_response.ok, secret=False)
         role_name_str = "role_int_ca_cert_issuer"
         role_param_dict = {
             "allow_localhost": "true",
@@ -462,108 +398,18 @@ class vaultClient:
         }
         logger.debug("Attempting to create intermediate CA role for cert issuing")
         create_role_response = \
-            self.vclient.secrets.pki.create_or_update_role(name=role_name_str,
-                                                           extra_params=role_param_dict,
-                                                           mount_point=mount_point)
+            self.vclient.secrets.pki.\
+            create_or_update_role(name=role_name_str,
+                                  extra_params=role_param_dict,
+                                  mount_point=mount_point)
         logger.debug("Create intermediate CA role response okay:")
-        self._dump_response(create_role_response.ok)
+        self._dump_response(create_role_response.ok, secret=False)
         logger.debug("Attempt to read newly created role")
         read_role_resposne = \
             self.vclient.secrets.pki.read_role(name=role_name_str,
                                                mount_point=mount_point)
         logger.debug("Read newly created role:")
-        self._dump_response(read_role_resposne)
-
-    def vault_setup_int_ca_certs_internal_ca(self):
-        """foo
-        """
-        mount_point = "pki_int"
-        type_str = "exported"
-        common_name = "Vault Intermediate CA pki_int mount point"
-        extra_param_dict = {
-            "format": "pem",
-            "key_type": "rsa",
-            "key_bits": "4096",
-            "ou": "Quantum Hacking",
-            "organization": "Quantum Internet Technologies LLC",
-            "country": "US",
-            "province": "Texas",
-            "locality": "Austin",
-            "ttl": "87600h"
-        }
-        logger.debug("Attempting to generate intermediate CA certificate/private key")
-        # TODO: Secret Exposure
-        self.gen_int_ca_response = \
-            self.vclient.secrets.pki.generate_intermediate(type_str,
-                                                           common_name=common_name,
-                                                           mount_point=mount_point,
-                                                           extra_params=extra_param_dict)
-        logger.debug("Generate intermediate CA response:")
-        self._dump_response(self.gen_int_ca_response)
-        int_ca_csr = self.gen_int_ca_response["data"]["csr"]
-        logger.debug("Intermediate CA Certificate Signing Request (CSR):")
-        self._dump_response(int_ca_csr)
-        logger.debug("Attempt to sign intermediate CA CSR with root CA")
-        root_ca_mount_point = "pki"
-        self.sign_int_ca_csr_response = \
-            self.vclient.secrets.pki.sign_intermediate(csr=int_ca_csr,
-                                                       common_name=common_name,
-                                                       mount_point=root_ca_mount_point,
-                                                       extra_params=extra_param_dict)
-        logger.debug("Sign intermediate CA response:")
-        self._dump_response(self.sign_int_ca_csr_response)
-        int_ca_cert = self.sign_int_ca_csr_response["data"]["certificate"]
-        logger.debug("Attempt to set signed intermediate CA certificate")
-        set_int_ca_cert_response = \
-            self.vclient.secrets.pki.set_signed_intermediate(certificate=int_ca_cert,
-                                                             mount_point=mount_point)
-        logger.debug("Set signed intermediate CA certificate response okay:")
-        self._dump_response(set_int_ca_cert_response.ok)
-        params_dict = {
-            "issuing_certificates": f"https://vault:8200/v1/{mount_point}/ca",
-            "crl_distribution_points": f"https://vault:8200/v1/{mount_point}/crl",
-            "ocsp_servers": ""
-        }
-        logger.debug("Attempting to set intermediate CA URLs")
-        url_response = \
-            self.vclient.secrets.pki.set_urls(params=params_dict,
-                                              mount_point=mount_point)
-        logger.debug("Set intermediate CA URLs response okay:")
-        self._dump_response(url_response.ok)
-        role_name_str = "role_int_ca_cert_issuer"
-        role_param_dict = {
-            "allow_localhost": "true",
-            "allow_subdomains": "true",
-            "allow_glob_domains": "true",
-            "enforce_hostnames": "false",
-            "allow_any_name": "true",
-            "allow_ip_sans": "true",
-            "server_flag": "true",
-            "client_flag": "true",
-            "key_type": "rsa",
-            "key_bits": "2048",
-            "generate_lease": "true",
-            "ou": "Quantum Hacking",
-            "organization": "Quantum Internet Technologies LLC",
-            "country": "US",
-            "province": "Texas",
-            "locality": "Austin",
-            "ttl": "8760h",
-            "max_ttl": "87600h",
-        }
-        logger.debug("Attempting to create intermediate CA role for cert issuing")
-        create_role_response = \
-            self.vclient.secrets.pki.create_or_update_role(name=role_name_str,
-                                                           extra_params=role_param_dict,
-                                                           mount_point=mount_point)
-        logger.debug("Create intermediate CA role response okay:")
-        self._dump_response(create_role_response.ok)
-        logger.debug("Attempt to read newly created role")
-        read_role_resposne = \
-            self.vclient.secrets.pki.read_role(name=role_name_str,
-                                               mount_point=mount_point)
-        logger.debug("Read newly created role:")
-        self._dump_response(read_role_resposne)
+        self._dump_response(read_role_resposne, secret=False)
 
     def vault_create_acl_policy(self):
         """foo
@@ -600,18 +446,17 @@ class vaultClient:
                                                      policy=policy_json,
                                                      pretty_print=False)
         logger.debug("Add ACL policy response okay:")
-        self._dump_response(policy_response.ok)
+        self._dump_response(policy_response.ok, secret=False)
         logger.debug("Attemp to read back policy")
         read_policy_response = \
             self.vclient.sys.read_policy(name=policy_name_str)
         logger.debug("Read policy response:")
-        self._dump_response(read_policy_response)
+        self._dump_response(read_policy_response, secret=False)
 
-    def vault_generate_rest_client_cert(self):
+    def vault_generate_client_cert(self, common_name: str):
         """foo
         """
         role_str = "role_int_ca_cert_issuer"
-        common_name = "rest"
         mount_point = "pki_int"
         extra_param_dict = {
             "alt_names": "172.16.192.*,127.0.0.1",
@@ -619,34 +464,65 @@ class vaultClient:
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
         }
-        logger.debug("Attempt to issue rest client certificate")
-        self.gen_rest_cert_response = \
-            self.vclient.secrets.pki.generate_certificate(name=role_str,
-                                                          common_name=common_name,
-                                                          mount_point=mount_point,
-                                                          extra_params=extra_param_dict)
-        logger.debug("rest client cert response:")
-        self._dump_response(self.gen_rest_cert_response)
-        self.rest_ca_chain = self.gen_rest_cert_response["data"]["ca_chain"]
-        self.rest_cert = self.gen_rest_cert_response["data"]["certificate"]
-        self.rest_private_key = self.gen_rest_cert_response["data"]["private_key"]
-        # Create rest client dir under the admin dir
-        pathlib.Path(vaultClient.ADMIN_REST_DIRPATH).mkdir(parents=True, exist_ok=True)
-        with open(vaultClient.ADMIN_REST_CLIENT_CA_CHAIN_FILEPATH, "w") as f:
-            f.write(self.rest_cert + "\n")
-            for cert in self.rest_ca_chain:
-                f.write(cert + "\n")
-        with open(vaultClient.ADMIN_REST_CLIENT_KEY_FILEPATH, 'w') as f:
-            f.write(self.rest_private_key)
-        # Create rest client dir for rest client
-        pathlib.Path(vaultClient.REST_DIRPATH).mkdir(parents=True, exist_ok=True)
-        with open(vaultClient.REST_CLIENT_CA_CHAIN_FILEPATH, "w") as f:
-            f.write(self.rest_cert + "\n")
-            for cert in self.rest_ca_chain:
-                f.write(cert + "\n")
-        with open(os.open(vaultClient.REST_CLIENT_KEY_FILEPATH,
-                  os.O_CREAT | os.O_WRONLY, 0o400), 'w') as f:
-            f.write(self.rest_private_key)
+        logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
+        gen_cert_response = \
+            self.vclient.secrets.pki.\
+            generate_certificate(name=role_str,
+                                 common_name=common_name,
+                                 mount_point=mount_point,
+                                 extra_params=extra_param_dict)
+        logger.debug(f"\"{common_name}\" client cert response:")
+        self._dump_response(gen_cert_response, secret=True)
+        ca_chain_pem_str = gen_cert_response["data"]["ca_chain"]
+        cert_pem_str = gen_cert_response["data"]["certificate"]
+        private_key_pem_str = gen_cert_response["data"]["private_key"]
+        client_dirpath = f"{vaultClient.CERT_DIRPATH}/{common_name}"
+        # Client dir private key read-only
+        client_perms: oct = stat.S_IRUSR
+        client_admin_dirpath = f"{vaultClient.ADMIN_DIRPATH}/{common_name}"
+        # Admin dir private key world-readable
+        client_admin_perms: oct = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+        vaultClient.\
+            write_client_credentials(dirpath=client_dirpath,
+                                     common_name=common_name,
+                                     permissions=client_perms,
+                                     client_cert=cert_pem_str,
+                                     client_private_key=private_key_pem_str,
+                                     ca_chain=ca_chain_pem_str)
+        vaultClient.\
+            write_client_credentials(dirpath=client_admin_dirpath,
+                                     common_name=common_name,
+                                     permissions=client_admin_perms,
+                                     client_cert=cert_pem_str,
+                                     client_private_key=private_key_pem_str,
+                                     ca_chain=ca_chain_pem_str)
+
+    @staticmethod
+    def write_client_credentials(dirpath: str, common_name: str,
+                                 permissions: oct, client_cert: str,
+                                 client_private_key: str, ca_chain: str):
+        """foo
+        """
+        # Ensure the directory exists
+        pathlib.Path(dirpath).mkdir(parents=True, exist_ok=True)
+        # Write CA cert chain as 0o644
+        with open(os.open(f"{dirpath}/"
+                          f"{common_name}{vaultClient.CA_CHAIN_SUFFIX}",
+                          os.O_CREAT | os.O_WRONLY,
+                          stat.S_IRUSR | stat.S_IWUSR |
+                          stat.S_IRGRP | stat.S_IROTH), "w") as f:
+            # Write client cert first
+            f.write(client_cert + "\n")
+            # Then, each link in the CA chain up to the root CA
+            for ca_cert in ca_chain:
+                f.write(ca_cert + "\n")
+        # User provided permissions for writing private key
+        with open(os.open(f"{dirpath}/"
+                          f"{common_name}{vaultClient.KEY_SUFFIX}",
+                          os.O_CREAT | os.O_WRONLY,
+                          permissions), "w") as f:
+            # Write out the client's private key
+            f.write(client_private_key)
 
 
 if __name__ == "__main__":
