@@ -31,7 +31,7 @@ import sys
 import time
 import requests
 
-logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 
 
 class vaultClient:

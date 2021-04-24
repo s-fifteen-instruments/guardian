@@ -38,7 +38,7 @@ services:
     <<: *certauth_label
     command: ["csr"]
 
-  vault:
+  vault: &vault_label
     # Use the latest Hashicorp Vault v1.7.x image available
     image: vault:${VAULT_TAG:-latest}
     ports:
@@ -66,6 +66,13 @@ services:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
       - internal-private
+
+  vault_client_auth:
+    <<: *vault_label
+    ports:
+      - 8282:8200
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/vault/config/client_auth.sh"]
 
   vault_init: &vault_init_label
     build: ./vault_init
