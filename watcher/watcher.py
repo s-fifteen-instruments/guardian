@@ -35,7 +35,7 @@ import traceback
 # Consider https://documentation.solarwinds.com/en/success_center/papertrail/content/kb/configuration/configuring-centralized-logging-from-python-apps.htm?cshid=pt-configuration-configuring-centralized-logging-from-python-apps
 # hostname = socket.gethostname()
 # user = user = getpass.getuser()
-logger.basicConfig(stream=sys.stdout, level=logger.INFO)  # ,
+logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)  # ,
 #                    format="%(levelname)s " +
 #                    "%(threadName)s " +
 #                    f"{hostname}: " +

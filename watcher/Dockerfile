@@ -18,9 +18,12 @@
 FROM alpine:latest
 LABEL author="Cyrus Proctor"
 
-# NOTE: 0 does not imply buffering
+# NOTE: 0 does not imply a false value
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
+
+COPY ./requirements.txt ${HOME}/
 
 # Set a volume to the epoch file directory to process
 VOLUME /epoch_files
@@ -28,6 +31,8 @@ VOLUME /epoch_files
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
+        py-pip \
+    && pip install -r ${HOME}/requirements.txt \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher
 
