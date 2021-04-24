@@ -18,28 +18,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
+set -x
+export CONFIG_FILE="docker-compose.init.yml"
+export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
+export LOG="docker-compose -f \${CONFIG_FILE} logs \${F} \${S} || { echo \"\${S} logs failed\" ; exit 1; } "
+export STALL="sleep \${WAIT}"
+export STARTUP="${UP} && ${STALL} && ${LOG}"
 
-
-docker-compose up -d --build certauth
-sleep 1
-docker-compose logs certauth
-docker-compose up -d vault
-sleep 1
-docker-compose logs vault
-docker-compose up -d --build vault_init
-sleep 2
-docker-compose logs vault_init
-docker-compose up -d --build certauth_csr
-sleep 1
-docker-compose logs certauth_csr
-docker-compose up -d --build vault_init_phase_2
-sleep 2
-docker-compose logs vault_init_phase_2
-docker-compose up -d --build qkd
-sleep 1
-docker-compose logs -f qkd
-docker-compose up -d --build  watcher
-docker-compose up -d --build notifier
-sleep 1
-docker-compose logs -f notifier
-docker-compose logs watcher
+S=certauth           WAIT=0 F=-f eval ${STARTUP}
+S=vault              WAIT=1 F=   eval ${STARTUP}
+S=vault_init         WAIT=0 F=-f eval ${STARTUP}
+S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
+S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
+S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+S=qkd                WAIT=0 F=-f eval ${STARTUP}
+S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
