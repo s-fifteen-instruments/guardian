@@ -19,8 +19,11 @@
 #
 #
 
+import base64
 import concurrent.futures as cf
 import errno
+import hvac
+import json
 import logging as logger
 # import getpass
 import multiprocessing
@@ -51,6 +54,16 @@ class watcherClient:
     DELETE_EPOCH_FILES: bool = False
     EPOCH_FILES_DIRPATH: str = "/epoch_files"
     NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"
+    VAULT_SERVER_NAME: str = "vault"
+    VAULT_SERVER_URI: str = f"https://{VAULT_SERVER_NAME}:8200"
+    CLIENT_NAME: str = "watcher"
+    CERT_DIRPATH: str = "/certificates/production"
+    CLIENT_DIRPATH: str = f"{CERT_DIRPATH}/{CLIENT_NAME}"
+    CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
+    KEY_SUFFIX: str = ".key.pem"
+    CLIENT_CERT_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{CA_CHAIN_SUFFIX}"
+    CLIENT_KEY_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{KEY_SUFFIX}"
+    SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_SERVER_NAME}/{VAULT_SERVER_NAME}{CA_CHAIN_SUFFIX}"
     KILL_NOW: bool = False
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 8.0
@@ -70,6 +83,8 @@ class watcherClient:
         self._threads = threads
         # Initialize a concurrent futures threadpool
         self.executor = cf.ThreadPoolExecutor(max_workers=self._threads)
+        # Authenticate with the vault server
+        self.vault_client_auth()
         self.mainloop()
 
     def exit_gracefully(self, signum, frame):
@@ -83,58 +98,131 @@ class watcherClient:
         self.executor.shutdown(wait=True)
         logger.debug("All currently executing threads have finished")
 
+    def vault_client_auth(self):
+        """foo
+        """
+        self.vclient: hvac.Client = \
+            hvac.Client(url=watcherClient.VAULT_SERVER_URI,
+                        cert=(watcherClient.CLIENT_CERT_FILEPATH,
+                              watcherClient.CLIENT_KEY_FILEPATH),
+                        verify=watcherClient.SERVER_CERT_FILEPATH)
+        mount_point = "cert"
+        logger.debug("Attempt TLS client login")
+        auth_response = self.vclient.auth_tls(mount_point=mount_point,
+                                              use_token=False)
+        logger.debug("Vault auth response:")
+        self._dump_response(auth_response, secret=True)
+        self.vclient.token = auth_response["auth"]["client_token"]
+        if self.vclient.is_authenticated():
+            logger.info(f"\"{watcherClient.CLIENT_NAME}\" is now authenticated")
+        else:
+            logger.info(f"\"{watcherClient.CLIENT_NAME}\" has failed to authenticate")
+
+    @staticmethod
+    def _is_json(response):
+        """foo
+        """
+        try:
+            json.loads(response)
+        except ValueError:
+            return False
+        except TypeError as e:
+            if str(e).find("dict") != -1:
+                return True
+        return True
+
+    @staticmethod
+    def _dump_response(response, secret: bool = True):
+        """foo
+        """
+        if not secret:
+            if response:
+                if watcherClient._is_json(response):
+                    logger.debug(f"""{json.dumps(response,
+                                                 indent=2,
+                                                 sort_keys=True)}""")
+                else:
+                    logger.debug(f"{response}")
+            else:
+                logger.debug("No response")
+        else:
+            logger.debug("REDACTED")
+
     @staticmethod
     def read_epoch_file(filepath):
         """foo
         """
+        # Ensure raw_bytes is defined
+        raw_bytes = bytes()
         try:
             with open(filepath, "rb") as efh:
-                raw_file = efh.read()
-            logger.debug(f"Filename: {filepath}: Successfully read in")
+                raw_bytes = efh.read()
         except Exception as e:
             logger.error(f"Filename: {filepath}: Unexpected I/O read error: {e}")
             raise e
+        else:
+            logger.debug(f"Filename: {filepath}: Successfully read in")
 
-        return raw_file
+        return raw_bytes
 
     @staticmethod
-    def parse_epoch_file_contents(filepath, raw_file):
+    def parse_raw_key_bytes(filepath, raw_file):
         """foo
         """
         # Header should be the first 16 bytes of type 7 epoch file
         # native byte order, int, unsigned int, unsigned int, int
         file_tag, start_epoch, num_epochs, num_valid_key_bits = \
             struct.unpack('=iIIi', raw_file[:16])
+        assert file_tag == 7  # qcrypto local epoch
         # Raw key is everything after the first 16 bytes
-        raw_key = raw_file[16:]
-        logger.debug(f"Filename: {filepath}; File Tag: {file_tag}; "
-                     f"Start Epoch {start_epoch:x}; "
+        # Drop the last 4-byte word that could have non-key zero padding
+        # Files with lengths of 0 or 1 32-bit word should get a raw_key size of 0
+        raw_key = raw_file[16:-4]
+        assert len(raw_key) == max(0, ((num_valid_key_bits + 31) // 32) * 4 - 4)
+        logger.debug(f"Filename: {filepath}; "
+                     f"File Tag: {file_tag}; "
+                     f"Start Epoch: {start_epoch:x}; "
                      f"Number of Epochs: {num_epochs}; "
                      f"Number of Key Bits: {num_valid_key_bits}; "
-                     f"Raw Key Size {len(raw_key)} bytes")
-        # Key bytestream from qcrypto packaged in 32-bit (4-byte) words
-        assert len(raw_key) % 4 == 0
-        num_raw_key_bits: int = len(raw_key) * 8  # bytes to bits
-        # Integer division
-        num_raw_key_32bit_words: int = len(raw_key) // 4
-        assert 0 <= num_raw_key_bits >= num_valid_key_bits
-        num_raw_key_padding_bits: int = num_raw_key_bits - num_valid_key_bits
-        assert 0 <= num_raw_key_padding_bits <= 31
-        key_word_list = list()
-        # Read in each 32-bit word into a zero padded 32-bit binary string
-        for key_word in struct.unpack(f"{num_raw_key_32bit_words}I", raw_key):
-            key_word_list.append(f"{key_word:032b}")
-        # TODO: Key exposure
-        logger.debug(f"Number of padding bits: {num_raw_key_padding_bits}")
-        logger.debug(f"Last Key Word: {key_word_list[-1][:]}")
-        logger.debug(f"Padding bits: {key_word_list[-1][-num_raw_key_padding_bits:]}")
-        # Remove the padding bits from the last 4-byte word (if any; 0 okay)
-        key_word_list[-1] = key_word_list[-1][:32 - num_raw_key_padding_bits]
-        logger.debug(f"Last Key Word (Padding Removed): {key_word_list[-1][:]}")
-        # Combine all list elements into one string with no delimeters
-        key_str = "".join(key_word_list)
+                     f"Trucated Raw Key Size: {len(raw_key)} bytes")
 
-        return key_str
+        return raw_key
+
+#     @staticmethod
+#     def parse_epoch_file_contents(filepath, raw_file):
+#         """foo
+#         """
+#         # Header should be the first 16 bytes of type 7 epoch file
+#         # native byte order, int, unsigned int, unsigned int, int
+#         file_tag, start_epoch, num_epochs, num_valid_key_bits = \
+#             struct.unpack('=iIIi', raw_file[:16])
+#         # Raw key is everything after the first 16 bytes
+#         # Drop the last 4-byte word that could have non-key zero padding
+#         # Files with lengths of 0 or 1 32-bit word should get a raw_key size of 0
+#         raw_key = raw_file[16:-4]
+#         assert len(raw_key) == max(0, ((num_valid_key_bits + 31) // 32) * 4 - 4)
+#         logger.debug(f"Filename: {filepath}; File Tag: {file_tag}; "
+#                      f"Start Epoch {start_epoch:x}; "
+#                      f"Number of Epochs: {num_epochs}; "
+#                      f"Number of Key Bits: {num_valid_key_bits}; "
+#                      f"Raw Key Size {len(raw_key)} bytes")
+#         # Encode key in base64
+#         b64_key = base64.standard_b64encode(raw_key)
+#         # Integer division
+#         num_raw_key_32bit_words: int = len(raw_key) // 4
+#         key_word_list = list()
+#         # Read in each 32-bit word into a zero padded 32-bit binary string
+#         for key_word in struct.unpack(f"{num_raw_key_32bit_words}I", raw_key):
+#             key_word_list.append(f"{key_word:032b}")
+#         key_str = "".join(key_word_list)
+#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/b64_{start_epoch}", "wb") as f:
+#             f.write(b64_key)
+#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/raw_{start_epoch}", "wb") as f:
+#             f.write(raw_key)
+#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/bs_{start_epoch}", "w") as f:
+#             f.write(key_str)
+#
+#         return b64_key
 
     @staticmethod
     def delete_epoch_file(filepath):
@@ -159,8 +247,8 @@ class watcherClient:
         """foo
         """
         logger.debug(f"Worker started on Filename: {filepath}")
-        raw_file = watcherClient.read_epoch_file(filepath)
-        key_str = watcherClient.parse_epoch_file_contents(filepath, raw_file)
+        raw_bytes = watcherClient.read_epoch_file(filepath)
+        raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
         watcherClient.delete_epoch_file(filepath)
 
         return {f"{filepath}": True}
@@ -253,4 +341,4 @@ class watcherClient:
 
 
 if __name__ == "__main__":
-    watcher = watcherClient()
+    watcher = watcherClient(threads=1)
