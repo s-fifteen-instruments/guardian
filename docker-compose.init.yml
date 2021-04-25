@@ -84,6 +84,7 @@ services:
       - internal-private
     volumes:
       - ./volumes/certificates:/certificates
+      - ./volumes/vault/policies:/vault/policies
 
   vault_init_phase_2:
     <<: *vault_init_label

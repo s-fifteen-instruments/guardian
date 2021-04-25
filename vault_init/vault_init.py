@@ -40,6 +40,7 @@ class vaultClient:
     VAULT_URI: str = "https://vault:8200"
     CERT_DIRPATH: str = "/certificates/production"
     ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
+    POLICIES_DIRPATH: str = "/vault/policies"
     VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/vault/SECRETS"
     CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.ca-chain.cert.pem"
     CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.key.pem"
@@ -54,6 +55,10 @@ class vaultClient:
     MAX_CONN_ATTEMPTS: int = 10
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 64.0  # seconds
+    VAULT_KEY_CHUNK_SIZE: int = 32  # bytes
+    VAULT_KV_ENDPOINT: str = "QKEYS"
+    VAULT_QKDE_ID: str = "QKDE0001"
+    VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
     def __init__(self) -> None:
         """foo
@@ -99,9 +104,14 @@ class vaultClient:
         """
         logger.info("Begin second phase initialization")
         self.connection_loop(self.vault_setup_int_ca_certs)
-        self.connection_loop(self.vault_create_acl_policy)
-        self.connection_loop(self.vault_generate_client_cert, common_name="watcher")
-        self.connection_loop(self.vault_generate_client_cert, common_name="rest")
+        self.connection_loop(self.vault_create_acl_policy,
+                             policy_name_str="int_ca_cert_issuer")
+        self.connection_loop(self.vault_enable_kv_secrets_engine)
+        self.connection_loop(self.vault_create_watcher_service_acl)
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="watcher")
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="rest")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
@@ -411,45 +421,34 @@ class vaultClient:
         logger.debug("Read newly created role:")
         self._dump_response(read_role_resposne, secret=False)
 
-    def vault_create_acl_policy(self):
+    @staticmethod
+    def vault_read_hcl_file(policy_name_str, is_template=False):
         """foo
         """
-        policy_name_str = "policy_int_ca_cert_issuer"
-        policy_json = """
-            path "pki_int/ca" {
-                capabilities = ["create", "update"]
-            }
+        template_dir = ""
+        template_str = ""
+        if is_template:
+            template_dir = "templates/"
+            template_str = ".template"
+        filepath = f"{vaultClient.POLICIES_DIRPATH}/{template_dir}" \
+            f"{policy_name_str}.policy{template_str}.hcl"
+        logger.debug(f"Attempting to read file: {filepath}")
+        return open(filepath, "r").read()
 
-            path "pki_int/certs" {
-                capabilities = ["list"]
-            }
-
-            path "pki_int/revoke" {
-                capabilities = ["create", "update"]
-            }
-
-            path "pki_int/tidy" {
-                capabilities = ["create", "update"]
-            }
-
-            path "auth/token/renew" {
-                capabilities = ["update"]
-            }
-
-            path "auth/token/renew-self" {
-                capabilities = ["update"]
-            }
+    def vault_create_acl_policy(self, policy_name_str):
+        """foo
         """
-        logger.debug("Attempt to add ACL for int CA issuer")
+        policy_hcl = vaultClient.vault_read_hcl_file(policy_name_str,
+                                                     is_template=False)
+        logger.debug("Attempt to add ACL for \"{policy_name_str}\"")
         policy_response = \
             self.vclient.sys.create_or_update_policy(name=policy_name_str,
-                                                     policy=policy_json,
-                                                     pretty_print=False)
+                                                     policy=policy_hcl)
         logger.debug("Add ACL policy response okay:")
         self._dump_response(policy_response.ok, secret=False)
         logger.debug("Attemp to read back policy")
         read_policy_response = \
-            self.vclient.sys.read_policy(name=policy_name_str)
+            self.vclient.get_policy(name=policy_name_str, parse=True)
         logger.debug("Read policy response:")
         self._dump_response(read_policy_response, secret=False)
 
@@ -523,6 +522,54 @@ class vaultClient:
                           permissions), "w") as f:
             # Write out the client's private key
             f.write(client_private_key)
+
+    def vault_enable_kv_secrets_engine(self):
+        """foo
+        """
+        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
+        logger.debug("Currently enabled secrets engines:")
+        self._dump_response(secrets_backends, secret=False)
+        backend_type_str = "kv"
+        mount_point = vaultClient.VAULT_KV_ENDPOINT
+        description_str = "Key/Value Store for QKD Keys."
+        config_dict = {
+            "default_lease_ttl": "",
+            "max_lease_ttl": "",
+            "cas_required": "True"
+        }
+        logger.debug("Attempt to enable kv secrets engine")
+        self.enable_kv_response = \
+            self.vclient.sys.enable_secrets_engine(backend_type_str,
+                                                   path=mount_point,
+                                                   description=description_str,
+                                                   config=config_dict)
+        logger.debug("Enable kv secrets egine response okay:")
+        self._dump_response(self.enable_kv_response.ok, secret=False)
+        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
+        logger.debug("Currently enabled secrets engines:")
+        self._dump_response(secrets_backends, secret=False)
+
+    def vault_create_watcher_service_acl(self):
+        """foo
+        """
+        policy_name_str = "watcher"
+        policy_template = \
+            vaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                            is_template=True)
+        policy_str = policy_template
+        policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                        vaultClient.VAULT_KV_ENDPOINT)
+        policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                        vaultClient.VAULT_QKDE_ID)
+        policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                        vaultClient.VAULT_QCHANNEL_ID)
+        filepath = f"{vaultClient.POLICIES_DIRPATH}/" \
+                   f"{policy_name_str}.policy.hcl"
+        logger.debug(f"Writing out policy to: {filepath}")
+        with open(filepath, "w") as f:
+            f.write(policy_str)
+        self.vault_create_acl_policy(policy_name_str=policy_name_str)
+
 
 
 if __name__ == "__main__":

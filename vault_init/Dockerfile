@@ -28,6 +28,7 @@ RUN addgroup vault                                       && \
     pip install --no-cache-dir -r ./requirements.txt
 
 VOLUME /certificates
+VOLUME /vault/policies
 
 # USER vaultinit
 

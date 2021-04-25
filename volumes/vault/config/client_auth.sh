@@ -34,6 +34,6 @@ set -x
 for client in ${client_delimited_str}; do
     vault write ${tls_certs} auth/cert/certs/${client}_cert \
         display_name=${client}_cert \
-        policies=policy_int_ca_cert_issuer \
+        policies=${client} \
         certificate=@${base_dir}/${client}/${client}.ca-chain.cert.pem
 done

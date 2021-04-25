@@ -70,6 +70,10 @@ class watcherClient:
     MAX_NUM_ATTEMPTS: int = 100
     NOTIFY_SLEEP_TIME: float = 0.5  # seconds
     NOTIFY_SLEEP_TIME_DELTA: float = 30.0  # seconds
+    VAULT_KEY_CHUNK_SIZE: int = 32  # bytes
+    VAULT_KV_ENDPOINT: str = "QKEYS"
+    VAULT_QKDE_ID: str = "QKDE0001"
+    VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
     def __init__(self, threads: int = None):
         """foo
@@ -174,6 +178,7 @@ class watcherClient:
         file_tag, start_epoch, num_epochs, num_valid_key_bits = \
             struct.unpack('=iIIi', raw_file[:16])
         assert file_tag == 7  # qcrypto local epoch
+        assert filepath.find(f"{start_epoch:x}") != -1
         # Raw key is everything after the first 16 bytes
         # Drop the last 4-byte word that could have non-key zero padding
         # Files with lengths of 0 or 1 32-bit word should get a raw_key size of 0
@@ -186,7 +191,7 @@ class watcherClient:
                      f"Number of Key Bits: {num_valid_key_bits}; "
                      f"Trucated Raw Key Size: {len(raw_key)} bytes")
 
-        return raw_key
+        return filepath.split("/")[-1], raw_key
 
 #     @staticmethod
 #     def parse_epoch_file_contents(filepath, raw_file):
@@ -242,13 +247,39 @@ class watcherClient:
                 logger.error(f"Attempt Delete: Filename: {filepath}: unexpected error: {e}")
                 raise e
 
-    @staticmethod
-    def process_epoch_file(filepath):
+    def vault_write_key(self, epoch: str, raw_key: bytes):
+        """foo
+        """
+        mount_point = watcherClient.VAULT_KV_ENDPOINT
+        qkey_path = f"{watcherClient.VAULT_QKDE_ID}/" \
+            f"{watcherClient.VAULT_QCHANNEL_ID}/" \
+            f"{epoch}"
+        secret_dict = {
+            "key": base64.standard_b64encode(raw_key).decode("utf-8")
+        }
+        logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
+        qkey_response = \
+            self.vclient.secrets.kv.v2.\
+            create_or_update_secret(path=qkey_path,
+                                    secret=secret_dict,
+                                    cas=0,
+                                    mount_point=mount_point)
+        logger.debug(f"Vault write epoch \"{epoch}\" key response ok:")
+        self._dump_response(qkey_response.ok, secret=False)
+        # TODO: Handle case when CAS does not match
+        # TODO: Handle case when path is wrong/permissions not set
+        # TODO: Need to query self capabilities to ensure path is good
+        # watcher_1             |     raise exceptions.Forbidden(message, errors=errors, method=method, url=url)
+        # watcher_1             | hvac.exceptions.Forbidden: 1 error occurred:
+        # watcher_1             | 	* permission denied
+
+    def process_epoch_file(self, filepath):
         """foo
         """
         logger.debug(f"Worker started on Filename: {filepath}")
         raw_bytes = watcherClient.read_epoch_file(filepath)
-        raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
+        epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
+        self.vault_write_key(epoch, raw_key)
         watcherClient.delete_epoch_file(filepath)
 
         return {f"{filepath}": True}
@@ -307,7 +338,7 @@ class watcherClient:
                             # Data should point us to a final key epoch filename
                             epoch_filepath = f"{watcherClient.EPOCH_FILES_DIRPATH}/{data}"
                             # Name of thread worker callback function and argument filepath
-                            args = (watcherClient.process_epoch_file,
+                            args = (self.process_epoch_file,
                                     epoch_filepath)
                             logger.debug(f"Filename submitted to worker threadpool: {epoch_filepath}")
                             # Submit the filepath to a worker thread for processing

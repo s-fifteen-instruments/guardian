@@ -32,7 +32,8 @@ RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
         py-pip \
-    && pip install -r ${HOME}/requirements.txt \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r ${HOME}/requirements.txt \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher
 
