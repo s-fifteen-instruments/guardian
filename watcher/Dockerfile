@@ -31,8 +31,10 @@ VOLUME /epoch_files
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
+        python3-dev \
         py-pip \
-    && pip install --no-cache-dir --upgrade pip \
+        build-base \
+#    && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r ${HOME}/requirements.txt \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher

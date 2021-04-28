@@ -1,7 +1,7 @@
 # Policy for watcher service to inject new QKD keys
 
 path "<<<KV_MOUNT_POINT>>>/data/<<<QKDE_ID>>>/<<<QCHANNEL_ID>>>/*" {
-    capabilities = ["create"]
+    capabilities = ["create", "update", "read"]
 }
 
 path "auth/token/renew" {

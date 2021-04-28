@@ -22,6 +22,8 @@
 import base64
 import concurrent.futures as cf
 import errno
+import hashlib
+import hmac
 import hvac
 import json
 import logging as logger
@@ -36,21 +38,22 @@ import time
 import traceback
 
 # Consider https://documentation.solarwinds.com/en/success_center/papertrail/content/kb/configuration/configuring-centralized-logging-from-python-apps.htm?cshid=pt-configuration-configuring-centralized-logging-from-python-apps
-# hostname = socket.gethostname()
-# user = user = getpass.getuser()
+#  hostname = socket.gethostname()
+#  user = user = getpass.getuser()
 logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)  # ,
-#                    format="%(levelname)s " +
-#                    "%(threadName)s " +
-#                    f"{hostname}: " +
-#                    f"{user}: " +
-#                    "%(asctime)s: " +
-#                    "%(filename)s;" +
-#                    "%(funcName)s();" +
-#                    "%(lineno)d: " +
-#                    "%(message)s")
+#                     format="%(levelname)s " +
+#                     "%(threadName)s " +
+#                     f"{hostname}: " +
+#                     f"{user}: " +
+#                     "%(asctime)s: " +
+#                     "%(filename)s;" +
+#                     "%(funcName)s();" +
+#                     "%(lineno)d: " +
+#                     "%(message)s")
 
 
 class watcherClient:
+    DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
     DELETE_EPOCH_FILES: bool = False
     EPOCH_FILES_DIRPATH: str = "/epoch_files"
     NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"
@@ -86,7 +89,9 @@ class watcherClient:
             threads = multiprocessing.cpu_count()
         self._threads = threads
         # Initialize a concurrent futures threadpool
-        self.executor = cf.ThreadPoolExecutor(max_workers=self._threads)
+        self.executor = \
+            cf.ThreadPoolExecutor(max_workers=self._threads,
+                                  thread_name_prefix=self.__class__.__name__)
         # Authenticate with the vault server
         self.vault_client_auth()
         self.mainloop()
@@ -121,6 +126,21 @@ class watcherClient:
             logger.info(f"\"{watcherClient.CLIENT_NAME}\" is now authenticated")
         else:
             logger.info(f"\"{watcherClient.CLIENT_NAME}\" has failed to authenticate")
+
+    def vault_can_create_new_keys(self, filepath: str):
+        """foo
+        """
+        can_create_new_keys = False
+        logger.debug(f"Attempt to query Vault self capabilities on filepath: {filepath}")
+        cap_response = \
+            self.vclient.sys.get_capabilities(paths=filepath)
+        logger.debug(f"Filepath: {filepath} capabilities response:")
+        self._dump_response(cap_response, secret=False)
+        capabilities = cap_response["data"][filepath]
+        if "create" in capabilities:
+            can_create_new_keys = True
+
+        return can_create_new_keys
 
     @staticmethod
     def _is_json(response):
@@ -254,24 +274,72 @@ class watcherClient:
         qkey_path = f"{watcherClient.VAULT_QKDE_ID}/" \
             f"{watcherClient.VAULT_QCHANNEL_ID}/" \
             f"{epoch}"
-        secret_dict = {
-            "key": base64.standard_b64encode(raw_key).decode("utf-8")
-        }
-        logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
-        qkey_response = \
-            self.vclient.secrets.kv.v2.\
-            create_or_update_secret(path=qkey_path,
-                                    secret=secret_dict,
-                                    cas=0,
+        full_path = f"{mount_point}/data/{qkey_path}"
+
+        # Query Vault to ensure we can create new keys at this path
+        can_create_new_keys = self.vault_can_create_new_keys(filepath=full_path)
+
+        # We do not have permission to create new keys at this vault path
+        if not can_create_new_keys:
+            logger.warning("Permission Denied to write new keys; "
+                           f"Epoch: {epoch}; Vault Path: {full_path}; "
+                           "Abondoning Key Write Attempt")
+
+        # We have permission to create new keys on this vault path
+        else:
+
+            num_raw_key_32bit_words: int = len(raw_key) // 4
+            key_word_list = list()
+            for key_word in struct.unpack(f"{num_raw_key_32bit_words}I", raw_key):
+                key_word_list.append(f"{key_word:032b}")
+            key_str = "".join(key_word_list)
+            # Base64 encode the raw bytes and decode the resulting byte
+            # stream into UTF-8 for safe transporting/storage
+            size_raw_key = sys.getsizeof(raw_key)
+            size_b64_key = sys.getsizeof(base64.standard_b64encode(raw_key))
+            size_b64_utf_key = sys.getsizeof(base64.standard_b64encode(raw_key).decode("UTF-8"))
+            size_key_str = sys.getsizeof(key_str.encode("UTF-8"))
+            logger.debug(f"Raw: {size_raw_key}; b64: {size_b64_key}; "
+                         f"b64_utf: {size_b64_utf_key}; key_str: {size_key_str} ")
+            mac = hmac.new(key=watcherClient.DIGEST_KEY,
+                           digestmod=hashlib.sha3_512)
+            mac.update(raw_key)
+            key_hexdigest = mac.hexdigest()
+            logger.debug(f"Key Hex Digest: {key_hexdigest}")
+            secret_dict = {
+                "key": base64.standard_b64encode(raw_key).decode("UTF-8"),
+                "digest": key_hexdigest
+            }
+            logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
+            qkey_response = \
+                self.vclient.secrets.kv.v2.\
+                create_or_update_secret(path=qkey_path,
+                                        secret=secret_dict,
+                                        mount_point=mount_point)
+            logger.debug(f"Vault write epoch \"{epoch}\" key response ok:")
+            self._dump_response(qkey_response.ok, secret=False)
+            logger.debug("Attempt to read back secret")
+            read_response = \
+                self.vclient.secrets.kv.v2.\
+                read_secret_version(path=qkey_path,
+                                    version=None,
                                     mount_point=mount_point)
-        logger.debug(f"Vault write epoch \"{epoch}\" key response ok:")
-        self._dump_response(qkey_response.ok, secret=False)
-        # TODO: Handle case when CAS does not match
-        # TODO: Handle case when path is wrong/permissions not set
-        # TODO: Need to query self capabilities to ensure path is good
-        # watcher_1             |     raise exceptions.Forbidden(message, errors=errors, method=method, url=url)
-        # watcher_1             | hvac.exceptions.Forbidden: 1 error occurred:
-        # watcher_1             | 	* permission denied
+            logger.debug(f"Vault read epoch \"{epoch}\" secret:")
+            self._dump_response(read_response, secret=False)
+            vault_b64_key = read_response["data"]["data"]["key"]
+            vault_key_hexdigest = read_response["data"]["data"]["digest"]
+            vault_key = base64.standard_b64decode(vault_b64_key.encode("UTF-8"))
+            mac = hmac.new(key=watcherClient.DIGEST_KEY,
+                           digestmod=hashlib.sha3_512)
+            mac.update(vault_key)
+            computed_key_hexdigest = mac.hexdigest()
+            assert vault_key_hexdigest == computed_key_hexdigest
+            # TODO: Handle case when CAS does not match
+            # TODO: Handle case when path is wrong/permissions not set
+            # TODO: Need to query self capabilities to ensure path is good
+            # watcher_1             |     raise exceptions.Forbidden(message, errors=errors, method=method, url=url)
+            # watcher_1             | hvac.exceptions.Forbidden: 1 error occurred:
+            # watcher_1             | 	* permission denied
 
     def process_epoch_file(self, filepath):
         """foo
