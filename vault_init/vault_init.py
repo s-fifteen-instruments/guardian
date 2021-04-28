@@ -534,20 +534,38 @@ class vaultClient:
         description_str = "Key/Value Store for QKD Keys."
         config_dict = {
             "default_lease_ttl": "",
-            "max_lease_ttl": "",
-            "cas_required": "True"
+            "max_lease_ttl": ""
         }
-        logger.debug("Attempt to enable kv secrets engine")
+        # This must be set to get Key/Value Version 2
+        options_dict = {
+            "version": 2
+        }
+        logger.debug("Attempt to enable kv version 2 secrets engine")
         self.enable_kv_response = \
             self.vclient.sys.enable_secrets_engine(backend_type_str,
                                                    path=mount_point,
                                                    description=description_str,
-                                                   config=config_dict)
-        logger.debug("Enable kv secrets egine response okay:")
+                                                   config=config_dict,
+                                                   options=options_dict)
+        logger.debug("Enable kv version 2 secrets egine response okay:")
         self._dump_response(self.enable_kv_response.ok, secret=False)
         secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
         logger.debug("Currently enabled secrets engines:")
         self._dump_response(secrets_backends, secret=False)
+        # Enforce check-and-set versioning
+        cas_required = True
+        logger.debug(f"Attempt to configure secrets engine mount_point: \"{mount_point}\"")
+        set_config_response = \
+            self.vclient.secrets.kv.v2.\
+            configure(mount_point=mount_point, cas_required=cas_required)
+        logger.debug(f"Set secret engine mount_point: \"{mount_point}\" reponse ok:")
+        self._dump_response(set_config_response.ok, secret=False)
+        logger.debug("Attempt to read specific secrets engine configuration")
+        read_config_response = \
+            self.vclient.secrets.kv.v2.\
+            read_configuration(mount_point=mount_point)
+        logger.debug(f"Read secret engine mount_point: \"{mount_point}\" reponse:")
+        self._dump_response(read_config_response, secret=False)
 
     def vault_create_watcher_service_acl(self):
         """foo
@@ -569,7 +587,6 @@ class vaultClient:
         with open(filepath, "w") as f:
             f.write(policy_str)
         self.vault_create_acl_policy(policy_name_str=policy_name_str)
-
 
 
 if __name__ == "__main__":

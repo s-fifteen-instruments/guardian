@@ -126,6 +126,7 @@ services:
       - internal-private
     volumes:
       - ./volumes/qkd/epoch_files:/epoch_files
+      - ./volumes/qkd/digest_files:/digest_files
       - ./volumes/certificates:/certificates
 
 

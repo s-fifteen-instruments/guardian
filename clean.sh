@@ -12,3 +12,4 @@ rm -rf ./volumes/vault/data/file
 rm -f  ./volumes/vault/logs/audit.log
 rm -f  ./volumes/vault/policies/watcher.policy.hcl
 rm -rf ./volumes/qkd/epoch_files/*
+rm -rf ./volumes/qkd/digest_files/*

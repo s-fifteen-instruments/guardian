@@ -56,6 +56,7 @@ class watcherClient:
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
     DELETE_EPOCH_FILES: bool = False
     EPOCH_FILES_DIRPATH: str = "/epoch_files"
+    DIGEST_FILES_DIRPATH: str = "/digest_files"
     NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"
     VAULT_SERVER_NAME: str = "vault"
     VAULT_SERVER_URI: str = f"https://{VAULT_SERVER_NAME}:8200"
@@ -127,20 +128,50 @@ class watcherClient:
         else:
             logger.info(f"\"{watcherClient.CLIENT_NAME}\" has failed to authenticate")
 
-    def vault_can_create_new_keys(self, filepath: str):
+    def vault_can_create_new_keys(self, full_filepath: str):
         """foo
         """
         can_create_new_keys = False
-        logger.debug(f"Attempt to query Vault self capabilities on filepath: {filepath}")
+        logger.debug(f"Attempt to query Vault self capabilities on "
+                     f"full_filepath: {full_filepath}")
         cap_response = \
-            self.vclient.sys.get_capabilities(paths=filepath)
-        logger.debug(f"Filepath: {filepath} capabilities response:")
+            self.vclient.sys.get_capabilities(paths=full_filepath)
+        logger.debug(f"full_filepath: {full_filepath} capabilities response:")
         self._dump_response(cap_response, secret=False)
-        capabilities = cap_response["data"][filepath]
+        capabilities = cap_response["data"][full_filepath]
         if "create" in capabilities:
             can_create_new_keys = True
 
         return can_create_new_keys
+
+    def vault_get_current_secret_version(self, filepath: str, mount_point: str):
+        """foo
+        """
+        secret_version = -1
+        logger.debug(f"Attempt to query Vault secret version on "
+                     f"filepath: {filepath}; mount_point: {mount_point}")
+        try:
+            metadata_response = \
+                self.vclient.secrets.kv.v2.\
+                read_secret_metadata(path=filepath,
+                                     mount_point=mount_point)
+        except hvac.exceptions.InvalidPath:
+           logger.debug("There is no secret yet at filepath: "
+                        f"{filepath}; mount_point: {mount_point}")
+           secret_version = 0
+        else:
+            logger.debug(f"filepath: {filepath} version response:")
+            self._dump_response(metadata_response, secret=False)
+            version_keys = sorted(list(map(int, metadata_response["data"]["versions"].keys())))
+            max_version = max(version_keys)
+            current_version = int(metadata_response["data"]["current_version"])
+            logger.debug(f"Available Secret Versions: {','.join(map(str, version_keys))}; Max Version: {max_version}; Current Version: {current_version}")
+            secret_version = current_version
+
+        return secret_version
+
+    def vault_get_secret_metadata(self):
+        pass
 
     @staticmethod
     def _is_json(response):
@@ -267,9 +298,40 @@ class watcherClient:
                 logger.error(f"Attempt Delete: Filename: {filepath}: unexpected error: {e}")
                 raise e
 
+    @staticmethod
+    def compute_hmac_hexdigest(message: bytes) -> str:
+        """foo
+        """
+        # Compute the hash-based message authentication code of the
+        # raw key using a SHA3 512-bit hash.
+        mac = hmac.new(key=watcherClient.DIGEST_KEY,
+                       digestmod=hashlib.sha3_512)
+        mac.update(message)
+        message_hexdigest = mac.hexdigest()
+        logger.debug(f"Hex Digest: {message_hexdigest}")
+
+        return message_hexdigest
+
+    @staticmethod
+    def write_hexdigest(hexdigest: str, filepath: str):
+        """foo
+        """
+        logger.debug(f"Writing hexdigest to filepath: {filepath}")
+        with open(filepath, "w") as f:
+            f.write(hexdigest)
+
+    @staticmethod
+    def read_hexdigest(filepath: str) -> str:
+        """foo
+        """
+        logger.debug(f"Reading hexdigest to filepath: {filepath}")
+        hexdigest = open(filepath, "r").read()
+        return hexdigest
+
     def vault_write_key(self, epoch: str, raw_key: bytes):
         """foo
         """
+        cas_error = False
         mount_point = watcherClient.VAULT_KV_ENDPOINT
         qkey_path = f"{watcherClient.VAULT_QKDE_ID}/" \
             f"{watcherClient.VAULT_QCHANNEL_ID}/" \
@@ -277,69 +339,108 @@ class watcherClient:
         full_path = f"{mount_point}/data/{qkey_path}"
 
         # Query Vault to ensure we can create new keys at this path
-        can_create_new_keys = self.vault_can_create_new_keys(filepath=full_path)
+        can_create_new_keys = \
+            self.vault_can_create_new_keys(full_filepath=full_path)
+        # Query Vault to check the version metadata at this path (should be none)
+        qkey_version = \
+            self.vault_get_current_secret_version(filepath=qkey_path,
+                                                  mount_point=mount_point)
 
         # We do not have permission to create new keys at this vault path
         if not can_create_new_keys:
             logger.warning("Permission Denied to write new keys; "
                            f"Epoch: {epoch}; Vault Path: {full_path}; "
-                           "Abondoning Key Write Attempt")
+                           "Abondoning Creation Write Attempt")
+
+        # There is (unexpectedly) already a key at this vault path
+        elif qkey_version != 0:
+            logger.warning("A version of keying material already exists "
+                           f"for epoch: \"{epoch}\"; version: {qkey_version}; "
+                           "Abandoning Key Creation Attempt")
 
         # We have permission to create new keys on this vault path
+        # and there is no keying material as of the previous query.
+        # Still use check-and-set = 0 to avoid race conditions.
         else:
 
-            num_raw_key_32bit_words: int = len(raw_key) // 4
-            key_word_list = list()
-            for key_word in struct.unpack(f"{num_raw_key_32bit_words}I", raw_key):
-                key_word_list.append(f"{key_word:032b}")
-            key_str = "".join(key_word_list)
+            # Compute the HMAC hexdigest of the raw key
+            key_hexdigest = watcherClient.compute_hmac_hexdigest(raw_key)
+            # Write out the hexdigest to a file for later comparison
+            digest_filepath = f"{watcherClient.DIGEST_FILES_DIRPATH}/" \
+                f"{epoch}.digest"
+            watcherClient.write_hexdigest(key_hexdigest, digest_filepath)
             # Base64 encode the raw bytes and decode the resulting byte
             # stream into UTF-8 for safe transporting/storage
-            size_raw_key = sys.getsizeof(raw_key)
-            size_b64_key = sys.getsizeof(base64.standard_b64encode(raw_key))
-            size_b64_utf_key = sys.getsizeof(base64.standard_b64encode(raw_key).decode("UTF-8"))
-            size_key_str = sys.getsizeof(key_str.encode("UTF-8"))
-            logger.debug(f"Raw: {size_raw_key}; b64: {size_b64_key}; "
-                         f"b64_utf: {size_b64_utf_key}; key_str: {size_key_str} ")
-            mac = hmac.new(key=watcherClient.DIGEST_KEY,
-                           digestmod=hashlib.sha3_512)
-            mac.update(raw_key)
-            key_hexdigest = mac.hexdigest()
-            logger.debug(f"Key Hex Digest: {key_hexdigest}")
             secret_dict = {
                 "key": base64.standard_b64encode(raw_key).decode("UTF-8"),
                 "digest": key_hexdigest
             }
             logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
-            qkey_response = \
-                self.vclient.secrets.kv.v2.\
-                create_or_update_secret(path=qkey_path,
-                                        secret=secret_dict,
-                                        mount_point=mount_point)
-            logger.debug(f"Vault write epoch \"{epoch}\" key response ok:")
-            self._dump_response(qkey_response.ok, secret=False)
-            logger.debug("Attempt to read back secret")
-            read_response = \
-                self.vclient.secrets.kv.v2.\
-                read_secret_version(path=qkey_path,
-                                    version=None,
-                                    mount_point=mount_point)
-            logger.debug(f"Vault read epoch \"{epoch}\" secret:")
-            self._dump_response(read_response, secret=False)
-            vault_b64_key = read_response["data"]["data"]["key"]
-            vault_key_hexdigest = read_response["data"]["data"]["digest"]
-            vault_key = base64.standard_b64decode(vault_b64_key.encode("UTF-8"))
-            mac = hmac.new(key=watcherClient.DIGEST_KEY,
-                           digestmod=hashlib.sha3_512)
-            mac.update(vault_key)
-            computed_key_hexdigest = mac.hexdigest()
-            assert vault_key_hexdigest == computed_key_hexdigest
-            # TODO: Handle case when CAS does not match
-            # TODO: Handle case when path is wrong/permissions not set
-            # TODO: Need to query self capabilities to ensure path is good
-            # watcher_1             |     raise exceptions.Forbidden(message, errors=errors, method=method, url=url)
-            # watcher_1             | hvac.exceptions.Forbidden: 1 error occurred:
-            # watcher_1             | 	* permission denied
+            try:
+                qkey_response = \
+                    self.vclient.secrets.kv.v2.\
+                    create_or_update_secret(path=qkey_path,
+                                            secret=secret_dict,
+                                            cas=0,  # Enforce only key creation
+                                            mount_point=mount_point)
+                logger.debug(f"Vault write epoch \"{epoch}\" key response:")
+                self._dump_response(qkey_response, secret=False)
+            except hvac.exceptions.InvalidRequest as e:
+                # Possible but unlikely
+               if "check-and-set parameter did not match the current version" in str(e):
+                   logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
+                   cas_error = True
+                # Unexpected error has occurred; re-raise it
+               else:
+                   raise e
+
+            if cas_error:
+                # Query Vault again to check the version metadata at this path
+                qkey_version_cas_error = \
+                    self.vault_get_current_secret_version(filepath=qkey_path,
+                                                          mount_point=mount_point)
+                # Secret was updated under our noses between initial version
+                # query and creation attempt with cas enforced
+                if qkey_version_cas_error != qkey_version:
+                    logger.warning(f"Epoch: \"{epoch}\"; A version update"
+                                   " occurred while attempting key creation; "
+                                   f"Old Version {qkey_version}; "
+                                   f"Current Version: {qkey_version_cas_error}")
+
+                # We shouldn't get here unless something unexpected has happened
+                else:
+                    logger.warning("Logical Error in attempting to create new "
+                                   f"epoch key: \"{epoch}\"; "
+                                   "Abandoning key creation attempt")
+
+           #  # REST client reading of key
+           #  # Query Vault to check the version metadata at this path
+           #  logger.debug("Attempt to read secret metadata")
+           #  qkey_version_read = \
+           #      self.vault_get_current_secret_version(filepath=qkey_path,
+           #                                            mount_point=mount_point)
+           #  logger.debug(f"Attempt to read back secret; current version: {qkey_version_read}")
+           #  # Need secret read permissions for this
+           #  read_response = \
+           #      self.vclient.secrets.kv.v2.\
+           #      read_secret_version(path=qkey_path,
+           #                          version=None,
+           #                          mount_point=mount_point)
+           #  logger.debug(f"Vault read epoch \"{epoch}\" secret:")
+           #  # TODO: Secret exposure
+           #  self._dump_response(read_response, secret=False)
+           #  vault_b64_key = read_response["data"]["data"]["key"]
+           #  vault_key_hexdigest = read_response["data"]["data"]["digest"]
+           #  vault_key = base64.standard_b64decode(vault_b64_key.encode("UTF-8"))
+           #  mac = hmac.new(key=watcherClient.DIGEST_KEY,
+           #                 digestmod=hashlib.sha3_512)
+           #  mac.update(vault_key)
+           #  computed_key_hexdigest = mac.hexdigest()
+           #  digest_filepath = f"{watcherClient.DIGEST_FILES_DIRPATH}/" \
+           #      f"{epoch}.digest"
+           #  file_hexdigest = watcherClient.read_hexdigest(digest_filepath)
+           #  assert vault_key_hexdigest == computed_key_hexdigest == file_hexdigest
+           #  logger.debug("The file, Vault, and computed hexdigests of the key all match")
 
     def process_epoch_file(self, filepath):
         """foo
