@@ -1,0 +1,135 @@
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+services:
+
+  rest:
+    build: ./rest
+    volumes:
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/certificates/production:/certificates
+    labels:
+      # Enable Traefik for this specific "backend" service
+      - traefik.enable=true
+      # Define the port inside of the Docker service to use
+      - traefik.http.services.restapp.loadbalancer.server.port=80
+      # Make Traefik use this domain in HTTP
+      - traefik.http.routers.restapp-http.entrypoints=web
+      - traefik.http.routers.restapp-http.rule=Host(`rest`)
+      # Use the traefik-public network (declared below)
+      - traefik.docker.network=traefik-public
+      # Make Traefik use this domain in HTTPS
+      - traefik.http.routers.restapp-https.entrypoints=websecure
+      - traefik.http.routers.restapp-https.rule=Host(`rest`)
+      - traefik.http.routers.restapp-https.tls=true
+      # Pass the SAE client's Common Name for parsing
+      - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
+      - traefik.http.routers.restapp-https.middlewares=client-cert-info
+    networks:
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+      # Use the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+
+
+  vault: &vault_label
+    # Use the latest Hashicorp Vault v1.7.x image available
+    image: vault:${VAULT_TAG:-latest}
+    ports:
+      # Listen on port 8200
+      - 8200:8200
+    cap_add:
+      # With this priviledged Linux capability, the container will attempt to
+      # lock memory to prevent sensitive values from being swapped to disk.
+      - IPC_LOCK
+    volumes:
+      # Mount a volume that stores the Vault @file configurations
+      - ./volumes/vault/config:/vault/config
+      # Mount a volume that stores any persistent data
+      - ./volumes/vault/data:/vault/data
+      # Mount a volume to store persistent logs
+      - ./volumes/vault/logs:/vault/logs
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/certificates/production:/certificates
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    # Server Configuration: /vault/config/vault-config.hcl
+    command: ["server"]
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+
+
+  vault_watch:
+    image: docker
+    restart: always
+    command: ["docker", "events"]
+    labels:
+      # Disable Traefik for this specific "backend" service
+      - traefik.enable=false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+  
+
+  traefik:
+    # Use the latest Traefik v2.4.x image available
+    image: traefik:${TRAEFIK_TAG:-latest}
+    ports:
+      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
+      - 80:80
+      # Listen on port 443, default for HTTPS
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      # Add the Docker socket as a mounted volume, so that
+      # Traefik can read the labels of other services
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/certificates/production:/certificates
+      # Mount the configuration directory
+      - ./volumes/traefik/configuration:/etc/traefik
+      # Mount the log directory
+      - ./volumes/traefik/logs:/var/log/traefik
+    networks:
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+
+networks:
+
+  # Use the previously created public network "traefik-public", shared with other
+  # services that need to be publicly available via this Traefik
+  traefik-public:
+    external: true
+  # Use the private internal network created by Docker to be shared
+  # by any backend service that needs to communicate amongst internal services
+  internal-private:
+    external: false
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.192.0/24
