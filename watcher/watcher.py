@@ -364,6 +364,7 @@ class watcherClient:
         else:
 
             # Compute the HMAC hexdigest of the raw key
+            logger.debug(f"Compute the HMAC hexdigest of epoch key: \"{epoch}\":")
             key_hexdigest = watcherClient.compute_hmac_hexdigest(raw_key)
             # Write out the hexdigest to a file for later comparison
             digest_filepath = f"{watcherClient.DIGEST_FILES_DIRPATH}/" \
@@ -373,7 +374,9 @@ class watcherClient:
             # stream into UTF-8 for safe transporting/storage
             secret_dict = {
                 "key": base64.standard_b64encode(raw_key).decode("UTF-8"),
-                "digest": key_hexdigest
+                "digest": key_hexdigest,
+                "bytes": str(len(raw_key)),
+                "status": "unlocked"
             }
             logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
             try:
