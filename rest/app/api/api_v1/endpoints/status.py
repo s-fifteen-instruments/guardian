@@ -21,12 +21,16 @@
 from typing import Any
 
 from fastapi import APIRouter
+from fastapi import Request
 
 from app import schemas
+
 
 router = APIRouter()
 
 
 @router.get("/", response_model=schemas.StatusResponse)
-def kme_status() -> Any:
-    return {"status": "weeee"}
+def kme_status(request: Request) -> Any:
+    return {
+        "status": request.app.state.vclient.hvc.sys.read_health_status(method='GET')
+    }

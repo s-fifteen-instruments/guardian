@@ -18,90 +18,58 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import json
-import logging as logger
-import urllib
+import time
 import typing
-import sys
+import urllib
 
 from fastapi import FastAPI, Request
-#from fastapi.logger import logger
 
 from app.api.api_v1.api import api_router
-from app.core.config import settings
+from app.core.config import logger, settings
+from app.vault.interface import VaultClient
 
-# from app.vault.interface import vclient
-import hvac
-
-# Attach to the Gunicorn logger, if it exists
-# gunicorn_logger = logging.getLogger('gunicorn.error')
-# logger.handlers = gunicorn_logger.handlers
-# if __name__ != "main":
-#     logger.setLevel(logging.DEBUG)
-# else:
-#     logger.setLevel(logging.DEBUG)
-
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 
 app = FastAPI()
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
-def _is_json(response):
-    try:
-        json.loads(response)
-    except ValueError:
-        return False
-    except TypeError as e:
-        if str(e).find("dict") != -1:
-            return True
-    return True
+@app.on_event("startup")
+def startup():
+    """foo
+    """
+    app.state.vclient = VaultClient()
 
 
-def _dump_response(response):
-   """foo
-   """
-   if response:
-       if _is_json(response):
-           logger.debug(f"""{json.dumps(response,
-                                        indent=2,
-                                        sort_keys=True)}""")
-       else:
-           logger.debug(f"{response}")
-   else:
-       logger.debug("No response")
+@app.on_event("shutdown")
+def shutdown():
+    """foo
+    """
+    app.state.vclient.vclient.logout()
 
 
-@app.get("/init")
-async def init_vault():
-    VAULT_URI: str = "https://vault:8200"
-    CLIENT_CERT_PATH: str = "/certificates/rest/rest.ca-chain.cert.pem"
-    CLIENT_KEY_PATH: str = "/certificates/rest/rest.key.pem"
-    SERVER_CERT_PATH: str = "/certificates/vault/vault.ca-chain.cert.pem"
-    vclient: hvac.Client = hvac.Client(url=VAULT_URI,
-                                       cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                                       verify=SERVER_CERT_PATH)
+@app.middleware("http")
+async def ensure_fresh_token(request: Request, call_next):
+    """foo
+    """
+    start_time = time.time()
+    # Ensure authentication token is still valid
+    # If not, reauthorize with the Vault instnance
+    app.state.vclient.vault_reauth()
+    request.state.vclient = app.state.vclient
+    sae_response = parse_sae_client_info(request)
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["x-process-time"] = str(process_time)
+    response.headers["x-sae-ip"] = str(sae_response["sae_ip"])
+    response.headers["x-sae-hostname"] = str(sae_response["sae_hostname"])
+    response.headers["x-sae-common-name"] = str(sae_response["sae_common_name"])
 
-    mount_point = "cert"
-    logger.debug("Attempt TLS client login")
-    auth_response = vclient.auth_tls(mount_point=mount_point,
-                                     use_token=False)
-    logger.debug("Vault auth response:")
-    _dump_response(auth_response)
-    vclient.token = auth_response["auth"]["client_token"]
-    logger.info("Hello from hvac!")
-    logger.info(f"Is the vault client authenticated: {vclient.is_authenticated()}")
-    logger.info(f"Is the vault client initialized: {vclient.sys.is_initialized()}")
-    logger.info(f"Is the vault client sealed: {vclient.sys.is_sealed()}")
-
-
-@app.get("/")
-def read_root(request: Request):
-    sae_dict = parse_sae_client_info(request)
-    return sae_dict
+    return response
 
 
 def parse_sae_client_info(request: Request) -> typing.Dict:
+    """foo
+    """
     sae_ip = request.client.host
     sae_hostname = request.url.hostname
     sae_common_name = ""

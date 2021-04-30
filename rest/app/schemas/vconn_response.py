@@ -18,12 +18,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from fastapi import APIRouter
+from pydantic import BaseModel
 
-from app.api.api_v1.endpoints import check_vconn, status  # , enc_keys, dec_keys
 
-api_router = APIRouter()
-api_router.include_router(check_vconn.router, prefix="/check_vconn", tags=["check_vconn"])
-api_router.include_router(status.router, prefix="/status", tags=["status"])
-# api_router.include_router(enc_keys.router, prefix="/enc_keys", tags=["enc_keys"])
-# api_router.include_router(dec_keys.router, prefix="/dec_keys", tags=["dec_keys"])
+class VconnResponse(BaseModel):
+    is_initialized: bool
+    is_sealed: bool
+    is_authenticated: bool

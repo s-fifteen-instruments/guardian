@@ -20,6 +20,10 @@ services:
 
   rest:
     build: ./rest
+    environment:
+      - WORKERS_PER_CORE=1
+      - MAX_WORKERS=1
+      - WEB_CONCURRENCY=1
     volumes:
       # Mount a volume that stores the TLS certificates
       - ./volumes/certificates/production:/certificates

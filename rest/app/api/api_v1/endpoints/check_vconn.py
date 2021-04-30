@@ -18,12 +18,29 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+from typing import Dict
+
 from fastapi import APIRouter
+from fastapi import Request
 
-from app.api.api_v1.endpoints import check_vconn, status  # , enc_keys, dec_keys
+from app import schemas
+from app.core.config import logger
 
-api_router = APIRouter()
-api_router.include_router(check_vconn.router, prefix="/check_vconn", tags=["check_vconn"])
-api_router.include_router(status.router, prefix="/status", tags=["status"])
-# api_router.include_router(enc_keys.router, prefix="/enc_keys", tags=["enc_keys"])
-# api_router.include_router(dec_keys.router, prefix="/dec_keys", tags=["dec_keys"])
+
+router = APIRouter()
+
+
+@router.get("/", response_model=schemas.VconnResponse)
+def check_vconn(request: Request) -> Dict:
+    is_inited = request.app.state.vclient.vault_check_init()
+    is_sealed = request.app.state.vclient.vault_check_seal()
+    is_authed = request.app.state.vclient.vault_check_auth()
+    logger.debug(f"Is the vault instance initialized: {is_inited}")
+    logger.debug(f"Is the vault instance sealed: {is_sealed}")
+    logger.debug(f"Is the vault client authenticated: {is_authed}")
+    check_dict = {
+        "is_initialized": is_inited,
+        "is_sealed": is_sealed,
+        "is_authenticated": is_authed
+    }
+    return check_dict

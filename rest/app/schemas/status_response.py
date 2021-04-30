@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 
 class StatusResponse(BaseModel):
-    status: str
+    status: Dict
     # source_kme_id: str
     # target_kme_id: str
     # master_sae_id: str
