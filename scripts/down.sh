@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/sh
 #
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
@@ -17,17 +17,21 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+#
 
-# Run as root
+# Absolute filepath to this script
+FILEPATH=$(readlink -f "${0}")
+# Absolute dirpath to this script
+DIRPATH=$(dirname "${FILEPATH}")
+# Check for docker daemon and docker-compose
+. "${DIRPATH}/docker_check.sh"
+
+trap 'sigint' INT
+
+sigint() {
+  echo "SIGINT received; exiting"
+  exit 0
+}
+
 set -x
-rm -rf ./volumes/certificates/production/vault
-rm -rf ./volumes/certificates/production/vault_init
-rm -rf ./volumes/certificates/production/rest
-rm -rf ./volumes/certificates/production/watcher
-rm -rf ./volumes/certificates/production/admin
-rm -rf ./volumes/certificates/generation/root
-rm -rf ./volumes/vault/data/file
-rm -f  ./volumes/vault/logs/audit.log
-rm -f  ./volumes/vault/policies/watcher.policy.hcl
-rm -rf ./volumes/qkd/epoch_files/*
-rm -rf ./volumes/qkd/digest_files/*
+docker-compose down --remove-orphans

@@ -24,6 +24,7 @@ services:
       - WORKERS_PER_CORE=1
       - MAX_WORKERS=1
       - WEB_CONCURRENCY=1
+      - GUNICORN_CMD_ARGS="--reload-delay 5"
     volumes:
       # Mount a volume that stores the TLS certificates
       - ./volumes/certificates/production:/certificates
@@ -75,6 +76,8 @@ services:
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
+      # Picked up by the unsealer service
+      - unsealer=watch
     # Server Configuration: /vault/config/vault-config.hcl
     command: ["server"]
     networks:
@@ -83,15 +86,17 @@ services:
       - internal-private
 
 
-  vault_watch:
-    image: docker
-    restart: always
-    command: ["docker", "events"]
+  unsealer:
+    build: ./unsealer
+    command: ["unsealer.py"]
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
     volumes:
+      # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/certificates/production:/certificates
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services

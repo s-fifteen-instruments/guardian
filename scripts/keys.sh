@@ -19,20 +19,25 @@
 #
 #
 set -x
+
+# Absolute filepath to this script
+FILEPATH=$(readlink -f "${0}")
+# Absolute dirpath to this script
+DIRPATH=$(dirname "${FILEPATH}")
+# Check for docker daemon and docker-compose
+. "${DIRPATH}/docker_check.sh"
+
 export CONFIG_FILE="docker-compose.init.yml"
 export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
 export LOG="docker-compose -f \${CONFIG_FILE} logs \${F} \${S} || { echo \"\${S} logs failed\" ; exit 1; } "
-export DOWN="docker-compose -f \${CONFIG_FILE} down || { echo \"\${S} down failed\" ; exit 1; } "
+export STOP="docker-compose -f \${CONFIG_FILE} stop \${S} || { echo \"\${S} stop failed\" ; exit 1; } "
+export REMOVE="docker-compose -f \${CONFIG_FILE} rm -s -f \${S} || { echo \"\${S} remove failed\" ; exit 1; } "
 export STALL="sleep \${WAIT}"
 export STARTUP="${UP} && ${STALL} && ${LOG}"
-export SHUTDOWN="${STALL} && ${DOWN}"
+export SHUTDOWN="${STALL} && ${STOP} && ${REMOVE}"
 
-S=certauth           WAIT=0 F=-f eval ${STARTUP}
-S=vault              WAIT=1 F=   eval ${STARTUP}
-S=vault_init         WAIT=0 F=-f eval ${STARTUP}
-S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
-S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-S=qkd                WAIT=0 F=-f eval ${STARTUP}
-S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
-                     WAIT=3      eval ${SHUTDOWN}
+S=qkd                    WAIT=0 F=-f eval ${STARTUP}
+S="watcher notifier qkd" WAIT=1 F=   eval ${STARTUP}
+S="watcher notifier qkd" WAIT=3      eval ${SHUTDOWN}
+
+# NOTE: This assumes a Vault instance is up and unsealed.

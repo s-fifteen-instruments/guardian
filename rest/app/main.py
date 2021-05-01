@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+import hvac
 import time
 import typing
 import urllib
@@ -37,14 +38,39 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 def startup():
     """foo
     """
-    app.state.vclient = VaultClient()
+    max_attempts: int = 10
+    backoff_factor: float = 1.0
+    backoff_max: float = 8.0
+
+    attempt_num: int = 0
+    total_stall_time: float = 0.0
+    while attempt_num < max_attempts:
+        try:
+            attempt_num += 1
+            app.state.vclient = VaultClient()
+            break
+        except hvac.exceptions.VaultDown as e:
+            logger.error(f"Vault Instance remains sealed at startup: {e}")
+            stall_time: float = backoff_factor * (2 ** (attempt_num - 1))
+            stall_time = min(backoff_max, stall_time)
+            total_stall_time = total_stall_time + stall_time
+            logger.debug(f"Sleeping for {stall_time} seconds")
+            time.sleep(stall_time)
+        except Exception as e:
+            logger.error(f"Unhandled exception at startup: {e}")
+            break
+    else:
+        logger.error(f"Max {attempt_num} connection attempts over {total_stall_time} seconds")
 
 
 @app.on_event("shutdown")
 def shutdown():
     """foo
     """
-    app.state.vclient.vclient.logout()
+    try:
+        app.state.vclient.vclient.logout()
+    except Exception as e:
+        logger.error(f"Unhandled exception at shutdown: {e}")
 
 
 @app.middleware("http")
@@ -53,7 +79,7 @@ async def ensure_fresh_token(request: Request, call_next):
     """
     start_time = time.time()
     # Ensure authentication token is still valid
-    # If not, reauthorize with the Vault instnance
+    # If not, reauthorize with the Vault instance
     app.state.vclient.vault_reauth()
     request.state.vclient = app.state.vclient
     sae_response = parse_sae_client_info(request)
