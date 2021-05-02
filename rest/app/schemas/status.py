@@ -23,7 +23,7 @@ from typing import Dict, Optional
 from pydantic import BaseModel
 
 
-class StatusResponse(BaseModel):
+class Status(BaseModel):
     status: Dict
     # source_kme_id: str
     # target_kme_id: str

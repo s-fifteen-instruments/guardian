@@ -20,10 +20,9 @@
 
 from fastapi import APIRouter
 
-from app.api.api_v1.endpoints import check_vconn, status  # , enc_keys, dec_keys
+from app.api.api_v1.endpoints import vconn, status, keys
 
 api_router = APIRouter()
-api_router.include_router(check_vconn.router, prefix="/check_vconn", tags=["check_vconn"])
+api_router.include_router(vconn.router, prefix="/check_vconn", tags=["check_vconn"])
 api_router.include_router(status.router, prefix="/status", tags=["status"])
-# api_router.include_router(enc_keys.router, prefix="/enc_keys", tags=["enc_keys"])
-# api_router.include_router(dec_keys.router, prefix="/dec_keys", tags=["dec_keys"])
+api_router.include_router(keys.router, prefix="/keys", tags=["keys"])

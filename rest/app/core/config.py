@@ -69,6 +69,9 @@ def _dump_response(response, secret: bool = True):
         logger.debug("REDACTED")
 
 
+# https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
+
+
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     VAULT_URI: str = "https://vault:8200"
@@ -79,6 +82,12 @@ class Settings(BaseSettings):
     VAULT_MAX_CONN_ATTEMPTS: int = 3
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
+    VALID_IP_ADDRESS_REGEX: str = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+    VALID_HOSTNAME_REGEX: str = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+    MAX_KEY_COUNT: int = 1024
+    KEY_SIZE: int = 32  # Bits
+    MIN_KEY_SIZE: int = 8  # Bits
+    MAX_KEY_SIZE: int = 1024  # Bits
 
 
 settings = Settings()

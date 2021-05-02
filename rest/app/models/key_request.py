@@ -18,19 +18,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from typing import Any
+from typing import Any, List, Optional
 
-from fastapi import APIRouter
-from fastapi import Request
-
-from app import schemas
+from pydantic import BaseModel
 
 
-router = APIRouter()
-
-
-@router.get("/", response_model=schemas.Status)
-def kme_status(request: Request) -> Any:
-    return {
-        "status": request.app.state.vclient.hvc.sys.read_health_status(method='GET')
-    }
+class KeyRequest(BaseModel):
+    number: Optional[int] = None
+    size: Optional[int] = None
+    additional_slave_SAE_IDs: Optional[List[str]] = None
+    extension_mandatory: Optional[List[Any]] = None
+    extension_optional: Optional[List[Any]] = None

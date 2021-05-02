@@ -30,7 +30,7 @@ from app.core.config import logger
 router = APIRouter()
 
 
-@router.get("/", response_model=schemas.VconnResponse)
+@router.get("/", response_model=schemas.Vconn)
 def check_vconn(request: Request) -> Dict:
     is_inited = request.app.state.vclient.vault_check_init()
     is_sealed = request.app.state.vclient.vault_check_seal()

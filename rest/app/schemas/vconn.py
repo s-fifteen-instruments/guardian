@@ -21,7 +21,7 @@
 from pydantic import BaseModel
 
 
-class VconnResponse(BaseModel):
+class Vconn(BaseModel):
     is_initialized: bool
     is_sealed: bool
     is_authenticated: bool
