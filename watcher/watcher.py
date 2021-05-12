@@ -544,4 +544,5 @@ class watcherClient:
 
 
 if __name__ == "__main__":
+    # TODO: Unset thread count
     watcher = watcherClient(threads=1)

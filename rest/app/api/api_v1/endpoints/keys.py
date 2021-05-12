@@ -20,7 +20,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from fastapi.encoders import jsonable_encoder
 
 from app import schemas
@@ -31,28 +31,80 @@ from app.core.config import logger, settings, _dump_response
 router = APIRouter()
 
 
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+
+master_sae_path = \
+    Path(...,  # Required value; no default
+         title="Master SAE ID",
+         description="Unique Master Security Application Entity (SAE) String",
+         min_length=settings.SAE_ID_MIN_LENGTH,
+         max_length=settings.SAE_ID_MAX_LENGTH,
+         regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+         )
+
+# ------------------------------------------------------------------------------
+
+slave_sae_path = \
+    Path(...,  # Required value, no default
+         title="Slave SAE ID",
+         description="Unique Slave Security Application Entity (SAE) String",
+         min_length=settings.SAE_ID_MIN_LENGTH,
+         max_length=settings.SAE_ID_MAX_LENGTH,
+         regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+         )
+
+# ------------------------------------------------------------------------------
+
+number_query = \
+    Query(1,  # Default value of 1
+          title="Number of Requested Keys",
+          description="Number of Requested Keys (int >= 1) for the KME to Return to the SAE",
+          le=settings.MAX_KEY_COUNT,  # Must be less than or equal to
+          ge=1  # Must be greater than or equal to
+          )
+
+# ------------------------------------------------------------------------------
+
+key_size_query = \
+    Query(settings.KEY_SIZE,  # Default value
+          title="Requested Key Size in Bits",
+          description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
+          le=settings.MAX_KEY_SIZE,  # Less than or equal to
+          ge=settings.MIN_KEY_SIZE  # Greater than or equal to
+          )
+
+# ------------------------------------------------------------------------------
+
+key_id_query = \
+    Query(...,  # Required value, no default
+          title="ID of the Requested Key",
+          description="ID of the requested key in UUID format as a string",
+          min_length=settings.KEY_ID_MIN_LENGTH,
+          max_length=settings.KEY_ID_MAX_LENGTH,
+          )
+
+# ------------------------------------------------------------------------------
+
+response_model_settings_dict = {
+    "response_model": schemas.KeyContainer,
+    "response_model_exclude_none": True,
+    "response_model_exclude_unset": True
+}
+
+
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+
 @router.get("/{slave_SAE_ID}/enc_keys",
-            response_model=schemas.KeyContainer,
-            response_model_exclude_none=True,
-            response_model_exclude_unset=True)
-def get_key(slave_SAE_ID: str = Path(...,
-                                     title="Slave SAE ID",
-                                     description="Unique Slave Security Application Entity (SAE) String",
-                                     min_length=3,
-                                     max_length=32,
-                                     regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
-                                     ),
-            number: Optional[int] = Query(1,
-                                          title="Number of Requested Keys",
-                                          description="Number of Requested Keys (int >= 1) for the KME to Return to the SAE",
-                                          le=settings.MAX_KEY_COUNT,
-                                          ge=1
-                                          ),
-            size: Optional[int] = Query(settings.KEY_SIZE,
-                                        title="Requested Key Size in Bits",
-                                        description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
-                                        le=settings.MAX_KEY_SIZE,
-                                        ge=settings.MIN_KEY_SIZE)):
+            **response_model_settings_dict)
+def get_key(slave_SAE_ID: str = slave_sae_path,
+            number: Optional[int] = number_query,
+            size: Optional[int] = key_size_query):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
@@ -60,11 +112,11 @@ def get_key(slave_SAE_ID: str = Path(...,
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
-                key_ID="A_Key_ID",
+                key_ID="A_Key_ID01234567890123456",
                 key="A_Key"
             ),
             schemas.KeyPair(
-                key_ID="B_Key_ID",
+                key_ID="B_Key_ID01234567890123456",
                 key="B_Key"
             )
         ],
@@ -74,23 +126,74 @@ def get_key(slave_SAE_ID: str = Path(...,
     return key_con
 
 
+# ------------------------------------------------------------------------------
+
+
+@router.get("/{master_SAE_ID}/dec_keys",
+            **response_model_settings_dict)
+def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+                         key_ID: str = key_id_query):
+    logger.debug(f"master_SAE_ID: {master_SAE_ID}")
+    logger.debug(f"key_ID: {key_ID}")
+    key_con = schemas.KeyContainer(
+        keys=[
+            schemas.KeyPair(
+                key_ID=key_ID,
+                key="Nice_Key"
+            ),
+        ],
+        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
+    )
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    return key_con
+
+
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+
 @router.post("/{slave_SAE_ID}/enc_keys",
-             response_model=schemas.KeyContainer,
-             response_model_exclude_none=True,
-             response_model_exclude_unset=True)
-def post_key(slave_SAE_ID: str,
-             key_req: models.KeyRequest):
+             **response_model_settings_dict)
+def post_key(slave_SAE_ID: str = slave_sae_path,
+             key_req: models.KeyRequest = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
     # TODO: key_list = construct_key_list(number, size)
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
-                key_ID="A_Key_ID",
+                key_ID="A_Key_ID01234567890123456",
                 key="A_Key"
             ),
             schemas.KeyPair(
-                key_ID="B_Key_ID",
+                key_ID="B_Key_ID01234567890123456",
+                key="B_Key"
+            )
+        ],
+        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
+    )
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    return key_con
+
+
+# ------------------------------------------------------------------------------
+
+
+@router.post("/{master_SAE_ID}/dec_keys",
+             **response_model_settings_dict)
+def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+                          key_req: models.KeyRequest = Body(...)):
+    logger.debug(f"master_SAE_ID: {master_SAE_ID}")
+    logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
+    key_con = schemas.KeyContainer(
+        keys=[
+            schemas.KeyPair(
+                key_ID="A_Key_ID01234567890123456",
+                key="A_Key"
+            ),
+            schemas.KeyPair(
+                key_ID="B_Key_ID01234567890123456",
                 key="B_Key"
             )
         ],

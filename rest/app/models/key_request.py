@@ -18,14 +18,59 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from typing import Any, List, Optional
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import conlist, constr, Field
+
+from app.core.config import settings
+from app import schemas
 
 
-class KeyRequest(BaseModel):
-    number: Optional[int] = None
-    size: Optional[int] = None
-    additional_slave_SAE_IDs: Optional[List[str]] = None
-    extension_mandatory: Optional[List[Any]] = None
-    extension_optional: Optional[List[Any]] = None
+class ExtensionMandatory(schemas.ForbidBase):
+    pass
+
+
+class ExtensionOptional(schemas.IgnoreBase):
+    pass
+
+
+class KeyRequest(schemas.ForbidBase):
+    number: Optional[int] = Field(1,  # Default value of 1
+                                  title="Number of Requested Keys",
+                                  description="Number of Requested Keys (int >= 1) for the KME to Return to the SAE",
+                                  le=settings.MAX_KEY_COUNT,  # Must be less than or equal to
+                                  ge=1  # Must be greater than or equal to
+                                  )
+    size: Optional[int] = Field(settings.KEY_SIZE,  # Default value of KME key size
+                                title="Requested Key Size in Bits",
+                                description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
+                                le=settings.MAX_KEY_SIZE,  # Less than or equal to
+                                ge=settings.MIN_KEY_SIZE  # Greater than or equal to
+                                )
+    additional_slave_SAE_IDs: Optional[conlist(constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained list of constrained strings; min string length to SAE_ID_MIN_LENGTH
+                                                      max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
+                                                      regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
+                                                      ),
+                                               min_items=0,  # Minimum number of allowed items in list
+                                               max_items=settings.MAX_SAE_ID_COUNT  # Maximum number of allowed items in list (potentially zero-inclusive)
+                                               )
+                                       ] = Field(None,  # Default value of nothing
+                                                 title="List of Additional Slave SAE IDs",
+                                                 description="List of Addtional Slave SAE IDs up to max_SAE_ID_count"
+                                                 )
+    extension_mandatory: Optional[conlist(ExtensionMandatory,  # Constrained list of ExtensionMandatory objects
+                                          min_items=0,  # Min number of items in list
+                                          max_items=settings.MAX_EX_MANADATORY_COUNT  # Max number of items in list
+                                          )
+                                  ] = Field(None,  # Default value of nothing
+                                            title="List of Mandatory Extension Parameters",
+                                            description="Array of extension parameters specified as name/value pairs that KME shall handle or return an error"
+                                            )
+    extension_optional: Optional[conlist(ExtensionOptional,  # Constrained list of ExtensionOptional objects
+                                         min_items=0,  # Min number of items in list
+                                         max_items=settings.MAX_EX_OPTIONAL_COUNT  # Max number of items in list
+                                         )
+                                 ] = Field(None,  # Default value of nothing
+                                           title="List of Optional Extension Parameters",
+                                           description="Array of extension parameters specified as name/value pairs that KME may ignore"
+                                           )

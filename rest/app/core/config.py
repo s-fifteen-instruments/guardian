@@ -20,6 +20,7 @@
 
 import json
 from pydantic import BaseSettings
+from math import ceil
 
 import logging
 from fastapi.logger import logger as logger
@@ -69,6 +70,17 @@ def _dump_response(response, secret: bool = True):
         logger.debug("REDACTED")
 
 
+def padded_base64_length(num_bytes: int):
+    """foo
+    """
+    blocks: int = ceil(num_bytes / 3)
+    return blocks * 4
+
+
+def bits2bytes(bits: int):
+    return bits / 8
+
+
 # https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
 
 
@@ -82,12 +94,20 @@ class Settings(BaseSettings):
     VAULT_MAX_CONN_ATTEMPTS: int = 3
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
-    VALID_IP_ADDRESS_REGEX: str = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-    VALID_HOSTNAME_REGEX: str = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+    VALID_IP_ADDRESS_REGEX: str = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+    VALID_HOSTNAME_REGEX: str = r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
     MAX_KEY_COUNT: int = 1024
+    MAX_KEY_PER_REQUEST: int = 2
     KEY_SIZE: int = 32  # Bits
     MIN_KEY_SIZE: int = 8  # Bits
     MAX_KEY_SIZE: int = 1024  # Bits
+    SAE_ID_MIN_LENGTH: int = 3
+    SAE_ID_MAX_LENGTH: int = 32
+    MAX_SAE_ID_COUNT: int = 2
+    KEY_ID_MIN_LENGTH: int = 16
+    KEY_ID_MAX_LENGTH: int = 128
+    MAX_EX_MANADATORY_COUNT: int = 2
+    MAX_EX_OPTIONAL_COUNT: int = 2
 
 
 settings = Settings()
