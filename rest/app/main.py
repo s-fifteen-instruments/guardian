@@ -20,14 +20,13 @@
 
 import hvac
 import time
-import typing
-import urllib
 
 from fastapi import FastAPI, Request
 
 from app.api.api_v1.api import api_router
 from app.core.config import logger, settings
 from app.vault.interface import VaultClient
+from app.utils import client
 
 
 app = FastAPI()
@@ -82,7 +81,7 @@ async def ensure_fresh_token(request: Request, call_next):
     # If not, reauthorize with the Vault instance
     app.state.vclient.vault_reauth()
     request.state.vclient = app.state.vclient
-    sae_response = parse_sae_client_info(request)
+    sae_response = client.parse_sae_client_info(request)
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["x-process-time"] = str(process_time)
@@ -91,29 +90,3 @@ async def ensure_fresh_token(request: Request, call_next):
     response.headers["x-sae-common-name"] = str(sae_response["sae_common_name"])
 
     return response
-
-
-def parse_sae_client_info(request: Request) -> typing.Dict:
-    """foo
-    """
-    sae_ip = request.client.host
-    sae_hostname = request.url.hostname
-    sae_common_name = ""
-    try:
-        # Header should be forwarded by Traefik
-        sae_common_name = request.headers["x-forwarded-tls-client-cert-info"]
-        # sae Common Name should be forwarded specifically
-        sae_common_name = urllib.parse.unquote(sae_common_name)
-        # Find the first CN - later ones are for CAs
-        sae_common_name = sae_common_name.split("CN=")[1]
-        # Split on a comma if there are more CNs
-        sae_common_name = sae_common_name.split(",")[0]
-        # Remove backslashes and double quotes
-        sae_common_name = sae_common_name.strip('\\"')
-    except Exception as err:
-        logger.warn(f"Unparsable sae common name in sae certificate:\n{sae_common_name}")
-        logger.exception(err)
-
-    return {"sae_ip": sae_ip,
-            "sae_hostname": sae_hostname,
-            "sae_common_name": sae_common_name}

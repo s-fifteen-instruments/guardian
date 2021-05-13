@@ -23,18 +23,18 @@ from typing import Optional
 from pydantic import conint, conlist, constr, Field
 
 from app.core.config import settings
-from app import schemas
+from app.schemas.base import IgnoreBase, ForbidBase
 
 
-class ExtensionMandatory(schemas.ForbidBase):
+class ExtensionMandatory(ForbidBase):
     pass
 
 
-class ExtensionOptional(schemas.IgnoreBase):
+class ExtensionOptional(IgnoreBase):
     pass
 
 
-class KeyRequest(schemas.ForbidBase):
+class KeyRequest(ForbidBase):
     number: Optional[int] = Field(1,  # Default value of 1
                                   title="Number of Requested Keys",
                                   description="Number of Requested Keys (int >= 1) for the KME to Return to the SAE",

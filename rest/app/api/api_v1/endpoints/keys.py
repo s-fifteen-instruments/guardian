@@ -20,9 +20,12 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Path, Query, Request
 from fastapi.encoders import jsonable_encoder
 
+from pydantic import conint
+
+from app.utils import client
 from app import schemas
 from app import models
 from app.core.config import logger, settings, _dump_response
@@ -72,8 +75,6 @@ key_size_query = \
     Query(settings.KEY_SIZE,  # Default value
           title="Requested Key Size in Bits",
           description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
-          le=settings.MAX_KEY_SIZE,  # Less than or equal to
-          ge=settings.MIN_KEY_SIZE  # Greater than or equal to
           )
 
 # ------------------------------------------------------------------------------
@@ -99,16 +100,39 @@ response_model_settings_dict = {
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
+@router.get("/{slave_SAE_ID}/status",
+            response_model=models.StatusRequest,
+            response_model_exclude_none=True,
+            response_model_exclude_unset=False,
+            response_model_exclude_defaults=False,
+            tags=["Status"])
+def get_status(slave_SAE_ID: str = slave_sae_path,
+               request: Request = None):
+    logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
+    stat_req = models.StatusRequest(
+        master_SAE_ID=client.parse_sae_client_info(request)["sae_hostname"],
+        slave_SAE_ID=slave_SAE_ID,
+        stored_key_count=42  # TODO: Query Vault for Key Count
+    )
+    return stat_req
+
+
+# ------------------------------------------------------------------------------
+
 
 @router.get("/{slave_SAE_ID}/enc_keys",
             **response_model_settings_dict)
 def get_key(slave_SAE_ID: str = slave_sae_path,
             number: Optional[int] = number_query,
-            size: Optional[int] = key_size_query):
+            size: Optional[conint(le=settings.MAX_KEY_SIZE,
+                                  ge=settings.MIN_KEY_SIZE,
+                                  multiple_of=settings.MIN_KEY_SIZE
+                                  )
+                           ] = key_size_query):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
-    # TODO: key_list = construct_key_list(number, size)
+    # TODO: Query Vault for keys and construct key list
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
@@ -135,6 +159,8 @@ def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
                          key_ID: str = key_id_query):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_ID: {key_ID}")
+    # TODO: Query Target KME for Key IDs
+    # TODO: If good, Query Vault for Key IDs
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
@@ -159,7 +185,7 @@ def post_key(slave_SAE_ID: str = slave_sae_path,
              key_req: models.KeyRequest = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
-    # TODO: key_list = construct_key_list(number, size)
+    # TODO: Query Vault for keys and construct key list
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
@@ -186,6 +212,8 @@ def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
                           key_req: models.KeyRequest = Body(...)):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
+    # TODO: Query Target KME for Key IDs
+    # TODO: If good, Query Vault for Key IDs
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(

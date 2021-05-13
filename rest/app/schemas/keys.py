@@ -23,7 +23,7 @@ from typing import Any, Optional
 from pydantic import conlist, Field
 
 from app.core.config import settings, bits2bytes, padded_base64_length
-from .base import ForbidBase
+from app.schemas.base import ForbidBase
 
 
 class KeyIDExtension(ForbidBase):
