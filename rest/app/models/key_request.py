@@ -20,7 +20,7 @@
 
 from typing import Optional
 
-from pydantic import conlist, constr, Field
+from pydantic import conint, conlist, constr, Field
 
 from app.core.config import settings
 from app import schemas
@@ -41,12 +41,14 @@ class KeyRequest(schemas.ForbidBase):
                                   le=settings.MAX_KEY_COUNT,  # Must be less than or equal to
                                   ge=1  # Must be greater than or equal to
                                   )
-    size: Optional[int] = Field(settings.KEY_SIZE,  # Default value of KME key size
-                                title="Requested Key Size in Bits",
-                                description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
-                                le=settings.MAX_KEY_SIZE,  # Less than or equal to
-                                ge=settings.MIN_KEY_SIZE  # Greater than or equal to
-                                )
+    size: Optional[conint(le=settings.MAX_KEY_SIZE,  # Less than or equal to
+                          ge=settings.MIN_KEY_SIZE,  # Greater than or equal to
+                          multiple_of=settings.MIN_KEY_SIZE  # Must be a multiple of this
+                          )
+                   ] = Field(settings.KEY_SIZE,  # Default value of KME key size
+                             title="Requested Key Size in Bits",
+                             description="Requested Key Size in Bits (min_key_size <= int <= max_key_size; multiple of 8 bits) for the KME to Return to the SAE",
+                             )
     additional_slave_SAE_IDs: Optional[conlist(constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained list of constrained strings; min string length to SAE_ID_MIN_LENGTH
                                                       max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
                                                       regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
