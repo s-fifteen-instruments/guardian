@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env python3
 #
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
@@ -18,18 +18,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Run as root
-set -x
-rm -f  ./scripts/.initialized
-rm -rf ./volumes/certificates/production/vault
-rm -rf ./volumes/certificates/production/vault_init
-rm -rf ./volumes/certificates/production/rest
-rm -rf ./volumes/certificates/production/watcher
-rm -rf ./volumes/certificates/production/admin
-rm -rf ./volumes/certificates/generation/root
-rm -rf ./volumes/vault/data/file
-rm -f  ./volumes/vault/logs/audit.log
-rm -f  ./volumes/vault/policies/watcher.policy.hcl
-rm -f  ./volumes/vault/policies/rest.policy.hcl
-rm -rf ./volumes/qkd/epoch_files/*
-rm -rf ./volumes/qkd/digest_files/*
+from app.schemas.base import ForbidBase
+
+
+class EpochFile(ForbidBase):
+    key: str
+    digest: str
+    num_bytes: int
+    status: str
+    version: int
+    path: str

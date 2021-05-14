@@ -25,10 +25,10 @@ from fastapi.encoders import jsonable_encoder
 
 from pydantic import conint
 
-from app.utils import client
+from app.utils import calculator, client
 from app import schemas
 from app import models
-from app.core.config import logger, settings, _dump_response
+from app.core.config import logger, settings, _dump_response, bits2bytes
 
 
 router = APIRouter()
@@ -107,12 +107,12 @@ response_model_settings_dict = {
             response_model_exclude_defaults=False,
             tags=["Status"])
 def get_status(slave_SAE_ID: str = slave_sae_path,
-               request: Request = None):
+               request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     stat_req = models.StatusRequest(
         master_SAE_ID=client.parse_sae_client_info(request)["sae_hostname"],
         slave_SAE_ID=slave_SAE_ID,
-        stored_key_count=42  # TODO: Query Vault for Key Count
+        stored_key_count=calculator.calculate_num_keys(request)
     )
     return stat_req
 
@@ -128,24 +128,15 @@ def get_key(slave_SAE_ID: str = slave_sae_path,
                                   ge=settings.MIN_KEY_SIZE,
                                   multiple_of=settings.MIN_KEY_SIZE
                                   )
-                           ] = key_size_query):
+                           ] = key_size_query,
+            request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
     # TODO: Query Vault for keys and construct key list
-    key_con = schemas.KeyContainer(
-        keys=[
-            schemas.KeyPair(
-                key_ID="A_Key_ID01234567890123456",
-                key="A_Key"
-            ),
-            schemas.KeyPair(
-                key_ID="B_Key_ID01234567890123456",
-                key="B_Key"
-            )
-        ],
-        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
-    )
+    key_con = calculator.generate_key_container(number=number,
+                                                size_bytes=bits2bytes(size),
+                                                request=request)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 

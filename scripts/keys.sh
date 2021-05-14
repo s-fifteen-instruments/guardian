@@ -37,7 +37,7 @@ export STARTUP="${UP} && ${STALL} && ${LOG}"
 export SHUTDOWN="${STALL} && ${STOP} && ${REMOVE}"
 
 S=qkd                    WAIT=0 F=-f eval ${STARTUP}
-S="watcher notifier qkd" WAIT=1 F=   eval ${STARTUP}
+S="watcher notifier"     WAIT=1 F=   eval ${STARTUP}
 S="watcher notifier qkd" WAIT=3      eval ${SHUTDOWN}
 
 # NOTE: This assumes a Vault instance is up and unsealed.

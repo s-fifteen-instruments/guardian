@@ -108,6 +108,7 @@ class vaultClient:
                              policy_name_str="int_ca_cert_issuer")
         self.connection_loop(self.vault_enable_kv_secrets_engine)
         self.connection_loop(self.vault_create_watcher_service_acl)
+        self.connection_loop(self.vault_create_rest_service_acl)
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="watcher")
         self.connection_loop(self.vault_generate_client_cert,
@@ -571,6 +572,27 @@ class vaultClient:
         """foo
         """
         policy_name_str = "watcher"
+        policy_template = \
+            vaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                            is_template=True)
+        policy_str = policy_template
+        policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                        vaultClient.VAULT_KV_ENDPOINT)
+        policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                        vaultClient.VAULT_QKDE_ID)
+        policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                        vaultClient.VAULT_QCHANNEL_ID)
+        filepath = f"{vaultClient.POLICIES_DIRPATH}/" \
+                   f"{policy_name_str}.policy.hcl"
+        logger.debug(f"Writing out policy to: {filepath}")
+        with open(filepath, "w") as f:
+            f.write(policy_str)
+        self.vault_create_acl_policy(policy_name_str=policy_name_str)
+
+    def vault_create_rest_service_acl(self):
+        """foo
+        """
+        policy_name_str = "rest"
         policy_template = \
             vaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
                                             is_template=True)

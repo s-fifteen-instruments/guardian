@@ -28,6 +28,8 @@ services:
     volumes:
       # Mount a volume that stores the TLS certificates
       - ./volumes/certificates/production:/certificates
+      # Mount a volume that stores the hex digest files of QKD keys
+      - ./volumes/qkd/digest_files:/digest_files
     labels:
       # Enable Traefik for this specific "backend" service
       - traefik.enable=true

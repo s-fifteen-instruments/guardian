@@ -78,7 +78,9 @@ def padded_base64_length(num_bytes: int):
 
 
 def bits2bytes(bits: int):
-    return bits / 8
+    """Using Floor Calculation
+    """
+    return bits // 8
 
 
 # https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
@@ -86,6 +88,8 @@ def bits2bytes(bits: int):
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
+    DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
+    DIGEST_FILES_DIRPATH: str = "/digest_files"
     KEY_ID_MAX_LENGTH: int = 128
     KEY_ID_MIN_LENGTH: int = 16
     KEY_SIZE: int = 32  # Bits
@@ -93,8 +97,8 @@ class Settings(BaseSettings):
     KME_ID_MIN_LENGTH: int = 3
     MAX_EX_MANADATORY_COUNT: int = 2
     MAX_EX_OPTIONAL_COUNT: int = 2
-    MAX_KEY_COUNT: int = 1024
-    MAX_KEY_PER_REQUEST: int = 2
+    MAX_KEY_COUNT: int = 250000000
+    MAX_KEY_PER_REQUEST: int = 4
     MAX_KEY_SIZE: int = 1024  # Bits
     MAX_SAE_ID_COUNT: int = 2
     MIN_KEY_SIZE: int = 8  # Bits
@@ -112,6 +116,9 @@ class Settings(BaseSettings):
     VAULT_SERVER_CERT_FILEPATH: str = "/certificates/vault/vault.ca-chain.cert.pem"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
     VAULT_URI: str = "https://vault:8200"
+    VAULT_KV_ENDPOINT: str = "QKEYS"
+    VAULT_QKDE_ID: str = "QKDE0001"
+    VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
 
 settings = Settings()
