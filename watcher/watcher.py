@@ -380,6 +380,89 @@ class watcherClient:
                                    f"epoch key: \"{epoch}\"; "
                                    "Abandoning key creation attempt")
 
+    def vault_read_secret_version(self, filepath: str, mount_point: str):
+        """foo
+        """
+        secret_data = dict()
+        secret_version = -1
+        logger.debug(f"Attempt to query Vault secret version on "
+                     f"filepath: {filepath}; mount_point: {mount_point}")
+        try:
+            data_response = \
+                self.vclient.secrets.kv.v2.\
+                read_secret_version(path=filepath,
+                                    version=None,   # Latest version returned
+                                    mount_point=mount_point)
+        except hvac.exceptions.InvalidPath:
+           logger.debug("There is no secret yet at filepath: "
+                        f"{filepath}; mount_point: {mount_point}")
+           secret_version = 0
+        else:
+            logger.debug(f"filepath: {filepath} version response:")
+            self._dump_response(data_response, secret=False)
+            current_version = int(data_response["data"]["metadata"]["version"])
+            logger.debug(f"Current Version: {current_version}")
+            secret_version = current_version
+            secret_data = data_response["data"]["data"]
+
+        return secret_version, secret_data
+
+    def vault_commit_secret(self, path: str, secret: dict, version: int,
+                            mount_point: str):
+        """foo
+        """
+        cas_error = True
+        try:
+            qkey_response = \
+                self.vclient.secrets.kv.v2.\
+                create_or_update_secret(path=path,
+                                        secret=secret,
+                                        cas=version,
+                                        mount_point=mount_point)
+            logger.debug(f"Vault write \"{path}\" response:")
+            self._dump_response(qkey_response, secret=False)
+            cas_error = False
+        except hvac.exceptions.InvalidRequest as e:
+            # Possible but unlikely
+           if "check-and-set parameter did not match the current version" in str(e):
+               logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
+            # Unexpected error has occurred; re-raise it
+           else:
+               raise e
+
+        return cas_error
+
+    def vault_update_status(self, epoch: str, num_bytes: int):
+        """foo
+        """
+        # Attempt to read status endpoint
+        # if not present, set CAS to 0
+        # else set CAS to received version
+        # Attempt to update status endpoint with new epoch; use CAS
+        # Iterate until successful
+        cas_error = True
+        while cas_error:
+            # First attempt to read status endpoint
+            mount_point = watcherClient.VAULT_KV_ENDPOINT
+            status_path = f"{watcherClient.VAULT_QKDE_ID}/" \
+                f"{watcherClient.VAULT_QCHANNEL_ID}/" \
+                "status"
+            status_version, status_data = \
+                self.vault_read_secret_version(filepath=status_path,
+                                               mount_point=mount_point
+                                               )
+            if epoch not in status_data:
+                status_data[epoch] = num_bytes
+            else:
+                # Apparently there is already an epoch file in Vault by this name
+                logger.error(f"Unexpected redundancy in status endpoint: {status_path}"
+                             f"Epoch \"{epoch}\" already exists")
+                raise KeyError(f"Unexpected redundancy in status endpoint: {status_path}"
+                               f"Epoch \"{epoch}\" already exists")
+            cas_error = self.\
+                vault_commit_secret(path=status_path, secret=status_data,
+                                    version=status_version, mount_point=mount_point)
+
     def process_epoch_file(self, filepath):
         """foo
         """
@@ -387,6 +470,7 @@ class watcherClient:
         raw_bytes = watcherClient.read_epoch_file(filepath)
         epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
         self.vault_write_key(epoch, raw_key)
+        self.vault_update_status(epoch, len(raw_key))
         watcherClient.delete_epoch_file(filepath)
 
         return {f"{filepath}": True}
