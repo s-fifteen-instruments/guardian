@@ -28,7 +28,8 @@ def calculate_num_keys(request: Request) -> int:
     """foo
     """
     # Negative one for retreiving a total byte count for all epoch files
-    _, vault_total_key_bytes = request.app.state.vclient.vault_get_key_byte_counts(byte_amount=-1)
+    _, vault_total_key_bytes = request.app.state.vclient.\
+        vault_get_key_byte_counts(byte_amount=-1)
     logger.debug(f"Vault Total Keying Material (bytes): {vault_total_key_bytes}")
     total_num_keys: int = 0
     if settings.KEY_SIZE > 0:

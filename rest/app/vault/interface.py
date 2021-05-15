@@ -153,9 +153,9 @@ class VaultClient:
     def vault_get_key_byte_counts(self, byte_amount: int = -1) -> int:
         """foo
         """
-        epoch_file_list = self.vault_directory_get_epoch_file_list()
         total_bytes = 0
         epoch_file_dict = dict()
+        epoch_file_list = self.vault_directory_get_epoch_file_list()
         for epoch_filename in epoch_file_list:
             epoch_file = self.vault_get_epoch_file(epoch_filename)
             epoch_file_dict[epoch_filename] = epoch_file
@@ -171,9 +171,19 @@ class VaultClient:
         mount_point = settings.VAULT_KV_ENDPOINT
         qkey_path = f"{settings.VAULT_QKDE_ID}/" \
             f"{settings.VAULT_QCHANNEL_ID}"
-        epoch_file_list_response = \
-            self.hvc.secrets.kv.v2.list_secrets(path=qkey_path,
-                                                mount_point=mount_point)
+        try:
+            epoch_file_list_response = \
+                self.hvc.secrets.kv.v2.list_secrets(path=qkey_path,
+                                                    mount_point=mount_point)
+        except hvac.exceptions.InvalidPath as e:
+            logger.error(f"No keying material found for Vault path: \"{qkey_path}\"; Exception: {e}")
+            raise \
+                HTTPException(status_code=400,
+                              detail="No keying material at Vault path "
+                                     f"'{qkey_path}' to satisfy "
+                                     f"current request"
+                              )
+
         logger.debug("Vault epoch file list response:")
         _dump_response(epoch_file_list_response, secret=False)
         return epoch_file_list_response["data"]["keys"]
@@ -243,6 +253,88 @@ class VaultClient:
         hexdigest = open(filepath, "r").read()
         return hexdigest
 
+    @staticmethod
+    def check_key_hmac(raw_key: bytes, epoch_file: schemas.EpochFile):
+        """foo
+        """
+        is_key_intact = False
+        computed_key_hexdigest = VaultClient.compute_hmac_hexdigest(raw_key)
+        logger.debug(f"Computed Hex Digest: {computed_key_hexdigest}")
+        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+                          f"{epoch_file.path.split('/')[-1]}.digest"
+        file_store_key_hexdigest = \
+            VaultClient.read_hexdigest(filepath=digest_filepath)
+        logger.debug(f"Filestore Hex Digest: {file_store_key_hexdigest}")
+        if (hmac.compare_digest(computed_key_hexdigest, epoch_file.digest) and
+                hmac.compare_digest(computed_key_hexdigest, file_store_key_hexdigest) and
+                epoch_file.num_bytes == len(raw_key)):
+            is_key_intact = True
+        return is_key_intact
+
+    @staticmethod
+    def decode_key_from_epoch_file(epoch_file: schemas.EpochFile):
+        """foo
+        """
+        return VaultClient.b64_decode_key(encoded_key=epoch_file.key)
+
+    @staticmethod
+    def b64_decode_key(encoded_key: bytes):
+        """foo
+        """
+        return base64.standard_b64decode((encoded_key.encode("UTF-8")))
+
+    @staticmethod
+    def b64_encode_key(raw_key: bytes):
+        """foo
+        """
+        return (base64.standard_b64encode(raw_key)).decode("UTF-8")
+
+    @staticmethod
+    def extract_key(epoch_file: schemas.EpochFile):
+        raw_key = VaultClient.decode_key_from_epoch_file(epoch_file=epoch_file)
+        if not VaultClient.check_key_hmac(raw_key=raw_key,
+                                          epoch_file=epoch_file):
+            raise \
+                HTTPException(status_code=503,
+                              detail="Key HMACs are inconsistent for epoch "
+                                     f"file: {epoch_file.path.split('/')[-1]}"
+                              )
+        return raw_key
+
+    @staticmethod
+    def compute_status(num_bytes: int):
+        """foo
+        """
+        status = "unlocked"
+        if num_bytes == 0:
+            status = "consumed"
+        return status
+
+    def vault_commit_secret(self, epoch_file: schemas.EpochFile):
+        """foo
+        """
+        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+                          f"{epoch_file.path.split('/')[-1]}.digest"
+        VaultClient.write_hexdigest(epoch_file.digest, digest_filepath)
+        # Attempt to update Vault
+        mount_point = settings.VAULT_KV_ENDPOINT
+        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
+            f"{settings.VAULT_QCHANNEL_ID}/" \
+            f"{epoch_file.path.split('/')[-1]}"
+        secret_dict = {
+            "key": epoch_file.key,
+            "digest": epoch_file.digest,
+            "bytes": str(epoch_file.num_bytes),
+            "status": epoch_file.status
+        }
+        epoch_file_response = \
+            self.hvc.secrets.kv.v2.create_or_update_secret(path=epoch_path,
+                                                           secret=secret_dict,
+                                                           cas=epoch_file.version,
+                                                           mount_point=mount_point)
+        logger.debug(f"Vault epoch file \"{epoch_file.path.split('/')[-1]}\" update response:")
+        _dump_response(epoch_file_response, secret=True)
+
     def vault_get_key(self, size_bytes: int):
         """foo
         """
@@ -256,46 +348,63 @@ class VaultClient:
         # Exclude the last epoch_filename; handle separately below
         for epoch_filename in epoch_filename_list[:-1] or []:
             epoch_file = epoch_file_dict[epoch_filename]
-            logger.debug(f"Vault Bytes: {epoch_file.num_bytes}")
             key_id_input_str += epoch_file.path + str(epoch_file.num_bytes)
-            raw_key = base64.standard_b64decode(epoch_file.key.encode("UTF-8"))
-            logger.debug(f"Raw Key: {raw_key}")
-            computed_key_hexdigest = VaultClient.compute_hmac_hexdigest(raw_key)
-            logger.debug(f"Computed Hex Digest: {computed_key_hexdigest}")
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                              f"{epoch_filename}.digest"
-            file_store_key_hexdigest = \
-                VaultClient.read_hexdigest(filepath=digest_filepath)
-            assert hmac.compare_digest(computed_key_hexdigest, epoch_file.digest)
-            assert hmac.compare_digest(computed_key_hexdigest, file_store_key_hexdigest)
-            assert epoch_file.num_bytes == len(raw_key)
-            key_buffer += raw_key
+            logger.debug(f"Vault Epoch File \"{epoch_filename}\" Num Bytes: {epoch_file.num_bytes}")
+            key_buffer += VaultClient.extract_key(epoch_file=epoch_file)
 
         # Add only from the end of the last epoch_file
         epoch_filename = epoch_filename_list[-1]
-        remaining_bytes: int = size_bytes - len(key_buffer)
-        logger.debug(f"Remaining Bytes: {remaining_bytes}")
         epoch_file = epoch_file_dict[epoch_filename]
-        logger.debug(f"Vault Bytes: {epoch_file.num_bytes}")
+        remaining_bytes: int = size_bytes - len(key_buffer)
         key_id_input_str += epoch_file.path + str(remaining_bytes) + str(len(epoch_file.key))
+        logger.debug(f"Remaining Num Bytes: {remaining_bytes}")
+        logger.debug(f"Vault Epoch File \"{epoch_filename}\" Num Bytes: {epoch_file.num_bytes}")
         logger.debug(f"Key ID Input String: {key_id_input_str}")
-        raw_key = base64.standard_b64decode(epoch_file.key.encode("UTF-8"))
-        computed_key_hexdigest = VaultClient.compute_hmac_hexdigest(raw_key)
-        logger.debug(f"Computed Hex Digest: {computed_key_hexdigest}")
-        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                          f"{epoch_filename}.digest"
-        file_store_key_hexdigest = \
-            VaultClient.read_hexdigest(filepath=digest_filepath)
-        assert hmac.compare_digest(computed_key_hexdigest, epoch_file.digest)
-        assert hmac.compare_digest(computed_key_hexdigest, file_store_key_hexdigest)
+        raw_key = VaultClient.extract_key(epoch_file=epoch_file)
         # Take bytes from the end of the raw key
         key_buffer += raw_key[-remaining_bytes:]
 
         # All the raw materials are gathered...we are ready
         key_id = str(uuid.uuid5(namespace=uuid.NAMESPACE_URL,
                                 name=key_id_input_str))
-        key = base64.standard_b64encode(key_buffer).decode("UTF-8")
-        logger.debug(f"Key ID: {key_id}")
+        key = VaultClient.b64_encode_key(raw_key=key_buffer)
+
+        # What is left comes from the beginning of the raw key
+        remaining_key = raw_key[:-remaining_bytes]
+        remaining_key_hexdigest = VaultClient.compute_hmac_hexdigest(remaining_key)
+        updated_epoch_file = schemas.EpochFile(
+            key=VaultClient.b64_encode_key(raw_key=remaining_key),
+            digest=remaining_key_hexdigest,
+            num_bytes=len(remaining_key),
+            status=VaultClient.compute_status(len(remaining_key)),
+            version=epoch_file.version,
+            path=epoch_file.path
+        )
+        self.vault_commit_secret(epoch_file=updated_epoch_file)
+        consumed_epoch_filename_list = epoch_filename_list[:-1]
+        # All keys have been consumed; delete the last epoch file
+        if len(raw_key) == 0:
+            consumed_epoch_filename_list = epoch_filename_list
+        # Iterate through the consumed files and delete them
+        for epoch_filename in consumed_epoch_filename_list or []:
+            epoch_file = epoch_file_dict[epoch_filename]
+            # Write out a hexdigest of an empty byte string
+            new_key = bytes()
+            new_key_hexdigest = VaultClient.compute_hmac_hexdigest(message=new_key)
+            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+                              f"{epoch_filename}.digest"
+            VaultClient.write_hexdigest(hexdigest=new_key_hexdigest,
+                                        filepath=digest_filepath)
+            mount_point = settings.VAULT_KV_ENDPOINT
+            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                f"{epoch_filename}"
+            epoch_file_response = \
+                self.hvc.secrets.kv.v2.\
+                delete_metadata_and_all_versions(path=epoch_path,
+                                                 mount_point=mount_point)
+            logger.debug(f"Vault epoch file \"{epoch_filename}\" delete response:")
+            _dump_response(epoch_file_response, secret=True)
 
         # We couldn't gather enough keying material
         if len(key_buffer) < size_bytes:
@@ -307,57 +416,4 @@ class VaultClient:
                                      f"request of {size_bytes} bytes"
                               )
 
-        key_pair = schemas.KeyPair(key_ID=key_id, key=key)
-
-        # What is left comes from the beginning of the raw key
-        new_key = raw_key[:-remaining_bytes]
-        new_key_hexdigest = VaultClient.compute_hmac_hexdigest(new_key)
-        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                          f"{epoch_filename}.digest"
-        VaultClient.write_hexdigest(new_key_hexdigest, digest_filepath)
-        # Attempt to update Vault
-        mount_point = settings.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
-            f"{epoch_filename}"
-        secret_dict = {
-            "key": base64.standard_b64encode(new_key).decode("UTF-8"),
-            "digest": new_key_hexdigest,
-            "bytes": str(len(new_key)),
-            "status": "unlocked"
-        }
-        epoch_file_response = \
-            self.hvc.secrets.kv.v2.create_or_update_secret(path=epoch_path,
-                                                           secret=secret_dict,
-                                                           cas=epoch_file.version,
-                                                           mount_point=mount_point)
-        logger.debug(f"Vault epoch file \"{epoch_filename}\" update response:")
-        _dump_response(epoch_file_response, secret=True)
-        # Iterate through the consumed files
-        for epoch_filename in epoch_filename_list[:-1] or []:
-            epoch_file = epoch_file_dict[epoch_filename]
-            new_key = bytes()
-            new_key_hexdigest = VaultClient.compute_hmac_hexdigest(message=new_key)
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                              f"{epoch_filename}.digest"
-            VaultClient.write_hexdigest(hexdigest=new_key_hexdigest,
-                                        filepath=digest_filepath)
-            mount_point = settings.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
-                f"{epoch_filename}"
-            secret_dict = {
-                "key": base64.standard_b64encode(new_key).decode("UTF-8"),
-                "digest": new_key_hexdigest,
-                "bytes": str(len(new_key)),
-                "status": "consumed"
-            }
-            epoch_file_response = \
-                self.hvc.secrets.kv.v2.create_or_update_secret(path=epoch_path,
-                                                               secret=secret_dict,
-                                                               cas=epoch_file.version,
-                                                               mount_point=mount_point)
-            logger.debug(f"Vault epoch file \"{epoch_filename}\" update response:")
-            _dump_response(epoch_file_response, secret=True)
-
-        return key_pair
+        return schemas.KeyPair(key_ID=key_id, key=key)

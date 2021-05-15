@@ -244,42 +244,6 @@ class watcherClient:
 
         return filepath.split("/")[-1], raw_key
 
-#     @staticmethod
-#     def parse_epoch_file_contents(filepath, raw_file):
-#         """foo
-#         """
-#         # Header should be the first 16 bytes of type 7 epoch file
-#         # native byte order, int, unsigned int, unsigned int, int
-#         file_tag, start_epoch, num_epochs, num_valid_key_bits = \
-#             struct.unpack('=iIIi', raw_file[:16])
-#         # Raw key is everything after the first 16 bytes
-#         # Drop the last 4-byte word that could have non-key zero padding
-#         # Files with lengths of 0 or 1 32-bit word should get a raw_key size of 0
-#         raw_key = raw_file[16:-4]
-#         assert len(raw_key) == max(0, ((num_valid_key_bits + 31) // 32) * 4 - 4)
-#         logger.debug(f"Filename: {filepath}; File Tag: {file_tag}; "
-#                      f"Start Epoch {start_epoch:x}; "
-#                      f"Number of Epochs: {num_epochs}; "
-#                      f"Number of Key Bits: {num_valid_key_bits}; "
-#                      f"Raw Key Size {len(raw_key)} bytes")
-#         # Encode key in base64
-#         b64_key = base64.standard_b64encode(raw_key)
-#         # Integer division
-#         num_raw_key_32bit_words: int = len(raw_key) // 4
-#         key_word_list = list()
-#         # Read in each 32-bit word into a zero padded 32-bit binary string
-#         for key_word in struct.unpack(f"{num_raw_key_32bit_words}I", raw_key):
-#             key_word_list.append(f"{key_word:032b}")
-#         key_str = "".join(key_word_list)
-#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/b64_{start_epoch}", "wb") as f:
-#             f.write(b64_key)
-#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/raw_{start_epoch}", "wb") as f:
-#             f.write(raw_key)
-#         with open(f"{watcherClient.EPOCH_FILES_DIRPATH}/bs_{start_epoch}", "w") as f:
-#             f.write(key_str)
-#
-#         return b64_key
-
     @staticmethod
     def delete_epoch_file(filepath):
         """foo
@@ -416,35 +380,6 @@ class watcherClient:
                                    f"epoch key: \"{epoch}\"; "
                                    "Abandoning key creation attempt")
 
-           #  # REST client reading of key
-           #  # Query Vault to check the version metadata at this path
-           #  logger.debug("Attempt to read secret metadata")
-           #  qkey_version_read = \
-           #      self.vault_get_current_secret_version(filepath=qkey_path,
-           #                                            mount_point=mount_point)
-           #  logger.debug(f"Attempt to read back secret; current version: {qkey_version_read}")
-           #  # Need secret read permissions for this
-           #  read_response = \
-           #      self.vclient.secrets.kv.v2.\
-           #      read_secret_version(path=qkey_path,
-           #                          version=None,
-           #                          mount_point=mount_point)
-           #  logger.debug(f"Vault read epoch \"{epoch}\" secret:")
-           #  # TODO: Secret exposure
-           #  self._dump_response(read_response, secret=False)
-           #  vault_b64_key = read_response["data"]["data"]["key"]
-           #  vault_key_hexdigest = read_response["data"]["data"]["digest"]
-           #  vault_key = base64.standard_b64decode(vault_b64_key.encode("UTF-8"))
-           #  mac = hmac.new(key=watcherClient.DIGEST_KEY,
-           #                 digestmod=hashlib.sha3_512)
-           #  mac.update(vault_key)
-           #  computed_key_hexdigest = mac.hexdigest()
-           #  digest_filepath = f"{watcherClient.DIGEST_FILES_DIRPATH}/" \
-           #      f"{epoch}.digest"
-           #  file_hexdigest = watcherClient.read_hexdigest(digest_filepath)
-           #  assert vault_key_hexdigest == computed_key_hexdigest == file_hexdigest
-           #  logger.debug("The file, Vault, and computed hexdigests of the key all match")
-
     def process_epoch_file(self, filepath):
         """foo
         """
@@ -544,5 +479,4 @@ class watcherClient:
 
 
 if __name__ == "__main__":
-    # TODO: Unset thread count
-    watcher = watcherClient(threads=1)
+    watcher = watcherClient()
