@@ -22,9 +22,9 @@ from app.schemas.base import ForbidBase
 
 
 class EpochFile(ForbidBase):
-    key: str
+    key: bytes
     digest: str
     num_bytes: int
-    status: str
     version: int
     path: str
+    epoch: str

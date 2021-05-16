@@ -58,10 +58,9 @@ def generate_key_container(number: int, size_bytes: int, request: Request) -> Ke
     return key_con
 
 
-def test_me(number: int, size_bytes: int, request: Request):
+async def test_me(number: int, size_bytes: int, request: Request):
     """foo
     """
-    worker_uid, epoch_dict = request.app.state.vclient.\
-        vault_claim_epoch_files(requested_num_bytes=size_bytes)
-    request.app.state.vclient.\
-        vault_release_epoch_files(worker_uid=worker_uid, epoch_dict=epoch_dict)
+    key_con = await request.app.state.vclient.\
+        fetch_multiple_keys(num_keys=number, key_size_bytes=size_bytes)
+    return key_con

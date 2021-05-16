@@ -340,7 +340,7 @@ class watcherClient:
                 "key": base64.standard_b64encode(raw_key).decode("UTF-8"),
                 "digest": key_hexdigest,
                 "bytes": str(len(raw_key)),
-                "status": "unlocked"
+                "epoch": str(epoch)
             }
             logger.debug(f"Attempt to write epoch \"{epoch}\" key to Vault")
             try:

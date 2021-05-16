@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
     DIGEST_FILES_DIRPATH: str = "/digest_files"
+    DIGEST_COMPARE_TO_FILE: bool = True
+    DIGEST_COMPARE: bool = False
     KEY_ID_MAX_LENGTH: int = 128
     KEY_ID_MIN_LENGTH: int = 16
     KEY_SIZE: int = 32  # Bits
@@ -99,7 +101,7 @@ class Settings(BaseSettings):
     MAX_EX_OPTIONAL_COUNT: int = 2
     MAX_KEY_COUNT: int = 250000000
     MAX_KEY_PER_REQUEST: int = 4
-    MAX_KEY_SIZE: int = 1024  # Bits
+    MAX_KEY_SIZE: int = 80000  # Bits
     MAX_SAE_ID_COUNT: int = 2
     MIN_KEY_SIZE: int = 8  # Bits
     SAE_ID_MAX_LENGTH: int = 32

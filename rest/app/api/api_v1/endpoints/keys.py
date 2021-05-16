@@ -65,7 +65,7 @@ number_query = \
     Query(1,  # Default value of 1
           title="Number of Requested Keys",
           description="Number of Requested Keys (int >= 1) for the KME to Return to the SAE",
-          le=settings.MAX_KEY_COUNT,  # Must be less than or equal to
+          le=settings.MAX_KEY_PER_REQUEST,  # Must be less than or equal to
           ge=1  # Must be greater than or equal to
           )
 
@@ -122,33 +122,19 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
 
 @router.get("/{slave_SAE_ID}/enc_keys",
             **response_model_settings_dict)
-def get_key(slave_SAE_ID: str = slave_sae_path,
-            number: Optional[int] = number_query,
-            size: Optional[conint(le=settings.MAX_KEY_SIZE,
-                                  ge=settings.MIN_KEY_SIZE,
-                                  multiple_of=settings.MIN_KEY_SIZE
-                                  )
-                           ] = key_size_query,
-            request: Request = Body(...)):
+async def get_key(slave_SAE_ID: str = slave_sae_path,
+                  number: Optional[int] = number_query,
+                  size: Optional[conint(le=settings.MAX_KEY_SIZE,
+                                        ge=settings.MIN_KEY_SIZE,
+                                        multiple_of=settings.MIN_KEY_SIZE
+                                        )
+                                 ] = key_size_query,
+                  request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
-    # TODO: Query Vault for keys and construct key list
-    # key_con = calculator.generate_key_container(number=number,
-    #                                             size_bytes=bits2bytes(size),
-    #                                             request=request)
-    calculator.test_me(number=number, size_bytes=size, request=request)
-    # logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
-    # return key_con
-    key_con = schemas.KeyContainer(
-        keys=[
-            schemas.KeyPair(
-                key_ID="A_Key01234567890123456",
-                key="Nice_Key"
-            ),
-        ],
-        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
-    )
+    key_con = await request.app.state.vclient.\
+        fetch_keys(num_keys=number, key_size_bytes=bits2bytes(size))
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 
@@ -184,24 +170,14 @@ def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
 
 @router.post("/{slave_SAE_ID}/enc_keys",
              **response_model_settings_dict)
-def post_key(slave_SAE_ID: str = slave_sae_path,
-             key_req: models.KeyRequest = Body(...)):
+async def post_key(slave_SAE_ID: str = slave_sae_path,
+                   key_req: models.KeyRequest = Body(...),
+                   request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
-    # TODO: Query Vault for keys and construct key list
-    key_con = schemas.KeyContainer(
-        keys=[
-            schemas.KeyPair(
-                key_ID="A_Key_ID01234567890123456",
-                key="A_Key"
-            ),
-            schemas.KeyPair(
-                key_ID="B_Key_ID01234567890123456",
-                key="B_Key"
-            )
-        ],
-        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
-    )
+    key_con = await request.app.state.vclient.\
+        fetch_keys(num_keys=key_req.number,
+                   key_size_bytes=bits2bytes(key_req.size))
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 

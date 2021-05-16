@@ -25,7 +25,7 @@ from fastapi import FastAPI, Request
 
 from app.api.api_v1.api import api_router
 from app.core.config import logger, settings
-from app.vault.semaphore import VaultSemaphore
+from app.vault.manager import VaultManager
 from app.utils import client
 
 
@@ -46,7 +46,7 @@ def startup():
     while attempt_num < max_attempts:
         try:
             attempt_num += 1
-            app.state.vclient = VaultSemaphore()
+            app.state.vclient = VaultManager()
             break
         except hvac.exceptions.VaultDown as e:
             logger.error(f"Vault Instance remains sealed at startup: {e}")
