@@ -25,7 +25,7 @@ import hvac
 import pydantic
 import requests
 import time
-from typing import List
+from typing import Any, Dict, List
 import uuid
 
 from fastapi import HTTPException
@@ -59,10 +59,12 @@ class VaultClient:
         self.connection_loop(self.vault_tls_client_auth)
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
-            logger.error(f"Attempt at Client Authentication with Vault Instance {settings.VAULT_URI} has failed")
+            logger.error(f"Attempt at Client Authentication with Vault"
+                         f"Instance {settings.VAULT_URI} has failed")
             raise hvac.exceptions.Unauthorized("Reauthorization to Vault has failed.")
-        else:
-            logger.debug(f"Client authentication successful with Vault Instance at {settings.VAULT_URI}")
+
+        logger.debug(f"Client authentication successful with Vault"
+                     f"Instance at {settings.VAULT_URI}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
@@ -130,10 +132,12 @@ class VaultClient:
             self.connection_loop(self.vault_tls_client_auth)
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
-            logger.error(f"Attempt at Client Reauthentication with Vault Instance {settings.VAULT_URI} has failed")
+            logger.error(f"Attempt at Client Reauthentication with Vault"
+                         f"Instance {settings.VAULT_URI} has failed")
             raise hvac.exceptions.Unauthorized("Reauthorization to Vault has failed.")
-        else:
-            logger.debug(f"Client Reauthentication successful with Vault Instance at {settings.VAULT_URI}")
+
+        logger.debug(f"Client Reauthentication successful with Vault"
+                     f"Instance at {settings.VAULT_URI}")
 
     def vault_check_init(self) -> bool:
         """foo
@@ -150,270 +154,199 @@ class VaultClient:
         """
         return self.hvc.is_authenticated()
 
-    def vault_get_key_byte_counts(self, byte_amount: int = -1) -> int:
+    def vault_read_secret_version(self, filepath: str, mount_point: str):
         """foo
         """
-        total_bytes = 0
-        epoch_file_dict = dict()
-        epoch_file_list = self.vault_directory_get_epoch_file_list()
-        for epoch_filename in epoch_file_list:
-            epoch_file = self.vault_get_epoch_file(epoch_filename)
-            epoch_file_dict[epoch_filename] = epoch_file
-            total_bytes += epoch_file.num_bytes
-            if total_bytes > byte_amount and byte_amount != -1:
-                break
-
-        return epoch_file_dict, total_bytes
-
-    def vault_directory_get_epoch_file_list(self) -> List[str]:
-        """foo
-        """
-        mount_point = settings.VAULT_KV_ENDPOINT
-        qkey_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}"
+        secret_data = dict()
+        secret_version = -1
+        logger.debug(f"Attempt to query Vault secret version on "
+                     f"filepath: {filepath}; mount_point: {mount_point}")
         try:
-            epoch_file_list_response = \
-                self.hvc.secrets.kv.v2.list_secrets(path=qkey_path,
-                                                    mount_point=mount_point)
-        except hvac.exceptions.InvalidPath as e:
-            logger.error(f"No keying material found for Vault path: \"{qkey_path}\"; Exception: {e}")
-            raise \
-                HTTPException(status_code=400,
-                              detail="No keying material at Vault path "
-                                     f"'{qkey_path}' to satisfy "
-                                     f"current request"
-                              )
-
-        logger.debug("Vault epoch file list response:")
-        _dump_response(epoch_file_list_response, secret=False)
-        return epoch_file_list_response["data"]["keys"]
-
-    def vault_epoch_file_get_bytes(self, epoch_filename: str) -> int:
-        epoch_file = self.vault_epoch_file_get_epoch_file(epoch_filename)
-        return epoch_file.num_bytes
-
-    def vault_get_epoch_file(self, epoch_filename) -> schemas.EpochFile:
-        """foo
-        """
-        # TODO: need to handle locked scenario
-        # TODO: handle as number of epoch files increases
-        while True:
-            mount_point = settings.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
-                f"{epoch_filename}"
-            epoch_file_response = \
-                self.hvc.secrets.kv.v2.read_secret(path=epoch_path,
-                                                   mount_point=mount_point)
-            logger.debug(f"Vault epoch file \"{epoch_filename}\" bytes response:")
-            _dump_response(epoch_file_response, secret=True)
-            key = epoch_file_response["data"]["data"]["key"]
-            digest = epoch_file_response["data"]["data"]["digest"]
-            num_bytes = int(epoch_file_response["data"]["data"]["bytes"])
-            status = epoch_file_response["data"]["data"]["status"]
-            version = epoch_file_response["data"]["metadata"]["version"]
-            epoch_file_response = schemas.EpochFile(
-                key=key,
-                digest=digest,
-                num_bytes=num_bytes,
-                status=status,
-                version=version,
-                path=epoch_path
-            )
-            if status == "unlocked" or status == "consumed":
-                break
-
-        return epoch_file_response
-
-    @staticmethod
-    def compute_hmac_hexdigest(message: bytes, digestmod = hashlib.sha3_512) -> str:
-        """foo
-        """
-        mac = hmac.new(key=settings.DIGEST_KEY,
-                       digestmod=hashlib.sha3_512)
-        mac.update(message)
-        message_hexdigest = mac.hexdigest()
-        logger.debug(f"Hex Digest: {message_hexdigest}")
-
-        return message_hexdigest
-
-    @staticmethod
-    def write_hexdigest(hexdigest: str, filepath: str):
-        """foo
-        """
-        logger.debug(f"Writing hexdigest to filepath: {filepath}")
-        with open(filepath, "w") as f:
-            f.write(hexdigest)
-
-    @staticmethod
-    def read_hexdigest(filepath: str) -> str:
-        """foo
-        """
-        logger.debug(f"Reading hexdigest from filepath: {filepath}")
-        hexdigest = open(filepath, "r").read()
-        return hexdigest
-
-    @staticmethod
-    def check_key_hmac(raw_key: bytes, epoch_file: schemas.EpochFile):
-        """foo
-        """
-        is_key_intact = False
-        computed_key_hexdigest = VaultClient.compute_hmac_hexdigest(raw_key)
-        logger.debug(f"Computed Hex Digest: {computed_key_hexdigest}")
-        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                          f"{epoch_file.path.split('/')[-1]}.digest"
-        file_store_key_hexdigest = \
-            VaultClient.read_hexdigest(filepath=digest_filepath)
-        logger.debug(f"Filestore Hex Digest: {file_store_key_hexdigest}")
-        if (hmac.compare_digest(computed_key_hexdigest, epoch_file.digest) and
-                hmac.compare_digest(computed_key_hexdigest, file_store_key_hexdigest) and
-                epoch_file.num_bytes == len(raw_key)):
-            is_key_intact = True
-        return is_key_intact
-
-    @staticmethod
-    def decode_key_from_epoch_file(epoch_file: schemas.EpochFile):
-        """foo
-        """
-        return VaultClient.b64_decode_key(encoded_key=epoch_file.key)
-
-    @staticmethod
-    def b64_decode_key(encoded_key: bytes):
-        """foo
-        """
-        return base64.standard_b64decode((encoded_key.encode("UTF-8")))
-
-    @staticmethod
-    def b64_encode_key(raw_key: bytes):
-        """foo
-        """
-        return (base64.standard_b64encode(raw_key)).decode("UTF-8")
-
-    @staticmethod
-    def extract_key(epoch_file: schemas.EpochFile):
-        raw_key = VaultClient.decode_key_from_epoch_file(epoch_file=epoch_file)
-        if not VaultClient.check_key_hmac(raw_key=raw_key,
-                                          epoch_file=epoch_file):
-            raise \
-                HTTPException(status_code=503,
-                              detail="Key HMACs are inconsistent for epoch "
-                                     f"file: {epoch_file.path.split('/')[-1]}"
-                              )
-        return raw_key
-
-    @staticmethod
-    def compute_status(num_bytes: int):
-        """foo
-        """
-        status = "unlocked"
-        if num_bytes == 0:
-            status = "consumed"
-        return status
-
-    def vault_commit_secret(self, epoch_file: schemas.EpochFile):
-        """foo
-        """
-        digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                          f"{epoch_file.path.split('/')[-1]}.digest"
-        VaultClient.write_hexdigest(epoch_file.digest, digest_filepath)
-        # Attempt to update Vault
-        mount_point = settings.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
-            f"{epoch_file.path.split('/')[-1]}"
-        secret_dict = {
-            "key": epoch_file.key,
-            "digest": epoch_file.digest,
-            "bytes": str(epoch_file.num_bytes),
-            "status": epoch_file.status
-        }
-        epoch_file_response = \
-            self.hvc.secrets.kv.v2.create_or_update_secret(path=epoch_path,
-                                                           secret=secret_dict,
-                                                           cas=epoch_file.version,
-                                                           mount_point=mount_point)
-        logger.debug(f"Vault epoch file \"{epoch_file.path.split('/')[-1]}\" update response:")
-        _dump_response(epoch_file_response, secret=True)
-
-    def vault_get_key(self, size_bytes: int):
-        """foo
-        """
-        key_id_input_str = ""
-        key_buffer = bytes()
-        epoch_file_dict, total_bytes = self.vault_get_key_byte_counts(byte_amount=size_bytes)
-        epoch_filename_list = \
-            sorted([epoch_filename for epoch_filename, epoch_file in epoch_file_dict.items()])
-        logger.debug("Epoch Filename List:")
-        _dump_response(epoch_filename_list, secret=False)
-        # Exclude the last epoch_filename; handle separately below
-        for epoch_filename in epoch_filename_list[:-1] or []:
-            epoch_file = epoch_file_dict[epoch_filename]
-            key_id_input_str += epoch_file.path + str(epoch_file.num_bytes)
-            logger.debug(f"Vault Epoch File \"{epoch_filename}\" Num Bytes: {epoch_file.num_bytes}")
-            key_buffer += VaultClient.extract_key(epoch_file=epoch_file)
-
-        # Add only from the end of the last epoch_file
-        epoch_filename = epoch_filename_list[-1]
-        epoch_file = epoch_file_dict[epoch_filename]
-        remaining_bytes: int = size_bytes - len(key_buffer)
-        key_id_input_str += epoch_file.path + str(remaining_bytes) + str(len(epoch_file.key))
-        logger.debug(f"Remaining Num Bytes: {remaining_bytes}")
-        logger.debug(f"Vault Epoch File \"{epoch_filename}\" Num Bytes: {epoch_file.num_bytes}")
-        logger.debug(f"Key ID Input String: {key_id_input_str}")
-        raw_key = VaultClient.extract_key(epoch_file=epoch_file)
-        # Take bytes from the end of the raw key
-        key_buffer += raw_key[-remaining_bytes:]
-
-        # All the raw materials are gathered...we are ready
-        key_id = str(uuid.uuid5(namespace=uuid.NAMESPACE_URL,
-                                name=key_id_input_str))
-        key = VaultClient.b64_encode_key(raw_key=key_buffer)
-
-        # What is left comes from the beginning of the raw key
-        remaining_key = raw_key[:-remaining_bytes]
-        remaining_key_hexdigest = VaultClient.compute_hmac_hexdigest(remaining_key)
-        updated_epoch_file = schemas.EpochFile(
-            key=VaultClient.b64_encode_key(raw_key=remaining_key),
-            digest=remaining_key_hexdigest,
-            num_bytes=len(remaining_key),
-            status=VaultClient.compute_status(len(remaining_key)),
-            version=epoch_file.version,
-            path=epoch_file.path
-        )
-        self.vault_commit_secret(epoch_file=updated_epoch_file)
-        consumed_epoch_filename_list = epoch_filename_list[:-1]
-        # All keys have been consumed; delete the last epoch file
-        if len(raw_key) == 0:
-            consumed_epoch_filename_list = epoch_filename_list
-        # Iterate through the consumed files and delete them
-        for epoch_filename in consumed_epoch_filename_list or []:
-            epoch_file = epoch_file_dict[epoch_filename]
-            # Write out a hexdigest of an empty byte string
-            new_key = bytes()
-            new_key_hexdigest = VaultClient.compute_hmac_hexdigest(message=new_key)
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
-                              f"{epoch_filename}.digest"
-            VaultClient.write_hexdigest(hexdigest=new_key_hexdigest,
-                                        filepath=digest_filepath)
-            mount_point = settings.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
-                f"{epoch_filename}"
-            epoch_file_response = \
+            data_response = \
                 self.hvc.secrets.kv.v2.\
-                delete_metadata_and_all_versions(path=epoch_path,
-                                                 mount_point=mount_point)
-            logger.debug(f"Vault epoch file \"{epoch_filename}\" delete response:")
-            _dump_response(epoch_file_response, secret=True)
+                read_secret_version(path=filepath,
+                                    version=None,   # Latest version returned
+                                    mount_point=mount_point)
+        except hvac.exceptions.InvalidPath:
+            logger.debug("There is no secret yet at filepath: "
+                         f"{filepath}; mount_point: {mount_point}")
+            secret_version = 0
+        else:
+            logger.debug(f"filepath: {filepath} version response:")
+            _dump_response(data_response, secret=False)
+            current_version = int(data_response["data"]["metadata"]["version"])
+            logger.debug(f"Current Version: {current_version}")
+            secret_version = current_version
+            secret_data = data_response["data"]["data"]
 
-        # We couldn't gather enough keying material
-        if len(key_buffer) < size_bytes:
-            logger.error("Not enough keying material to satisfy request.")
+        return secret_version, secret_data
+
+    def vault_commit_secret(self, path: str, secret: Dict[str, Any],
+                            version: int, mount_point: str):
+        """foo
+        """
+        cas_error = True
+        try:
+            qkey_response = \
+                self.hvc.secrets.kv.v2.\
+                create_or_update_secret(path=path,
+                                        secret=secret,
+                                        cas=version,
+                                        mount_point=mount_point)
+            logger.debug(f"Vault write \"{path}\" response:")
+            _dump_response(qkey_response, secret=False)
+            cas_error = False
+        except hvac.exceptions.InvalidRequest as e:
+            # Possible but unlikely
+            if "check-and-set parameter did not match the current version" in str(e):
+                logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
+            # Unexpected error has occurred; re-raise it
+            else:
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Uexpected Error: {e}"
+                                  )
+
+        return cas_error
+
+    @staticmethod
+    def check_byte_counts(data_index: Dict[str, Any], requested_num_bytes: int):
+        """foo
+        """
+        current_byte_count = 0
+        epoch_dict = dict()
+        for epoch, worker_uid_or_num_bytes in sorted(data_index.items()):
+            # This epoch file is free and displaying number of bytes for consuming
+            # Worker UIDs should be strings
+            if isinstance(worker_uid_or_num_bytes, int):
+                num_bytes = worker_uid_or_num_bytes
+                epoch_dict[epoch] = num_bytes
+                current_byte_count += num_bytes
+            if current_byte_count >= requested_num_bytes:
+                break
+        # We have iterated through all epoch files and not
+        # found enough bytes for the request
+        else:
+            logger.error("Not enough keying material "
+                         f"({current_byte_count} bytes) to satisfy "
+                         f"request of {requested_num_bytes} bytes"
+                         )
             raise \
                 HTTPException(status_code=400,
                               detail="Not enough keying material "
-                                     f"({len(key_buffer)} bytes) to satisfy "
-                                     f"request of {size_bytes} bytes"
+                                     f"({current_byte_count} bytes) to satisfy "
+                                     f"request of {requested_num_bytes} bytes"
                               )
 
-        return schemas.KeyPair(key_ID=key_id, key=key)
+        return epoch_dict
+
+    @staticmethod
+    def construct_claimed_status(data_index: Dict[str, Any], epoch_dict: Dict[str, int]):
+        """foo
+        """
+        worker_uid = str(uuid.uuid4())
+        for epoch, num_bytes in epoch_dict.items():
+            if epoch in data_index:
+                if data_index[epoch] == num_bytes:
+                    data_index[epoch] = worker_uid
+                else:
+                    # Should not be here if no other worker has modified this entry
+                    logger.error(f"Unexpected modified epoch in data index: {epoch}; "
+                                 f"Expected num_bytes: {num_bytes}; Got: {data_index[epoch]}")
+                    raise \
+                        HTTPException(status_code=503,
+                                      detail=f"Unexpected modified epoch in data index: {epoch}; "
+                                      f"Expected num_bytes: {num_bytes}; Got: {data_index[epoch]}"
+                                      )
+            else:
+                # Should not be here if epoch_dict was generated off data_index
+                logger.error(f"Unexpected missing epoch in data index: {epoch}")
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Unexpected missing epoch in data index: {epoch}"
+                                  )
+
+        return worker_uid, data_index
+
+    @staticmethod
+    def construct_released_status(data_index: Dict[str, Any], worker_uid: str,
+                                  epoch_dict: Dict[str, int]):
+        """foo
+        """
+        for epoch, num_bytes in epoch_dict.items():
+            if epoch in data_index:
+                if data_index[epoch] == worker_uid:
+                    data_index[epoch] = num_bytes
+                else:
+                    # Should not be here if no other worker has modified this entry
+                    logger.error(f"Unexpected modified epoch in data index: {epoch}; "
+                                 f"Expected worker_uid: {worker_uid}; Got: {data_index[epoch]}")
+                    raise \
+                        HTTPException(status_code=503,
+                                      detail=f"Unexpected modfied epoch in data index: {epoch}; "
+                                             f"Expected worker_uid: {worker_uid}; Got: {data_index[epoch]}"
+                                      )
+            else:
+                # Should not be here if epoch_dict was generated off data_index
+                logger.error(f"Unexpected missing epoch in data index: {epoch}")
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Unexpected missing epoch in data index: {epoch}"
+                                  )
+
+        return data_index
+
+    def vault_claim_epoch_files(self, requested_num_bytes: int):
+        """foo
+        """
+        cas_error = True
+        while cas_error:
+            # First, attempt to read status endpoint
+            mount_point = settings.VAULT_KV_ENDPOINT
+            status_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                "status"
+            status_version, status_data = \
+                self.vault_read_secret_version(filepath=status_path,
+                                               mount_point=mount_point
+                                               )
+            # Next, determine if enough keying material is currently free to
+            # fulfill requested_num_bytes
+            epoch_dict = VaultClient.\
+                check_byte_counts(data_index=status_data,
+                                  requested_num_bytes=requested_num_bytes)
+            # Build the updated version of the secret to be committed
+            worker_uid, updated_status_data = VaultClient.\
+                construct_claimed_status(data_index=status_data,
+                                         epoch_dict=epoch_dict)
+            # Commit the status back to Vault to claim the epoch_dict
+            cas_error = self.\
+                vault_commit_secret(path=status_path, secret=updated_status_data,
+                                    version=status_version, mount_point=mount_point)
+
+        return worker_uid, epoch_dict
+
+    def vault_release_epoch_files(self, worker_uid: str,
+                                  epoch_dict: Dict[str, int]):
+        """foo
+        """
+        cas_error = True
+        while cas_error:
+            # First, attempt to read status endpoint
+            mount_point = settings.VAULT_KV_ENDPOINT
+            status_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                "status"
+            status_version, status_data = \
+                self.vault_read_secret_version(filepath=status_path,
+                                               mount_point=mount_point
+                                               )
+            # Build the updated version of the secret to be committed
+            updated_status_data = VaultClient.\
+                construct_released_status(data_index=status_data,
+                                          worker_uid=worker_uid,
+                                          epoch_dict=epoch_dict)
+            # Commit the status back to Vault to release the epoch_dict
+            cas_error = self.\
+                vault_commit_secret(path=status_path, secret=updated_status_data,
+                                    version=status_version, mount_point=mount_point)

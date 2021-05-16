@@ -134,9 +134,21 @@ def get_key(slave_SAE_ID: str = slave_sae_path,
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
     # TODO: Query Vault for keys and construct key list
-    key_con = calculator.generate_key_container(number=number,
-                                                size_bytes=bits2bytes(size),
-                                                request=request)
+    # key_con = calculator.generate_key_container(number=number,
+    #                                             size_bytes=bits2bytes(size),
+    #                                             request=request)
+    calculator.test_me(number=number, size_bytes=size, request=request)
+    # logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    # return key_con
+    key_con = schemas.KeyContainer(
+        keys=[
+            schemas.KeyPair(
+                key_ID="A_Key01234567890123456",
+                key="Nice_Key"
+            ),
+        ],
+        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
+    )
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 
