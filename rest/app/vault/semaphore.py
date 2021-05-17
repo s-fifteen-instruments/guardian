@@ -159,7 +159,10 @@ class VaultSemaphore(VaultClient):
         for epoch, num_bytes in epoch_dict.items():
             if epoch in data_index:
                 if data_index[epoch] == worker_uid:
-                    data_index[epoch] = num_bytes
+                    if num_bytes > 0:
+                        data_index[epoch] = num_bytes
+                    else:
+                        del data_index[epoch]
                 else:
                     # Should not be here if no other worker has modified this entry
                     logger.error(f"Unexpected modified epoch in data index: {epoch}; "

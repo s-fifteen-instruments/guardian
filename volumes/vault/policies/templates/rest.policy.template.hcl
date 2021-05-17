@@ -7,7 +7,7 @@ path "<<<KV_MOUNT_POINT>>>/data/<<<QKDE_ID>>>/<<<QCHANNEL_ID>>>/*" {
 
 # Allow client to read list epoch file paths and delete associated data
 path "<<<KV_MOUNT_POINT>>>/metadata/<<<QKDE_ID>>>/<<<QCHANNEL_ID>>>/*" {
-    capabilities = ["delete"]
+    capabilities = ["read", "delete"]
 }
 
 path "auth/token/renew" {

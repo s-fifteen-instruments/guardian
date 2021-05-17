@@ -23,6 +23,7 @@ import asyncio
 import base64
 import hashlib
 import hmac
+import hvac
 from typing import Dict, List, Tuple
 import uuid
 
@@ -42,35 +43,124 @@ class VaultManager(VaultSemaphore):
         """
         super().__init__()
 
-#     async def fetch_multiple_keys(self, num_keys: int, key_size_bytes: int):
-#         """foo
-#         """
-#         task_list = list()
-#         for index in range(num_keys):
-#             task_list.append(self.fetch_one_key(key_size_bytes=key_size_bytes))
-#
-#         return schemas.KeyContainer(keys=list(await asyncio.gather(*task_list)))
-
     async def fetch_keys(self, num_keys: int, key_size_bytes: int):
         """Critical Region
         """
         # Critical Start
-        worker_uid, epoch_dict = \
+        worker_uid, epoch_status_dict = \
             self.vault_claim_epoch_files(requested_num_bytes=(num_keys * key_size_bytes))
 
         sorted_epoch_file_list = await \
-            self.fetch_keying_material(epoch_dict=epoch_dict)
+            self.fetch_keying_material(epoch_dict=epoch_status_dict)
 
         key_con, updated_epoch_file_list = await self.\
             build_key_container(num_keys=num_keys,
                                 key_size_bytes=key_size_bytes,
                                 sorted_epoch_file_list=sorted_epoch_file_list)
 
+        updated_epoch_status_dict = dict()
+        fully_consumed_epoch_list = list()
+        partially_consumed_epoch_dict = dict()
+        for epoch, num_bytes in epoch_status_dict.items():
+            for epoch_file in updated_epoch_file_list:
+                if epoch == epoch_file.epoch:
+                    updated_epoch_status_dict[epoch] = epoch_file.num_bytes
+                    if epoch_file.num_bytes == 0:
+                        fully_consumed_epoch_list.append(epoch)
+                    else:
+                        partially_consumed_epoch_dict[epoch] = epoch_file
+                    break
+
+        task_list = list()
+        for epoch in fully_consumed_epoch_list:
+            task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
+        for epoch, epoch_file in partially_consumed_epoch_dict.items():
+            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+
+        await asyncio.gather(*task_list)
+
         # Critical End
         self.vault_release_epoch_files(worker_uid=worker_uid,
-                                       epoch_dict=epoch_dict)
+                                       epoch_dict=updated_epoch_status_dict)
 
         return key_con
+
+    async def vault_update_epoch_file(self, epoch_file: schemas.EpochFile):
+        """foo
+        """
+        cas_error = True
+        while cas_error:
+            cas_error = await self.vault_update_secret(epoch_file=epoch_file)
+
+    async def vault_update_secret(self, epoch_file: schemas.EpochFile) -> bool:
+        """foo
+        """
+        cas_error = True
+        try:
+            mount_point = settings.VAULT_KV_ENDPOINT
+            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                f"{epoch_file.epoch}"
+
+            epoch_file_metadata_response = \
+                self.hvc.secrets.kv.v2.read_secret_metadata(path=epoch_path,
+                                                            mount_point=mount_point)
+            logger.debug(f"Vault epoch file \"{epoch_file.epoch}\" metadata response:")
+            _dump_response(epoch_file_metadata_response, secret=False)
+            current_version = epoch_file_metadata_response["data"]["current_version"]
+            if current_version != epoch_file.version:
+                logger.error(f"Unexpected Epoch File Version: {epoch_file.epoch}; "
+                             f"Stored Version: {epoch_file.version}; "
+                             f"Current Version: {current_version}"
+                             )
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Unexpected Epoch File Version: {epoch_file.epoch}; "
+                                         f"Stored Version: {epoch_file.version}; "
+                                         f"Current Version: {current_version}"
+                                  )
+
+            secret_dict = {
+                "key": await VaultManager.b64_encode_key(epoch_file.key),
+                "digest": epoch_file.digest,
+                "bytes": str(epoch_file.num_bytes),
+                "epoch": epoch_file.epoch
+            }
+            epoch_file_response = self.hvc.secrets.kv.v2.\
+                create_or_update_secret(path=epoch_path,
+                                        secret=secret_dict,
+                                        cas=epoch_file.version,
+                                        mount_point=mount_point
+                                        )
+            logger.debug(f"Vault epoch file \"{epoch_file.epoch}\" update response:")
+            _dump_response(epoch_file_response, secret=True)
+            cas_error = False
+        except hvac.exceptions.InvalidRequest as e:
+            # Possible but unlikely
+            if "check-and-set parameter did not match the current version" in str(e):
+                logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
+            # Unexpected error has occurred; re-raise it
+            else:
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Uexpected Error: {e}"
+                                  )
+
+        return cas_error
+
+    async def vault_destroy_epoch_file(self, epoch: str):
+        """foo
+        """
+        mount_point = settings.VAULT_KV_ENDPOINT
+        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
+            f"{settings.VAULT_QCHANNEL_ID}/" \
+            f"{epoch}"
+        epoch_file_response = \
+            self.hvc.secrets.kv.v2.\
+            delete_metadata_and_all_versions(path=epoch_path,
+                                             mount_point=mount_point)
+        logger.debug(f"Vault epoch file \"{epoch}\" delete response:")
+        _dump_response(epoch_file_response, secret=True)
 
     async def build_key_pair(self,
                              key_size_bytes: int,
