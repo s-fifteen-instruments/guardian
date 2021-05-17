@@ -25,6 +25,7 @@ ENV HOME=/root
 VOLUME ${HOME}/code/qsim/epoch_files
 
 COPY ["./qsim/", "${HOME}/code/qsim/"]
+COPY ["./rnd.c.patch", "${HOME}/code/rnd.c.patch"]
 
 # Ensure basic packages are installed for building and running qsim
 # Minor sed fixes for testing
@@ -52,6 +53,8 @@ RUN apk update --no-cache \
     && sed -i "s#/\* i f (\!inbytesread) break;  end of file reached \*/#if (\!inbytesread) break; /* end of file reached */#g" chopper.c \
     && make CC=${CC} \
     && cd ../errorcorrection \
+    && mv ${HOME}/code/rnd.c.patch ./ \
+    && patch rnd.c < ./rnd.c.patch \
     && make CC=${CC} \
     && cd ${HOME}/code/qsim
     # Leave building qsim for docker-compose

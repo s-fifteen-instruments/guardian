@@ -19,9 +19,9 @@
 #
 #
 set -x
-
+echo $PATH
 pgrep -f docker > /dev/null || { echo "No active docker daemon; Please start docker before continuing."; exit 1; }
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker-compose >/dev/null 2>&1; then
     echo "The 'docker-compose' command could not be found; Please ensure it is available before continuing."
     exit 1
 fi
