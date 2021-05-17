@@ -53,6 +53,7 @@ class VaultClient:
     MAX_CONN_ATTEMPTS: int = 10
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 64.0  # seconds
+    TIME_WINDOW: float = 30.0  # seconds
 
     def __init__(self) -> None:
         """foo
@@ -75,7 +76,7 @@ class VaultClient:
             "label": "unsealer=watch",
             "image": "vault"
         }
-        since = datetime.datetime.now()
+        since = datetime.datetime.now() - datetime.timedelta(seconds=VaultClient.TIME_WINDOW)
         logger.info("Waiting for Vault instance start or restart events...")
         while not self.KILL_NOW:
             time.sleep(1)

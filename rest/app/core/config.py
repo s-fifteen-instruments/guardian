@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     VAULT_BACKOFF_MAX: float = 8.0
     VAULT_CLIENT_CERT_FILEPATH: str = "/certificates/rest/rest.ca-chain.cert.pem"
     VAULT_CLIENT_KEY_FILEPATH: str = "/certificates/rest/rest.key.pem"
-    VAULT_MAX_CONN_ATTEMPTS: int = 3
+    VAULT_MAX_CONN_ATTEMPTS: int = 10
     VAULT_SERVER_CERT_FILEPATH: str = "/certificates/vault/vault.ca-chain.cert.pem"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
     VAULT_URI: str = "https://vault:8200"
