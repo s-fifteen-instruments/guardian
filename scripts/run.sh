@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 #
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
