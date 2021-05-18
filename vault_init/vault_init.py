@@ -556,6 +556,10 @@ class vaultClient:
         # Enforce check-and-set versioning
         cas_required = True
         logger.debug(f"Attempt to configure secrets engine mount_point: \"{mount_point}\"")
+        # TODO: Vault sometimes returns a 400 status as it is "upgrading to KV V2.
+        # Need to make this retry if there is a failure:
+        # hvac.exceptions.InvalidRequest: Upgrading from non-versioned to versioned data. This backend will be unavailable for a brief period and will resume service shortly., on post https://vault:8200/v1/QKEYS/config
+        time.sleep(3)
         set_config_response = \
             self.vclient.secrets.kv.v2.\
             configure(mount_point=mount_point, cas_required=cas_required)
