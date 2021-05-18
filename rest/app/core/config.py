@@ -114,12 +114,13 @@ class Settings(BaseSettings):
     VALID_IP_ADDRESS_REGEX: str = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
+    VAULT_NAME: str = "vault"
     VAULT_CLIENT_CERT_FILEPATH: str = "/certificates/rest/rest.ca-chain.cert.pem"
     VAULT_CLIENT_KEY_FILEPATH: str = "/certificates/rest/rest.key.pem"
     VAULT_MAX_CONN_ATTEMPTS: int = 10
-    VAULT_SERVER_CERT_FILEPATH: str = "/certificates/vault/vault.ca-chain.cert.pem"
+    VAULT_SERVER_CERT_FILEPATH: str = f"/certificates/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
-    VAULT_URI: str = "https://vault:8200"
+    VAULT_URI: str = f"https://{VAULT_NAME}:8200"
     VAULT_KV_ENDPOINT: str = "QKEYS"
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"

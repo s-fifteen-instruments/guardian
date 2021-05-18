@@ -18,18 +18,44 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+if [ "${1}" != "kme1" ] && [ "${1}" != "kme2" ] && [ "${1}" != "both" ]; then
+  echo "Expecting \"kme1\", \"kme2\", or \"both\" as the first argument."
+  echo "Received ${1}. Exiting ..."
+  exit -1
+fi
 # Run as root
 set -x
 rm -f  ./scripts/.initialized
-rm -rf /volumes/certificates/production/vault
-rm -rf /volumes/certificates/production/vault_init
-rm -rf /volumes/certificates/production/rest
-rm -rf /volumes/certificates/production/watcher
-rm -rf /volumes/certificates/production/admin
-rm -rf /volumes/certificates/generation/root
-rm -rf /volumes/vault/data/file
-rm -f  /volumes/vault/logs/audit.log
-rm -f  /volumes/vault/policies/watcher.policy.hcl
-rm -f  /volumes/vault/policies/rest.policy.hcl
-rm -rf /volumes/qkd/epoch_files/*
-rm -rf /volumes/qkd/digest_files/*
+
+if [ "${1}" == "kme1" ] || [ "${1}" == "both" ]; then
+
+  rm -rf /volumes/kme1/certificates/production/vault
+  rm -rf /volumes/kme1/certificates/production/vault_init
+  rm -rf /volumes/kme1/certificates/production/rest
+  rm -rf /volumes/kme1/certificates/production/watcher
+  rm -rf /volumes/kme1/certificates/production/admin
+  rm -rf /volumes/kme1/certificates/generation/root
+  rm -rf /volumes/kme1/vault/data/file
+  rm -f  /volumes/kme1/vault/logs/audit.log
+  rm -f  /volumes/kme1/vault/policies/watcher.policy.hcl
+  rm -f  /volumes/kme1/vault/policies/rest.policy.hcl
+  rm -rf /volumes/kme1/qkd/epoch_files/*
+  rm -rf /volumes/kme1/qkd/digest_files/*
+
+fi
+if [ "${1}" == "kme2" ] || [ "${1}" == "both" ]; then
+
+  rm -rf /volumes/kme2/certificates/production/vault
+  rm -rf /volumes/kme2/certificates/production/vault_init
+  rm -rf /volumes/kme2/certificates/production/rest
+  rm -rf /volumes/kme2/certificates/production/watcher
+  rm -rf /volumes/kme2/certificates/production/admin
+  rm -rf /volumes/kme2/certificates/generation/root
+  rm -rf /volumes/kme2/vault/data/file
+  rm -f  /volumes/kme2/vault/logs/audit.log
+  rm -f  /volumes/kme2/vault/policies/watcher.policy.hcl
+  rm -f  /volumes/kme2/vault/policies/rest.policy.hcl
+  rm -rf /volumes/kme2/qkd/epoch_files/*
+  rm -rf /volumes/kme2/qkd/digest_files/*
+
+fi

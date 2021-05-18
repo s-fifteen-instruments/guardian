@@ -42,7 +42,9 @@ keys:
 
 cycle: clean rest log
 
-.PHONY: clean
+.PHONY: clean allclean
+allclean: export KME = both
+allclean: clean
 clean: down
-	sudo $(SCRIPTS)/clean.sh
+	sudo $(SCRIPTS)/clean.sh $(KME)
 

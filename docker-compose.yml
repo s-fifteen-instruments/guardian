@@ -26,12 +26,12 @@ services:
       - MAX_WORKERS=8
       - WEB_CONCURRENCY=1
       - GUNICORN_CMD_ARGS="--reload-delay 5"
-      - DIGEST_FILES_DIRPATH=/digest_files/${KME:-kme1}
+      - DIGEST_FILES_DIRPATH=/digest_files/${KME:-SETME}
     volumes:
       # Mount a volume that stores the TLS certificates
-      - /volumes/certificates/production:/certificates
+      - /volumes/${KME:-SETME}/certificates/production:/certificates
       # Mount a volume that stores the hex digest files of QKD keys
-      - /volumes/qkd/digest_files:/digest_files
+      - /volumes/${KME:-SETME}/qkd/digest_files:/digest_files
     labels:
       # Enable Traefik for this specific "backend" service
       - traefik.enable=true
@@ -70,13 +70,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - /volumes/vault/config:/vault/config
+      - /volumes/${KME:-SETME}/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - /volumes/vault/data:/vault/data
+      - /volumes/${KME:-SETME}/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - /volumes/vault/logs:/vault/logs
+      - /volumes/${KME:-SETME}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - /volumes/certificates/production:/certificates
+      - /volumes/${KME:-SETME}/certificates/production:/certificates
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -100,7 +100,7 @@ services:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/certificates/production:/certificates
+      - /volumes/${KME:-SETME}/certificates/production:/certificates
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
@@ -121,11 +121,11 @@ services:
       # Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/certificates/production:/certificates
+      - /volumes/${KME:-SETME}/certificates/production:/certificates
       # Mount the configuration directory
-      - /volumes/traefik/configuration:/etc/traefik
+      - /volumes/${KME:-SETME}/traefik/configuration:/etc/traefik
       # Mount the log directory
-      - /volumes/traefik/logs:/var/log/traefik
+      - /volumes/${KME:-SETME}/traefik/logs:/var/log/traefik
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS

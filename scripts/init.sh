@@ -34,7 +34,7 @@ if [ -f "${DIRPATH}/.initialized" ]; then
   exit 0
 fi
 
-export CONFIG_FILE="docker-compose.${KME}.init.yml"
+export CONFIG_FILE="docker-compose.init.yml"
 export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
 export LOG="docker-compose -f \${CONFIG_FILE} logs \${F} \${S} || { echo \"\${S} logs failed\" ; exit 1; } "
 export DOWN="docker-compose -f \${CONFIG_FILE} down || { echo \"\${S} down failed\" ; exit 1; } "
@@ -60,10 +60,10 @@ elif [ "${KME}" = "kme2" ]; then
   
   S=vault              WAIT=1 F=   eval ${STARTUP}
   S=vault_init         WAIT=0 F=-f eval ${STARTUP}
-  S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-  S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
-  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-  S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
+  # S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
+  # S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
+  # S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  # S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
 else

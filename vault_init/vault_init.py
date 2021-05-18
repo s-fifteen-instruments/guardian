@@ -37,19 +37,22 @@ logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 class vaultClient:
     """foo
     """
-    VAULT_URI: str = "https://vault:8200"
+    VAULT_NAME: str = "vault"
+    VAULT_URI: str = f"https://{VAULT_NAME}:8200"
     CERT_DIRPATH: str = "/certificates/production"
     ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
     POLICIES_DIRPATH: str = "/vault/policies"
-    VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/vault/SECRETS"
-    CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.ca-chain.cert.pem"
-    CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault_init.key.pem"
-    SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/vault.ca-chain.cert.pem"
-    PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.csr.pem"
-    PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/vault_init/pki_int.ca-chain.cert.pem"
+    LOG_DIRPATH: str = "/vault/logs"
+    VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/{VAULT_NAME}/SECRETS"
+    VAULT_INIT_NAME: str = "vault_init"
     CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
     KEY_SUFFIX: str = ".key.pem"
-    LOG_DIRPATH: str = "/vault/logs"
+    CSR_SUFFIX: str = ".csr.pem"
+    CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_INIT_NAME}{CA_CHAIN_SUFFIX}"
+    CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_INIT_NAME}{KEY_SUFFIX}"
+    SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_NAME}{CA_CHAIN_SUFFIX}"
+    PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
+    PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     MAX_CONN_ATTEMPTS: int = 10
@@ -376,8 +379,8 @@ class vaultClient:
         logger.debug("Intermediate CA cert response:")
         self._dump_response(self.set_int_ca_cert_response.ok, secret=False)
         params_dict = {
-            "issuing_certificates": f"https://vault:8200/v1/{mount_point}/ca",
-            "crl_distribution_points": f"https://vault:8200/v1/{mount_point}/crl",
+            "issuing_certificates": f"{vaultClient.VAULT_URI}/v1/{mount_point}/ca",
+            "crl_distribution_points": f"{vaultClient.VAULT_URI}/v1/{mount_point}/crl",
             "ocsp_servers": ""
         }
         logger.debug("Attempting to set intermediate CA URLs")
