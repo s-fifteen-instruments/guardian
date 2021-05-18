@@ -49,6 +49,7 @@ ctest: clean link
 	/usr/bin/time -v ./run_splicer
 	/usr/bin/time -v ./run_ec
 	/usr/bin/time -v ./run_copy hec
+	/usr/bin/time -v ./run_copy lec
 
 .PHONY: clean allclean distclean
 clean:

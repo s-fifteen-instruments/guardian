@@ -34,4 +34,5 @@ sigint() {
 }
 
 set -x
-docker-compose logs -f "${@}"
+export CONFIG_FILE="docker-compose.${KME}.yml"
+docker-compose -f ${CONFIG_FILE} logs -f "${@}"

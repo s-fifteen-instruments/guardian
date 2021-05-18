@@ -23,4 +23,14 @@ set -x
 
 source config
 
-cp -a ${data_dir}/finalkey.${count_type}/* ./epoch_files
+if [ "${count_type}" = "hec" ]; then
+  export out_dir=kme1
+elif [ "${count_type}" = "lec" ]; then
+  export out_dir=kme2
+else
+  echo "Unknown count_type: ${count_type}; exiting..."
+  exit -1
+fi
+
+mkdir -p ./epoch_files/${out_dir}/
+cp -a ${data_dir}/finalkey.${count_type}/* ./epoch_files/${out_dir}/

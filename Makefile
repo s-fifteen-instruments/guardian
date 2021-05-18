@@ -19,6 +19,11 @@
 #
 SCRIPTS := ./scripts
 SERVICES := rest
+export KME ?= kme1
+$(info )
+$(info Using KME configuration: '$(KME)')
+$(info Use the command-line syntax, e.g. 'KME=kme2' to change)
+$(info )
 
 rest: init
 	$(SCRIPTS)/run.sh

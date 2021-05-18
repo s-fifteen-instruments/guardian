@@ -27,7 +27,7 @@ DIRPATH=$(dirname "${FILEPATH}")
 # Check for docker daemon and docker-compose
 . "${DIRPATH}/docker_check.sh"
 
-export CONFIG_FILE="docker-compose.init.yml"
+export CONFIG_FILE="docker-compose.${KME}.init.yml"
 export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
 export LOG="docker-compose -f \${CONFIG_FILE} logs \${F} \${S} || { echo \"\${S} logs failed\" ; exit 1; } "
 export STOP="docker-compose -f \${CONFIG_FILE} stop \${S} || { echo \"\${S} stop failed\" ; exit 1; } "

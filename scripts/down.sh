@@ -34,4 +34,5 @@ sigint() {
 }
 
 set -x
-docker-compose down --remove-orphans
+export CONFIG_FILE="docker-compose.${KME}.yml"
+docker-compose -f ${CONFIG_FILE} down --remove-orphans

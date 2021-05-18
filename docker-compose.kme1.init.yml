@@ -32,7 +32,7 @@ services:
     networks:
       - internal-private
     volumes:
-      - ./volumes/certificates:/certificates
+      - /volumes/certificates:/certificates
       - ./certauth/SECRETS:/SECRETS
 
   certauth_csr:
@@ -51,13 +51,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - ./volumes/vault/config:/vault/config
+      - /volumes/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - ./volumes/vault/data:/vault/data
+      - /volumes/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - ./volumes/vault/logs:/vault/logs
+      - /volumes/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - ./volumes/certificates/production:/certificates
+      - /volumes/certificates/production:/certificates
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -84,8 +84,8 @@ services:
     networks:
       - internal-private
     volumes:
-      - ./volumes/certificates:/certificates
-      - ./volumes/vault/policies:/vault/policies
+      - /volumes/certificates:/certificates
+      - /volumes/vault/policies:/vault/policies
 
   vault_init_phase_2:
     <<: *vault_init_label
@@ -104,7 +104,7 @@ services:
     networks:
       - internal-private
     volumes:
-      - ./volumes/qkd/epoch_files:/root/code/qsim/epoch_files
+      - /volumes/qkd/epoch_files:/root/code/qsim/epoch_files
 
   notifier:
     build: ./notifier
@@ -115,10 +115,12 @@ services:
     networks:
       - internal-private
     volumes:
-      - ./volumes/qkd/epoch_files:/epoch_files
+      - /volumes/qkd/epoch_files/${KME:-kme1}:/epoch_files
   
   watcher:
     build: ./watcher
+    environment:
+      - DIGEST_FILES_DIRPATH=/digest_files/${KME:-kme1}
     command: ["watcher.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -126,9 +128,9 @@ services:
     networks:
       - internal-private
     volumes:
-      - ./volumes/qkd/epoch_files:/epoch_files
-      - ./volumes/qkd/digest_files:/digest_files
-      - ./volumes/certificates:/certificates
+      - /volumes/qkd/epoch_files/${KME:-kme1}:/epoch_files
+      - /volumes/qkd/digest_files:/digest_files
+      - /volumes/certificates:/certificates
 
 
 networks:

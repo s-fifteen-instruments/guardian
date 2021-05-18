@@ -20,7 +20,9 @@
 
 import json
 from pydantic import BaseSettings
+from pydantic.env_settings import SettingsSourceCallable
 from math import ceil
+from typing import Tuple
 
 import logging
 from fastapi.logger import logger as logger
@@ -91,7 +93,7 @@ class Settings(BaseSettings):
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
     DIGEST_FILES_DIRPATH: str = "/digest_files"
     DIGEST_COMPARE_TO_FILE: bool = True
-    DIGEST_COMPARE: bool = False
+    DIGEST_COMPARE: bool = True
     KEY_ID_MAX_LENGTH: int = 128
     KEY_ID_MIN_LENGTH: int = 16
     KEY_SIZE: int = 32  # Bits
@@ -121,6 +123,17 @@ class Settings(BaseSettings):
     VAULT_KV_ENDPOINT: str = "QKEYS"
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"
+
+    # Make environment settings take precedence over __init__ and file
+    class Config:
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings: SettingsSourceCallable,
+            env_settings: SettingsSourceCallable,
+            file_secret_settings: SettingsSourceCallable,
+        ) -> Tuple[SettingsSourceCallable, ...]:
+            return env_settings, init_settings, file_secret_settings
 
 
 settings = Settings()

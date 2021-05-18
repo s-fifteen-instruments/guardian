@@ -30,12 +30,16 @@ import logging as logger
 # import getpass
 import multiprocessing
 import os
+import pathlib
 import signal
 # import socket
 import sys
 import struct
 import time
 import traceback
+from pydantic import BaseSettings
+from pydantic.env_settings import SettingsSourceCallable
+from typing import Tuple
 
 # Consider https://documentation.solarwinds.com/en/success_center/papertrail/content/kb/configuration/configuring-centralized-logging-from-python-apps.htm?cshid=pt-configuration-configuring-centralized-logging-from-python-apps
 #  hostname = socket.gethostname()
@@ -52,7 +56,7 @@ logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)  # ,
 #                     "%(message)s")
 
 
-class watcherClient:
+class Settings(BaseSettings):
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
     DELETE_EPOCH_FILES: bool = False
     EPOCH_FILES_DIRPATH: str = "/epoch_files"
@@ -68,7 +72,6 @@ class watcherClient:
     CLIENT_CERT_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{CA_CHAIN_SUFFIX}"
     CLIENT_KEY_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{KEY_SUFFIX}"
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_SERVER_NAME}/{VAULT_SERVER_NAME}{CA_CHAIN_SUFFIX}"
-    KILL_NOW: bool = False
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 8.0
     MAX_NUM_ATTEMPTS: int = 100
@@ -79,12 +82,27 @@ class watcherClient:
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
+    # Make environment settings take precedence over __init__ and file
+    class Config:
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings: SettingsSourceCallable,
+            env_settings: SettingsSourceCallable,
+            file_secret_settings: SettingsSourceCallable,
+        ) -> Tuple[SettingsSourceCallable, ...]:
+            return env_settings, init_settings, file_secret_settings
+
+
+class watcherClient:
+
     def __init__(self, threads: int = None):
         """foo
         """
         # Shut down gracefully with a SIGINT or SIGTERM
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
+        self.KILL_NOW: bool = False
         # Default to thread count equal to number of CPU cores
         if not threads:
             threads = multiprocessing.cpu_count()
@@ -112,10 +130,10 @@ class watcherClient:
         """foo
         """
         self.vclient: hvac.Client = \
-            hvac.Client(url=watcherClient.VAULT_SERVER_URI,
-                        cert=(watcherClient.CLIENT_CERT_FILEPATH,
-                              watcherClient.CLIENT_KEY_FILEPATH),
-                        verify=watcherClient.SERVER_CERT_FILEPATH)
+            hvac.Client(url=settings.VAULT_SERVER_URI,
+                        cert=(settings.CLIENT_CERT_FILEPATH,
+                              settings.CLIENT_KEY_FILEPATH),
+                        verify=settings.SERVER_CERT_FILEPATH)
         mount_point = "cert"
         logger.debug("Attempt TLS client login")
         auth_response = self.vclient.auth_tls(mount_point=mount_point,
@@ -124,9 +142,9 @@ class watcherClient:
         self._dump_response(auth_response, secret=True)
         self.vclient.token = auth_response["auth"]["client_token"]
         if self.vclient.is_authenticated():
-            logger.info(f"\"{watcherClient.CLIENT_NAME}\" is now authenticated")
+            logger.info(f"\"{settings.CLIENT_NAME}\" is now authenticated")
         else:
-            logger.info(f"\"{watcherClient.CLIENT_NAME}\" has failed to authenticate")
+            logger.info(f"\"{settings.CLIENT_NAME}\" has failed to authenticate")
 
     def vault_can_create_new_keys(self, full_filepath: str):
         """foo
@@ -249,7 +267,7 @@ class watcherClient:
         """foo
         """
         try:
-            if watcherClient.DELETE_EPOCH_FILES:
+            if settings.DELETE_EPOCH_FILES:
                 os.remove(filepath)
                 logger.debug(f"Filename: {filepath}; successfully deleted")
             else:
@@ -268,7 +286,7 @@ class watcherClient:
         """
         # Compute the hash-based message authentication code of the
         # raw key using a SHA3 512-bit hash.
-        mac = hmac.new(key=watcherClient.DIGEST_KEY,
+        mac = hmac.new(key=settings.DIGEST_KEY,
                        digestmod=hashlib.sha3_512)
         mac.update(message)
         message_hexdigest = mac.hexdigest()
@@ -296,9 +314,9 @@ class watcherClient:
         """foo
         """
         cas_error = False
-        mount_point = watcherClient.VAULT_KV_ENDPOINT
-        qkey_path = f"{watcherClient.VAULT_QKDE_ID}/" \
-            f"{watcherClient.VAULT_QCHANNEL_ID}/" \
+        mount_point = settings.VAULT_KV_ENDPOINT
+        qkey_path = f"{settings.VAULT_QKDE_ID}/" \
+            f"{settings.VAULT_QCHANNEL_ID}/" \
             f"{epoch}"
         full_path = f"{mount_point}/data/{qkey_path}"
 
@@ -330,8 +348,10 @@ class watcherClient:
             # Compute the HMAC hexdigest of the raw key
             logger.debug(f"Compute the HMAC hexdigest of epoch key: \"{epoch}\":")
             key_hexdigest = watcherClient.compute_hmac_hexdigest(raw_key)
+            # Ensure the digest directory exists; make it if not
+            pathlib.Path(f"{settings.DIGEST_FILES_DIRPATH}").mkdir(parents=True, exist_ok=True)
             # Write out the hexdigest to a file for later comparison
-            digest_filepath = f"{watcherClient.DIGEST_FILES_DIRPATH}/" \
+            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
                 f"{epoch}.digest"
             watcherClient.write_hexdigest(key_hexdigest, digest_filepath)
             # Base64 encode the raw bytes and decode the resulting byte
@@ -422,10 +442,12 @@ class watcherClient:
             logger.debug(f"Vault write \"{path}\" response:")
             self._dump_response(qkey_response, secret=False)
             cas_error = False
+            logger.info(f"Vault write \"{path}\" version {version} successful")
         except hvac.exceptions.InvalidRequest as e:
             # Possible but unlikely
            if "check-and-set parameter did not match the current version" in str(e):
-               logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
+               logger.info(f"InvalidRequest, Check-And-Set Error; Version"
+                           f"Mismatch: {version}; Exception {e}; Retrying...")
             # Unexpected error has occurred; re-raise it
            else:
                raise e
@@ -443,9 +465,9 @@ class watcherClient:
         cas_error = True
         while cas_error:
             # First attempt to read status endpoint
-            mount_point = watcherClient.VAULT_KV_ENDPOINT
-            status_path = f"{watcherClient.VAULT_QKDE_ID}/" \
-                f"{watcherClient.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.VAULT_KV_ENDPOINT
+            status_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
                 "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
@@ -479,9 +501,9 @@ class watcherClient:
         """foo
         """
         # Initialization
-        self.backoff_factor: float = watcherClient.BACKOFF_FACTOR
-        self.backoff_max: float = watcherClient.BACKOFF_MAX
-        self.max_num_attempts: int = watcherClient.MAX_NUM_ATTEMPTS
+        self.backoff_factor: float = settings.BACKOFF_FACTOR
+        self.backoff_max: float = settings.BACKOFF_MAX
+        self.max_num_attempts: int = settings.MAX_NUM_ATTEMPTS
         attempt_num: int = 0
         total_stall_time: float = 0.0
         total_notify_sleep_time: float = 0.0
@@ -503,17 +525,17 @@ class watcherClient:
             total_stall_time = total_stall_time + stall_time
             try:
                 # Attempt to open the notify pipe read-only, non-blocking
-                with open(os.open(watcherClient.NOTIFY_PIPE_FILEPATH,
+                with open(os.open(settings.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
-                    logger.debug(f"{watcherClient.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
+                    logger.debug(f"{settings.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
                     # Notify pipe was successfully opened; iterate until otherwise
                     while not self.KILL_NOW:
                         # Break out of inner loop if notify pipe no longer exists
-                        if not os.path.exists(watcherClient.NOTIFY_PIPE_FILEPATH):
-                            logger.info(f"{watcherClient.NOTIFY_PIPE_FILEPATH} does not exist. Retrying...")
+                        if not os.path.exists(settings.NOTIFY_PIPE_FILEPATH):
+                            logger.info(f"{settings.NOTIFY_PIPE_FILEPATH} does not exist. Retrying...")
                             break
                         if total_notify_sleep_time > \
-                           watcherClient.NOTIFY_SLEEP_TIME_DELTA * \
+                           settings.NOTIFY_SLEEP_TIME_DELTA * \
                            notify_sleep_iteration_count:
                             notify_sleep_iteration_count += 1
                             logger.debug(f"Sleeping until notification; Total Time Slept: {total_notify_sleep_time:.1f} seconds")
@@ -527,7 +549,7 @@ class watcherClient:
                             total_stall_time = 0.0
                             total_notify_sleep_time = 0.0
                             # Data should point us to a final key epoch filename
-                            epoch_filepath = f"{watcherClient.EPOCH_FILES_DIRPATH}/{data}"
+                            epoch_filepath = f"{settings.EPOCH_FILES_DIRPATH}/{data}"
                             # Name of thread worker callback function and argument filepath
                             args = (self.process_epoch_file,
                                     epoch_filepath)
@@ -553,7 +575,7 @@ class watcherClient:
 
                             end_time = time.time()
                             # Sleep for a bit and then recheck the notify pipe
-                            notify_sleep_time = max(0, watcherClient.NOTIFY_SLEEP_TIME - (end_time - start_time))
+                            notify_sleep_time = max(0, settings.NOTIFY_SLEEP_TIME - (end_time - start_time))
                             time.sleep(notify_sleep_time)
                             total_notify_sleep_time += notify_sleep_time
 
@@ -561,6 +583,8 @@ class watcherClient:
                 logger.info(f"FIFO not found; Sleep time {stall_time}; Attempt Number: {attempt_num}/{self.max_num_attempts}: Total Stall Time: {total_stall_time} s")
                 time.sleep(stall_time)
 
+
+settings = Settings()
 
 if __name__ == "__main__":
     watcher = watcherClient()

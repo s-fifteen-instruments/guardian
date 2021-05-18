@@ -34,4 +34,5 @@ sigint() {
 }
 
 set -x
-docker-compose up -d --build
+export CONFIG_FILE="docker-compose.${KME}.yml"
+docker-compose -f ${CONFIG_FILE} up -d --build
