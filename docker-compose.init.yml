@@ -115,7 +115,8 @@ services:
     networks:
       - internal-private
     volumes:
-      - /volumes/${KME:-SETME}/qkd/epoch_files/${KME:-SETME}:/epoch_files
+      # NOTE: Only kme1 generates epoch files in this configuration
+      - /volumes/kme1/qkd/epoch_files/${KME:-SETME}:/epoch_files
  
   watcher:
     build: ./watcher

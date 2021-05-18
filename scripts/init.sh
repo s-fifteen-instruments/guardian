@@ -58,12 +58,13 @@ if [ "${KME}" = "kme1" ]; then
 
 elif [ "${KME}" = "kme2" ]; then
   
+  S=certauth           WAIT=0 F=-f eval ${STARTUP}
   S=vault              WAIT=1 F=   eval ${STARTUP}
   S=vault_init         WAIT=0 F=-f eval ${STARTUP}
-  # S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-  # S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
-  # S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-  # S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
+  S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
+  S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
+  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
 else
