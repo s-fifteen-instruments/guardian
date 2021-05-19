@@ -89,6 +89,8 @@ services:
 
   vault_init_phase_2:
     <<: *vault_init_label
+    environment:
+      - CLIENT_ALT_NAMES=192.168.1.*,${KME:-SETME}
     command: ["vault_init.py", "--second"]
 
   vault_init_phase_3:

@@ -2,8 +2,16 @@
 # Specifically for TLS settings
 tls:
   certificates:
-  - certFile: /certificates/rest/rest.ca-chain.cert.pem
-    keyFile: /certificates/rest/rest.key.pem
+  - certFile: /certificates/{{ env "KME" }}/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/{{ env "KME" }}/rest/rest.key.pem
+    stores:
+    - default
+  - certFile: /certificates/kme1/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/kme1/rest/rest.key.pem
+    stores:
+    - default
+  - certFile: /certificates/kme2/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/kme2/rest/rest.key.pem
     stores:
     - default
   options:
@@ -14,10 +22,11 @@ tls:
       preferServerCipherSuites: True
       clientAuth:
         caFiles:
-        - /certificates/vault_init/vault_init.ca-chain.cert.pem
+        - /certificates/kme1/vault_init/vault_init.ca-chain.cert.pem
+        - /certificates/kme2/vault_init/vault_init.ca-chain.cert.pem
         clientAuthType: RequireAndVerifyClientCert
   stores:
     default:
       defaultCertificate:
-        certFile: /certificates/rest/rest.ca-chain.cert.pem
-        keyFile: /certificates/rest/rest.key.pem
+        certFile: /certificates/{{ env "KME" }}/rest/rest.ca-chain.cert.pem
+        keyFile: /certificates/{{ env "KME" }}/rest/rest.key.pem

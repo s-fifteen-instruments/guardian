@@ -116,12 +116,15 @@ services:
       # Listen on port 443, default for HTTPS
       - 443:443
     restart: unless-stopped
+    environment:
+      - KME=${KME:-SETME}
     volumes:
       # Add the Docker socket as a mounted volume, so that
       # Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/${KME:-SETME}/certificates/production:/certificates
+      - /volumes/kme1/certificates/production:/certificates/kme1
+      - /volumes/kme2/certificates/production:/certificates/kme2
       # Mount the configuration directory
       - /volumes/${KME:-SETME}/traefik/configuration:/etc/traefik
       # Mount the log directory

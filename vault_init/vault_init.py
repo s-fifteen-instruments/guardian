@@ -30,11 +30,14 @@ import stat
 import sys
 import time
 import requests
+from pydantic import BaseSettings
+from pydantic.env_settings import SettingsSourceCallable
+from typing import Tuple
 
 logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 
 
-class vaultClient:
+class Settings(BaseSettings):
     """foo
     """
     VAULT_NAME: str = "vault"
@@ -53,6 +56,7 @@ class vaultClient:
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_NAME}{CA_CHAIN_SUFFIX}"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
+    CLIENT_ALT_NAMES: str = "172.16.192.*,127.0.0.1,192.168.1.*,kme1,kme2"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     MAX_CONN_ATTEMPTS: int = 10
@@ -63,6 +67,19 @@ class vaultClient:
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
+    # Make environment settings take precedence over __init__ and file
+    class Config:
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings: SettingsSourceCallable,
+            env_settings: SettingsSourceCallable,
+            file_secret_settings: SettingsSourceCallable,
+        ) -> Tuple[SettingsSourceCallable, ...]:
+            return env_settings, init_settings, file_secret_settings
+
+
+class VaultClient:
     def __init__(self) -> None:
         """foo
         """
@@ -85,10 +102,10 @@ class vaultClient:
         """foo
         """
         self.vclient: hvac.Client = \
-            hvac.Client(url=vaultClient.VAULT_URI,
-                        cert=(vaultClient.CLIENT_CERT_FILEPATH,
-                              vaultClient.CLIENT_KEY_FILEPATH),
-                        verify=vaultClient.SERVER_CERT_FILEPATH)
+            hvac.Client(url=settings.VAULT_URI,
+                        cert=(settings.CLIENT_CERT_FILEPATH,
+                              settings.CLIENT_KEY_FILEPATH),
+                        verify=settings.SERVER_CERT_FILEPATH)
         self.connection_loop(self.vault_init)
         self.connection_loop(self.vault_unseal)
         self.connection_loop(self.vault_root_token_auth)
@@ -120,9 +137,9 @@ class vaultClient:
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
         """
-        self.max_attempts: int = vaultClient.MAX_CONN_ATTEMPTS
-        self.backoff_factor: float = vaultClient.BACKOFF_FACTOR
-        self.backoff_max: float = vaultClient.BACKOFF_MAX
+        self.max_attempts: int = settings.MAX_CONN_ATTEMPTS
+        self.backoff_factor: float = settings.BACKOFF_FACTOR
+        self.backoff_max: float = settings.BACKOFF_MAX
 
         attempt_num: int = 0
         total_stall_time: float = 0.0
@@ -181,7 +198,7 @@ class vaultClient:
         """
         if not secret:
             if response:
-                if vaultClient._is_json(response):
+                if VaultClient._is_json(response):
                     logger.debug(f"""{json.dumps(response,
                                                  indent=2,
                                                  sort_keys=True)}""")
@@ -199,16 +216,16 @@ class vaultClient:
                                       "root_token": self.root_token},
                                      indent=2,
                                      sort_keys=True)
-        logger.info(f"Writing Vault secrets to: {vaultClient.VAULT_SECRETS_FILEPATH}")
-        with open(vaultClient.VAULT_SECRETS_FILEPATH, "w") as f:
+        logger.info(f"Writing Vault secrets to: {settings.VAULT_SECRETS_FILEPATH}")
+        with open(settings.VAULT_SECRETS_FILEPATH, "w") as f:
             f.write(json_output_str)
 
     def vault_init(self):
         """foo
         """
         if not self.vclient.sys.is_initialized():
-            self.secret_shares: int = vaultClient.SECRET_SHARES
-            self.secret_threshold: int = vaultClient.SECRET_THRESHOLD
+            self.secret_shares: int = settings.SECRET_SHARES
+            self.secret_threshold: int = settings.SECRET_THRESHOLD
             assert self.secret_threshold <= self.secret_shares
             self.init_response = \
                 self.vclient.sys.initialize(secret_shares=self.secret_shares,
@@ -253,7 +270,7 @@ class vaultClient:
             # TODO: Secret Exposure
             if not hasattr(self, "root_token"):
                 self.root_token = \
-                    json.loads(open(vaultClient.VAULT_SECRETS_FILEPATH,
+                    json.loads(open(settings.VAULT_SECRETS_FILEPATH,
                                     "r").read())["root_token"]
 
             self.vclient.token = self.root_token
@@ -273,7 +290,7 @@ class vaultClient:
         logger.debug("Attempt to enable file audit device")
         device_type_str = "file"
         description_str = "File to hold audit events"
-        options_dict = {"file_path": f"{vaultClient.LOG_DIRPATH}/audit.log"}
+        options_dict = {"file_path": f"{settings.LOG_DIRPATH}/audit.log"}
         self.enable_audit_response = \
             self.vclient.sys.enable_audit_device(device_type_str,
                                                  description=description_str,
@@ -329,8 +346,8 @@ class vaultClient:
     def write_pki_int_csr_pem_file(self):
         """foo
         """
-        logger.info(f"Writing Vault intermediate PKI CSR to: {vaultClient.PKI_INT_CSR_PEM_FILEPATH}")
-        with open(vaultClient.PKI_INT_CSR_PEM_FILEPATH, "w") as f:
+        logger.info(f"Writing Vault intermediate PKI CSR to: {settings.PKI_INT_CSR_PEM_FILEPATH}")
+        with open(settings.PKI_INT_CSR_PEM_FILEPATH, "w") as f:
             f.write(self.int_ca_csr)
 
     def vault_write_int_ca_csr(self):
@@ -371,7 +388,7 @@ class vaultClient:
         logger.debug("Attempt to read in signed intermediate CA CSR")
         # TODO: handle FileNotFoundError exception
         self.int_ca_cert = \
-            open(vaultClient.PKI_INT_CERT_PEM_FILEPATH, "r").read()
+            open(settings.PKI_INT_CERT_PEM_FILEPATH, "r").read()
         mount_point = "pki_int"
         self.set_int_ca_cert_response = self.vclient.secrets.pki.\
             set_signed_intermediate(certificate=self.int_ca_cert,
@@ -379,8 +396,8 @@ class vaultClient:
         logger.debug("Intermediate CA cert response:")
         self._dump_response(self.set_int_ca_cert_response.ok, secret=False)
         params_dict = {
-            "issuing_certificates": f"{vaultClient.VAULT_URI}/v1/{mount_point}/ca",
-            "crl_distribution_points": f"{vaultClient.VAULT_URI}/v1/{mount_point}/crl",
+            "issuing_certificates": f"{settings.VAULT_URI}/v1/{mount_point}/ca",
+            "crl_distribution_points": f"{settings.VAULT_URI}/v1/{mount_point}/crl",
             "ocsp_servers": ""
         }
         logger.debug("Attempting to set intermediate CA URLs")
@@ -434,7 +451,7 @@ class vaultClient:
         if is_template:
             template_dir = "templates/"
             template_str = ".template"
-        filepath = f"{vaultClient.POLICIES_DIRPATH}/{template_dir}" \
+        filepath = f"{settings.POLICIES_DIRPATH}/{template_dir}" \
             f"{policy_name_str}.policy{template_str}.hcl"
         logger.debug(f"Attempting to read file: {filepath}")
         return open(filepath, "r").read()
@@ -442,8 +459,8 @@ class vaultClient:
     def vault_create_acl_policy(self, policy_name_str):
         """foo
         """
-        policy_hcl = vaultClient.vault_read_hcl_file(policy_name_str,
-                                                     is_template=False)
+        policy_hcl = settings.vault_read_hcl_file(policy_name_str,
+                                                  is_template=False)
         logger.debug("Attempt to add ACL for \"{policy_name_str}\"")
         policy_response = \
             self.vclient.sys.create_or_update_policy(name=policy_name_str,
@@ -462,7 +479,7 @@ class vaultClient:
         role_str = "role_int_ca_cert_issuer"
         mount_point = "pki_int"
         extra_param_dict = {
-            "alt_names": "172.16.192.*,127.0.0.1,192.168.1.*,kme1,kme2",
+            "alt_names": settings.CLIENT_ALT_NAMES,
             "format_str": "pem",
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
@@ -479,20 +496,20 @@ class vaultClient:
         ca_chain_pem_str = gen_cert_response["data"]["ca_chain"]
         cert_pem_str = gen_cert_response["data"]["certificate"]
         private_key_pem_str = gen_cert_response["data"]["private_key"]
-        client_dirpath = f"{vaultClient.CERT_DIRPATH}/{common_name}"
+        client_dirpath = f"{settings.CERT_DIRPATH}/{common_name}"
         # Client dir private key read-only
         client_perms: oct = stat.S_IRUSR
-        client_admin_dirpath = f"{vaultClient.ADMIN_DIRPATH}/{common_name}"
+        client_admin_dirpath = f"{settings.ADMIN_DIRPATH}/{common_name}"
         # Admin dir private key world-readable
         client_admin_perms: oct = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-        vaultClient.\
+        VaultClient.\
             write_client_credentials(dirpath=client_dirpath,
                                      common_name=common_name,
                                      permissions=client_perms,
                                      client_cert=cert_pem_str,
                                      client_private_key=private_key_pem_str,
                                      ca_chain=ca_chain_pem_str)
-        vaultClient.\
+        VaultClient.\
             write_client_credentials(dirpath=client_admin_dirpath,
                                      common_name=common_name,
                                      permissions=client_admin_perms,
@@ -510,7 +527,7 @@ class vaultClient:
         pathlib.Path(dirpath).mkdir(parents=True, exist_ok=True)
         # Write CA cert chain as 0o644
         with open(os.open(f"{dirpath}/"
-                          f"{common_name}{vaultClient.CA_CHAIN_SUFFIX}",
+                          f"{common_name}{settings.CA_CHAIN_SUFFIX}",
                           os.O_CREAT | os.O_WRONLY,
                           stat.S_IRUSR | stat.S_IWUSR |
                           stat.S_IRGRP | stat.S_IROTH), "w") as f:
@@ -521,7 +538,7 @@ class vaultClient:
                 f.write(ca_cert + "\n")
         # User provided permissions for writing private key
         with open(os.open(f"{dirpath}/"
-                          f"{common_name}{vaultClient.KEY_SUFFIX}",
+                          f"{common_name}{settings.KEY_SUFFIX}",
                           os.O_CREAT | os.O_WRONLY,
                           permissions), "w") as f:
             # Write out the client's private key
@@ -534,7 +551,7 @@ class vaultClient:
         logger.debug("Currently enabled secrets engines:")
         self._dump_response(secrets_backends, secret=False)
         backend_type_str = "kv"
-        mount_point = vaultClient.VAULT_KV_ENDPOINT
+        mount_point = settings.VAULT_KV_ENDPOINT
         description_str = "Key/Value Store for QKD Keys."
         config_dict = {
             "default_lease_ttl": "",
@@ -580,16 +597,16 @@ class vaultClient:
         """
         policy_name_str = "watcher"
         policy_template = \
-            vaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+            VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
                                             is_template=True)
         policy_str = policy_template
         policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
-                                        vaultClient.VAULT_KV_ENDPOINT)
+                                        settings.VAULT_KV_ENDPOINT)
         policy_str = policy_str.replace("<<<QKDE_ID>>>",
-                                        vaultClient.VAULT_QKDE_ID)
+                                        settings.VAULT_QKDE_ID)
         policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
-                                        vaultClient.VAULT_QCHANNEL_ID)
-        filepath = f"{vaultClient.POLICIES_DIRPATH}/" \
+                                        settings.VAULT_QCHANNEL_ID)
+        filepath = f"{settings.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
         logger.debug(f"Writing out policy to: {filepath}")
         with open(filepath, "w") as f:
@@ -601,16 +618,16 @@ class vaultClient:
         """
         policy_name_str = "rest"
         policy_template = \
-            vaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+            VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
                                             is_template=True)
         policy_str = policy_template
         policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
-                                        vaultClient.VAULT_KV_ENDPOINT)
+                                        settings.VAULT_KV_ENDPOINT)
         policy_str = policy_str.replace("<<<QKDE_ID>>>",
-                                        vaultClient.VAULT_QKDE_ID)
+                                        settings.VAULT_QKDE_ID)
         policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
-                                        vaultClient.VAULT_QCHANNEL_ID)
-        filepath = f"{vaultClient.POLICIES_DIRPATH}/" \
+                                        settings.VAULT_QCHANNEL_ID)
+        filepath = f"{settings.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
         logger.debug(f"Writing out policy to: {filepath}")
         with open(filepath, "w") as f:
@@ -618,6 +635,7 @@ class vaultClient:
         self.vault_create_acl_policy(policy_name_str=policy_name_str)
 
 
+settings = Settings()
+
 if __name__ == "__main__":
-    # init_vault()
-    vclient = vaultClient()
+    vclient = VaultClient()

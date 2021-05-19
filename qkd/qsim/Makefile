@@ -60,7 +60,7 @@ clean:
 	rm -f *_tlog
 	rm -f *.out
 	rm -f *.bin
-	rm -f ./epoch_files/*
+	rm -rf ./epoch_files/*
 	find -type d \( -name "*.hec" -o -name "*.lec" \) -exec rm -rf {} + 
 	+$(MAKE) -C ./src clean
 
