@@ -25,10 +25,10 @@ if [ "${1}" != "kme1" ] && [ "${1}" != "kme2" ] && [ "${1}" != "both" ]; then
 fi
 # Run as root
 set -x
-rm -f  ./scripts/.initialized
 
-if [ "${1}" == "kme1" ] || [ "${1}" == "both" ]; then
+if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
 
+  rm -f  ./scripts/.kme1.initialized
   rm -rf /volumes/kme1/certificates/production/vault
   rm -rf /volumes/kme1/certificates/production/vault_init
   rm -rf /volumes/kme1/certificates/production/rest
@@ -43,8 +43,9 @@ if [ "${1}" == "kme1" ] || [ "${1}" == "both" ]; then
   rm -rf /volumes/kme1/qkd/digest_files/*
 
 fi
-if [ "${1}" == "kme2" ] || [ "${1}" == "both" ]; then
+if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
 
+  rm -f  ./scripts/.kme2.initialized
   rm -rf /volumes/kme2/certificates/production/vault
   rm -rf /volumes/kme2/certificates/production/vault_init
   rm -rf /volumes/kme2/certificates/production/rest

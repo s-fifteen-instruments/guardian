@@ -29,7 +29,7 @@ DIRPATH=$(dirname "${FILEPATH}")
 
 # If this file exists, we've already gone through
 # the whole initialization process...skip it.
-if [ -f "${DIRPATH}/.initialized" ]; then
+if [ -f "${DIRPATH}/.${KME}.initialized" ]; then
 	echo "KME \"${KME}\" already initialized ... continuing"
   exit 0
 fi
@@ -56,6 +56,7 @@ if [ "${KME}" = "kme1" ]; then
   S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
+touch "${DIRPATH}/.${KME}.initialized"
 elif [ "${KME}" = "kme2" ]; then
   
   S=certauth           WAIT=0 F=-f eval ${STARTUP}
@@ -67,10 +68,9 @@ elif [ "${KME}" = "kme2" ]; then
   S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
+touch "${DIRPATH}/.${KME}.initialized"
 else
   echo "Unrecognized KME type: \"${KME}\""
   echo "Use \"kme1\" or \"kme2\"; exiting"
   exit -1
 fi
-
-touch "${DIRPATH}/.initialized"

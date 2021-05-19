@@ -104,7 +104,8 @@ services:
     networks:
       - internal-private
     volumes:
-      - /volumes/${KME:-SETME}/qkd/epoch_files:/root/code/qsim/epoch_files
+      # NOTE: Only kme1 generates epoch files in this configuration
+      - /volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
 
   notifier:
     build: ./notifier
@@ -120,8 +121,6 @@ services:
  
   watcher:
     build: ./watcher
-    environment:
-      - DIGEST_FILES_DIRPATH=/digest_files/${KME:-SETME}
     command: ["watcher.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -129,8 +128,9 @@ services:
     networks:
       - internal-private
     volumes:
-      - /volumes/${KME:-SETME}/qkd/epoch_files/${KME:-SETME}:/epoch_files
-      - /volumes/${KME:-SETME}/qkd/digest_files:/digest_files
+      # NOTE: Only kme1 generates epoch files in this configuration
+      - /volumes/kme1/qkd/epoch_files/${KME:-SETME}:/epoch_files
+      - /volumes/kme1/qkd/digest_files/${KME:-SETME}:/digest_files
       - /volumes/${KME:-SETME}/certificates:/certificates
 
 

@@ -26,12 +26,12 @@ services:
       - MAX_WORKERS=8
       - WEB_CONCURRENCY=1
       - GUNICORN_CMD_ARGS="--reload-delay 5"
-      - DIGEST_FILES_DIRPATH=/digest_files/${KME:-SETME}
     volumes:
       # Mount a volume that stores the TLS certificates
       - /volumes/${KME:-SETME}/certificates/production:/certificates
       # Mount a volume that stores the hex digest files of QKD keys
-      - /volumes/${KME:-SETME}/qkd/digest_files:/digest_files
+      # NOTE: Only kme1 generates epoch files in this configuration
+      - /volumes/kme1/qkd/digest_files/${KME:-SETME}:/digest_files
     labels:
       # Enable Traefik for this specific "backend" service
       - traefik.enable=true
