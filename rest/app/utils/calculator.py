@@ -21,46 +21,45 @@
 from fastapi import HTTPException, Request
 
 from app.core.config import logger, settings, bits2bytes
-from app.schemas.keys import KeyContainer
+# from app.schemas.keys import KeyContainer
 
 
 def calculate_num_keys(request: Request) -> int:
     """foo
     """
-    # Negative one for retreiving a total byte count for all epoch files
-    _, vault_total_key_bytes = request.app.state.vclient.\
-        vault_get_key_byte_counts(byte_amount=-1)
+    vault_total_key_bytes = request.app.state.vclient.vault_calculate_total_bytes()
     logger.debug(f"Vault Total Keying Material (bytes): {vault_total_key_bytes}")
     total_num_keys: int = 0
     if settings.KEY_SIZE > 0:
         total_num_keys: int = vault_total_key_bytes // bits2bytes(settings.KEY_SIZE)
     logger.debug(f"Calculated Number of Keys in Vault: {total_num_keys}")
+
     return total_num_keys
 
 
-def generate_key_container(number: int, size_bytes: int, request: Request) -> KeyContainer:
-    """foo
-    """
-    if number > settings.MAX_KEY_PER_REQUEST:
-        raise \
-            HTTPException(status_code=400,
-                          detail=f"Too many keys requested ({number}) for this "
-                                 "transaction. Configuration maximum set to: "
-                                 f"{settings.MAX_KEY_PER_REQUEST}"
-                          )
-    key_list = list()
-    for key_index in range(number):
-        key_list.append(request.app.state.vclient.vault_get_key(size_bytes=size_bytes))
-    key_con = KeyContainer(
-        keys=key_list,
-        key_container_extension={}
-    )
-    return key_con
-
-
-async def test_me(number: int, size_bytes: int, request: Request):
-    """foo
-    """
-    key_con = await request.app.state.vclient.\
-        fetch_multiple_keys(num_keys=number, key_size_bytes=size_bytes)
-    return key_con
+# def generate_key_container(number: int, size_bytes: int, request: Request) -> KeyContainer:
+#     """foo
+#     """
+#     if number > settings.MAX_KEY_PER_REQUEST:
+#         raise \
+#             HTTPException(status_code=400,
+#                           detail=f"Too many keys requested ({number}) for this "
+#                                  "transaction. Configuration maximum set to: "
+#                                  f"{settings.MAX_KEY_PER_REQUEST}"
+#                           )
+#     key_list = list()
+#     for key_index in range(number):
+#         key_list.append(request.app.state.vclient.vault_get_key(size_bytes=size_bytes))
+#     key_con = KeyContainer(
+#         keys=key_list,
+#         key_container_extension={}
+#     )
+#     return key_con
+#
+#
+# async def test_me(number: int, size_bytes: int, request: Request):
+#     """foo
+#     """
+#     key_con = await request.app.state.vclient.\
+#         fetch_multiple_keys(num_keys=number, key_size_bytes=size_bytes)
+#     return key_con

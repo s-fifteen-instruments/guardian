@@ -93,6 +93,20 @@ class VaultSemaphore(VaultClient):
         return cas_error
 
     @staticmethod
+    def total_byte_count(data_index: Dict[str, Any]):
+        """foo
+        """
+        total_byte_count = 0
+        for epoch, worker_uid_or_num_bytes in sorted(data_index.items()):
+            # This epoch file is free and displaying number of bytes for consuming
+            # Worker UIDs should be strings
+            if isinstance(worker_uid_or_num_bytes, int):
+                num_bytes = worker_uid_or_num_bytes
+                total_byte_count += num_bytes
+
+        return total_byte_count
+
+    @staticmethod
     def check_byte_counts(data_index: Dict[str, Any], requested_num_bytes: int):
         """foo
         """
@@ -181,6 +195,24 @@ class VaultSemaphore(VaultClient):
                                   )
 
         return data_index
+
+    def vault_calculate_total_bytes(self) -> int:
+        """foo
+        """
+        mount_point = settings.VAULT_KV_ENDPOINT
+        status_path = f"{settings.VAULT_QKDE_ID}/" \
+            f"{settings.VAULT_QCHANNEL_ID}/" \
+            "status"
+        status_version, status_data = \
+            self.vault_read_secret_version(filepath=status_path,
+                                           mount_point=mount_point
+                                           )
+        # Next, determine if enough keying material is currently free to
+        # fulfill requested_num_bytes
+        total_byte_count = VaultSemaphore.\
+            total_byte_counts(data_index=status_data)
+
+        return total_byte_count
 
     def vault_claim_epoch_files(self, requested_num_bytes: int):
         """foo
