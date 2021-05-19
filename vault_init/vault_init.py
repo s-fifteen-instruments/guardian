@@ -462,7 +462,7 @@ class vaultClient:
         role_str = "role_int_ca_cert_issuer"
         mount_point = "pki_int"
         extra_param_dict = {
-            "alt_names": "172.16.192.*,127.0.0.1",
+            "alt_names": "172.16.192.*,127.0.0.1,192.168.1.*,kme1,kme2",
             "format_str": "pem",
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"

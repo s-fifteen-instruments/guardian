@@ -39,12 +39,12 @@ services:
       - traefik.http.services.restapp.loadbalancer.server.port=80
       # Make Traefik use this domain in HTTP
       - traefik.http.routers.restapp-http.entrypoints=web
-      - traefik.http.routers.restapp-http.rule=Host(`rest`)
+      - traefik.http.routers.restapp-http.rule=Host(`${KME:-SETME}`)
       # Use the traefik-public network (declared below)
       - traefik.docker.network=traefik-public
       # Make Traefik use this domain in HTTPS
       - traefik.http.routers.restapp-https.entrypoints=websecure
-      - traefik.http.routers.restapp-https.rule=Host(`rest`)
+      - traefik.http.routers.restapp-https.rule=Host(`${KME:-SETME}`)
       - traefik.http.routers.restapp-https.tls=true
       # Pass the SAE client's Common Name for parsing
       - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
