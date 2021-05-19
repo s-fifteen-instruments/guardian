@@ -210,7 +210,7 @@ class VaultSemaphore(VaultClient):
         # Next, determine if enough keying material is currently free to
         # fulfill requested_num_bytes
         total_byte_count = VaultSemaphore.\
-            total_byte_counts(data_index=status_data)
+            total_byte_count(data_index=status_data)
 
         return total_byte_count
 
