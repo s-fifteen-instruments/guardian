@@ -459,8 +459,8 @@ class VaultClient:
     def vault_create_acl_policy(self, policy_name_str):
         """foo
         """
-        policy_hcl = settings.vault_read_hcl_file(policy_name_str,
-                                                  is_template=False)
+        policy_hcl = VaultClient.vault_read_hcl_file(policy_name_str,
+                                                     is_template=False)
         logger.debug("Attempt to add ACL for \"{policy_name_str}\"")
         policy_response = \
             self.vclient.sys.create_or_update_policy(name=policy_name_str,
