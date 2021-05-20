@@ -1,0 +1,34 @@
+# Traefik dynamic configuration file
+# Specifically for TLS settings
+tls:
+  certificates:
+{{ if (fileExists "/certificates/kme1/rest/rest.ca-chain.cert.pem") -}}
+  - certFile: /certificates/kme1/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/kme1/rest/rest.key.pem
+{{- end }}
+{{ if (fileExists "/certificates/kme2/rest/rest.ca-chain.cert.pem") -}}
+  - certFile: /certificates/kme2/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/kme2/rest/rest.key.pem
+{{- end }}
+    stores:
+    - default
+  options:
+    default:
+      minVersion: VersionTLS12
+      maxVersion: VersionTLS13
+      sniStrict: True
+      preferServerCipherSuites: True
+      clientAuth:
+        caFiles:
+{{ if (fileExists "/certificates/kme1/vault_init/vault_init.ca-chain.cert.pem ") -}}
+        - /certificates/kme1/vault_init/vault_init.ca-chain.cert.pem
+{{- end }}
+{{ if (fileExists "/certificates/kme2/vault_init/vault_init.ca-chain.cert.pem ") -}}
+        - /certificates/kme2/vault_init/vault_init.ca-chain.cert.pem
+{{- end }}
+        clientAuthType: RequireAndVerifyClientCert
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certificates/{{ env "KME" }}/rest/rest.ca-chain.cert.pem
+        keyFile: /certificates/{{ env "KME" }}/rest/rest.key.pem
