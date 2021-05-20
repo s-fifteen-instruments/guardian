@@ -40,6 +40,9 @@ logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 class Settings(BaseSettings):
     """foo
     """
+    KME: str = "SETME"
+    KME1_NAME: str = "kme1"
+    KME2_NAME: str = "kme2"
     VAULT_NAME: str = "vault"
     VAULT_URI: str = f"https://{VAULT_NAME}:8200"
     CERT_DIRPATH: str = "/certificates/production"
@@ -56,7 +59,9 @@ class Settings(BaseSettings):
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_NAME}{CA_CHAIN_SUFFIX}"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
-    CLIENT_ALT_NAMES: str = "172.16.192.*,127.0.0.1,192.168.1.*,kme1,kme2"
+    CLIENT_ALT_NAMES: str = f"172.16.192.*,127.0.0.1,192.168.1.*,{KME1_NAME},{KME2_NAME}"
+    TRAEFIK_TEMPLATE_FILEPATH_SUFFIX: str = "/etc/traefik/templates/tls.template.yml"
+    TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX: str = "/etc/traefik/traefik.d"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     MAX_CONN_ATTEMPTS: int = 10
@@ -66,6 +71,7 @@ class Settings(BaseSettings):
     VAULT_KV_ENDPOINT: str = "QKEYS"
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"
+    VAULT_LEDGER_ID: str = "LEDGER"
 
     # Make environment settings take precedence over __init__ and file
     class Config:
@@ -133,6 +139,7 @@ class VaultClient:
                              common_name="watcher")
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="rest")
+        self.connection_loop(self.write_traefik_tls_config_files())
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
@@ -627,12 +634,46 @@ class VaultClient:
                                         settings.VAULT_QKDE_ID)
         policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
                                         settings.VAULT_QCHANNEL_ID)
+        policy_str = policy_str.replace("<<<LEDGER_ID>>>",
+                                        settings.VAULT_LEDGER_ID)
         filepath = f"{settings.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
         logger.debug(f"Writing out policy to: {filepath}")
         with open(filepath, "w") as f:
             f.write(policy_str)
         self.vault_create_acl_policy(policy_name_str=policy_name_str)
+
+    def write_traefik_tls_config_files(self):
+        """foo
+        """
+        if settings.KME == settings.KME1_NAME or settings.KME == settings.KME2_NAME:
+            template_filepath = f"{settings.KME}{settings.TRAEFIK_TEMPLATE_FILEPATH_SUFFIX}"
+            dyn_kme1_config_filepath = \
+                f"{settings.KME1_NAME}" \
+                f"{settings.TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX}/" \
+                f"tls.{settings.KME}.yml"
+            dyn_kme2_config_filepath = \
+                f"{settings.KME2_NAME}" \
+                f"{settings.TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX}/" \
+                f"tls.{settings.KME}.yml"
+        else:
+            raise ValueError(f"KME Environment Variable: \"{settings.KME}\" "
+                             "Does not match possible KME names: "
+                             f"\"{settings.KME1_NAME}\" or \"{settings.KME2_NAME}\"; "
+                             f"Set this in the docker-compose.init.yml file"
+                             )
+
+        logger.debug(f"Attempting to read Traefik TLS template: {template_filepath}")
+        template = open(template_filepath, "r").read()
+        tls_str = template
+        tls_str = tls_str.replace("<<<KME>>>", settings.KME)
+
+        logger.debug(f"Attempting to write Traefik TLS config: {dyn_kme1_config_filepath}")
+        with open(dyn_kme1_config_filepath, "w") as f:
+            f.write(tls_str)
+        logger.debug(f"Attempting to write Traefik TLS config: {dyn_kme2_config_filepath}")
+        with open(dyn_kme2_config_filepath, "w") as f:
+            f.write(tls_str)
 
 
 settings = Settings()

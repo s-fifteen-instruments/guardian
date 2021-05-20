@@ -35,6 +35,8 @@ if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
   rm -rf /volumes/kme1/certificates/production/watcher
   rm -rf /volumes/kme1/certificates/production/admin
   rm -rf /volumes/kme1/certificates/generation/root
+  rm -f  /volumes/kme1/traefik/configuration/traefik.d/tls.kme1.yml
+  rm -f  /volumes/kme2/traefik/configuration/traefik.d/tls.kme1.yml  # kme2 dir intentional
   rm -rf /volumes/kme1/vault/data/file
   rm -f  /volumes/kme1/vault/logs/audit.log
   rm -f  /volumes/kme1/vault/policies/watcher.policy.hcl
@@ -52,6 +54,8 @@ if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
   rm -rf /volumes/kme2/certificates/production/watcher
   rm -rf /volumes/kme2/certificates/production/admin
   rm -rf /volumes/kme2/certificates/generation/root
+  rm -f  /volumes/kme1/traefik/configuration/traefik.d/tls.kme2.yml  # kme1 dir intentional
+  rm -f  /volumes/kme2/traefik/configuration/traefik.d/tls.kme2.yml
   rm -rf /volumes/kme2/vault/data/file
   rm -f  /volumes/kme2/vault/logs/audit.log
   rm -f  /volumes/kme2/vault/policies/watcher.policy.hcl

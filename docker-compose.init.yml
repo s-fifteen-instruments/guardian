@@ -91,7 +91,16 @@ services:
     <<: *vault_init_label
     environment:
       - CLIENT_ALT_NAMES=192.168.1.*,${KME:-SETME}
+      - KME=${KME:-SETME}
     command: ["vault_init.py", "--second"]
+    volumes:
+      - /volumes/${KME:-SETME}/certificates:/certificates
+      - /volumes/${KME:-SETME}/vault/policies:/vault/policies
+      # NOTE: Add in dynamic TLS configuration once certificates
+      # have been generated to avoid Traefik header forwaring issues
+      # when passing TLS information to the rest app. 
+      - /volumes/kme1/traefik/configuration:/kme1/etc/traefik
+      - /volumes/kme2/traefik/configuration:/kme2/etc/traefik
 
   vault_init_phase_3:
     <<: *vault_init_label

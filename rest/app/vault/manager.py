@@ -28,6 +28,7 @@ from typing import Dict, List, Tuple
 import uuid
 
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 
 from app.core.config import logger, settings, _dump_response
 from app import schemas
@@ -43,7 +44,8 @@ class VaultManager(VaultSemaphore):
         """
         super().__init__()
 
-    async def fetch_keys(self, num_keys: int, key_size_bytes: int):
+    async def fetch_keys(self, num_keys: int, key_size_bytes: int,
+                         master_SAE_ID: str, slave_SAE_ID: str):
         """Critical Region
         """
         # Critical Start
@@ -53,10 +55,15 @@ class VaultManager(VaultSemaphore):
         sorted_epoch_file_list = await \
             self.fetch_keying_material(epoch_dict=epoch_status_dict)
 
-        key_con, updated_epoch_file_list = await self.\
+        key_con, key_id_ledger_list, updated_epoch_file_list = await self.\
             build_key_container(num_keys=num_keys,
                                 key_size_bytes=key_size_bytes,
                                 sorted_epoch_file_list=sorted_epoch_file_list)
+
+        for key_id_ledger in key_id_ledger_list:
+            key_id_ledger.master_SAE_ID = master_SAE_ID
+            key_id_ledger.slave_SAE_ID = slave_SAE_ID
+            _dump_response(jsonable_encoder(key_id_ledger), secret=False)
 
         updated_epoch_status_dict = dict()
         fully_consumed_epoch_list = list()
@@ -76,6 +83,8 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+        for ledger in key_id_ledger_list:
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
 
         await asyncio.gather(*task_list)
 
@@ -84,6 +93,60 @@ class VaultManager(VaultSemaphore):
                                        epoch_dict=updated_epoch_status_dict)
 
         return key_con
+
+    @staticmethod
+    async def build_vault_ledger_entry(key_id_ledger: schemas.KeyIDLedger):
+        """foo
+        """
+        secret_dict = {
+            "key_ID": f"{key_id_ledger.key_ID}",
+            "master_SAE_ID": f"{key_id_ledger.master_SAE_ID}",
+            "slave_SAE_ID": f"{key_id_ledger.slave_SAE_ID}",
+            "num_bytes": key_id_ledger.num_bytes,
+        }
+
+        for epoch, byte_range in sorted(key_id_ledger.ledger_dict.items()):
+            secret_dict[f"{epoch}_start_index"] = byte_range.start
+            secret_dict[f"{epoch}_end_index"] = byte_range.end
+
+        return secret_dict
+
+    async def vault_commit_local_key_id_ledger(self,
+                                               key_id_ledger: schemas.KeyIDLedger) -> None:
+        """foo
+        """
+        try:
+            mount_point = settings.VAULT_KV_ENDPOINT
+            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                f"{settings.VAULT_LEDGER_ID}/" \
+                f"{key_id_ledger.key_ID}"
+            key_id_ledger_response = self.hvc.secrets.kv.v2.\
+                create_or_update_secret(path=epoch_path,
+                                        secret=await VaultManager.
+                                        build_vault_ledger_entry(key_id_ledger),
+                                        cas=0,  # This should be the first entry for this Key ID
+                                        mount_point=mount_point
+                                        )
+            logger.debug(f"Vault Key ID \"{key_id_ledger.key_ID}\" Ledger update response:")
+            _dump_response(key_id_ledger_response, secret=False)
+        except hvac.exceptions.InvalidRequest as e:
+            # Possible but unlikely
+            if "check-and-set parameter did not match the current version" in str(e):
+                logger.error(f"InvalidRequest, Key ID: \"{key_id_ledger.key_ID}\" "
+                             f"Ledger Check-And-Set Error; Version Mismatch: {e}")
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Key ID: \"{key_id_ledger.key_ID}\" "
+                                         "Ledger Check-And-Set Error; "
+                                         "Expecting Version 0; "
+                                         f"Version Mismatch: {e}"
+                                  )
+            else:
+                raise \
+                    HTTPException(status_code=503,
+                                  detail=f"Uexpected Error: {e}"
+                                  )
 
     async def vault_update_epoch_file(self, epoch_file: schemas.EpochFile):
         """foo
@@ -166,11 +229,13 @@ class VaultManager(VaultSemaphore):
                              key_size_bytes: int,
                              sorted_epoch_file_list:
                              List[schemas.EpochFile]) -> Tuple[schemas.KeyPair,
+                                                               schemas.KeyIDLedger,
                                                                List[schemas.EpochFile]]:
         """foo
         """
         key_id_input_str = ""
         key_buffer = bytes()
+        key_id_ledger_dict = dict()
         remaining_bytes = key_size_bytes
         for epoch_file in sorted_epoch_file_list:
             key_id_input_str += f"{epoch_file.path}/" \
@@ -188,6 +253,8 @@ class VaultManager(VaultSemaphore):
                 # consume from other epoch files
                 remaining_bytes -= computed_num_bytes
                 epoch_file.num_bytes = 0
+                byte_range = schemas.ByteRange(start=0, end=computed_num_bytes)
+                key_id_ledger_dict[epoch_file.epoch] = byte_range
             # Only part of an epoch file is being consumed
             else:
                 key_id_input_str += f"{remaining_bytes}"
@@ -200,6 +267,9 @@ class VaultManager(VaultSemaphore):
                 epoch_file.num_bytes -= remaining_bytes
                 # No more keying material needed
                 remaining_bytes = 0
+                byte_range = schemas.ByteRange(start=epoch_file.num_bytes,
+                                               end=computed_num_bytes)
+                key_id_ledger_dict[epoch_file.epoch] = byte_range
                 # Quit the loop early
                 break
 
@@ -210,26 +280,37 @@ class VaultManager(VaultSemaphore):
         key_pair = schemas.KeyPair(key_ID=key_id,
                                    key=await VaultManager.b64_encode_key(raw_key=key_buffer)
                                    )
-        return key_pair, sorted_epoch_file_list
+        key_id_ledger = \
+            schemas.KeyIDLedger(key_ID=key_id,
+                                master_SAE_ID="UPDATETHIS",
+                                slave_SAE_ID="UPDATETHIS",
+                                num_bytes=key_size_bytes,
+                                ledger_dict=key_id_ledger_dict
+                                )
+
+        return key_pair, key_id_ledger, sorted_epoch_file_list
 
     async def build_key_container(self, num_keys: int,
                                   key_size_bytes: int,
                                   sorted_epoch_file_list:
                                   List[schemas.EpochFile]) -> Tuple[schemas.KeyContainer,
+                                                                    List[schemas.KeyIDLedger],
                                                                     List[schemas.EpochFile]]:
         """foo
         """
         key_list = list()
+        key_id_ledger_list = list()
         for key_index in range(num_keys):
-            key_pair, sorted_epoch_file_list = await \
+            key_pair, key_id_ledger, sorted_epoch_file_list = await \
                 self.build_key_pair(key_size_bytes=key_size_bytes,
                                     sorted_epoch_file_list=
                                     sorted_epoch_file_list
                                     )
             key_list.append(key_pair)
+            key_id_ledger_list.append(key_id_ledger)
 
         key_con = schemas.KeyContainer(keys=key_list)
-        return key_con, sorted_epoch_file_list
+        return key_con, key_id_ledger_list, sorted_epoch_file_list
 
     async def fetch_keying_material(self, epoch_dict:
                                     Dict[str, int]) -> List[schemas.EpochFile]:

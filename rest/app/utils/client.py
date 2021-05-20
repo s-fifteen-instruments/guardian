@@ -32,6 +32,7 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     sae_ip = request.client.host
     sae_hostname = request.url.hostname
     sae_common_name = ""
+    sae_san = ""
     try:
         # Header should be forwarded by Traefik
         sae_common_name = request.headers["x-forwarded-tls-client-cert-info"]
@@ -39,6 +40,8 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
         sae_common_name = urllib.parse.unquote(sae_common_name)
         # Find the first CN - later ones are for CAs
         sae_common_name = sae_common_name.split("CN=")[1]
+        # split on a colon to remove SAN information first
+        sae_common_name = sae_common_name.split(";")[0]
         # Split on a comma if there are more CNs
         sae_common_name = sae_common_name.split(",")[0]
         # Remove backslashes and double quotes
@@ -46,7 +49,24 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     except Exception as err:
         logger.warn(f"Unparsable sae common name in sae certificate:\n{sae_common_name}")
         logger.exception(err)
+    try:
+        logger.debug(f"Headers: {request.headers['x-forwarded-tls-client-cert-info']}")
+        # Header should be forwarded by Traefik
+        sae_san = request.headers["x-forwarded-tls-client-cert-info"]
+        # sae SAN should be forwarded specifically
+        sae_san = urllib.parse.unquote(sae_san)
+        # Find the first Subject - later ones are for CAs
+        sae_san = sae_san.split("Subject=")[1]
+        # split SAN to remove additional information first
+        sae_san = sae_san.split("SAN=")[1]
+        # Remove backslashes and double quotes and trailing comma
+        sae_san = sae_san.replace('"', '').replace('\\', '').rstrip(",")
+    except Exception as err:
+        logger.warn(f"Unparsable sae SAN in sae certificate:\n{sae_san}")
+        logger.exception(err)
 
     return {"sae_ip": sae_ip,
             "sae_hostname": sae_hostname,
-            "sae_common_name": sae_common_name}
+            "sae_common_name": sae_common_name,
+            "sae_san": sae_san
+            }

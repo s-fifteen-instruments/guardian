@@ -134,7 +134,9 @@ async def get_key(slave_SAE_ID: str = slave_sae_path,
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
     key_con = await request.app.state.vclient.\
-        fetch_keys(num_keys=number, key_size_bytes=bits2bytes(size))
+        fetch_keys(num_keys=number, key_size_bytes=bits2bytes(size),
+                   master_SAE_ID=request.state.sae_hostname,
+                   slave_SAE_ID=slave_SAE_ID)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 

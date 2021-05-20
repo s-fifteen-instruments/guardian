@@ -18,11 +18,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from typing import Any, Optional
+from fastapi import HTTPException
+from pydantic import conlist, constr, Field, root_validator
+from typing import Any, Dict, Optional
 
-from pydantic import conlist, Field
-
-from app.core.config import settings, bits2bytes, padded_base64_length
+from app.core.config import logger, settings, bits2bytes, padded_base64_length
 from app.schemas.base import ForbidBase
 
 
@@ -102,11 +102,54 @@ class KeyContainer(KeyContainerExtension):
 # -----------------------------------------------------------------------------
 
 
-# class MasterSAEID(ForbidBase):
-#     master_sae_ID: str = Field(...,
-#                                title="Master SAE ID",
-#                                description="Unique Master Security Application Entity (SAE) String",
-#                                min_length=settings.SAE_ID_MIN_LENGTH,
-#                                max_length=settings.SAE_ID_MAX_LENGTH,
-#                                regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
-#                                )
+class ByteRange(ForbidBase):
+    start: int = Field(...,  # Required value; no default
+                       title="Starting Index of Keying Material in Epoch File",
+                       description="Inclusive Starting Index of Keying Material in Epoch File",
+                       ge=0  # Must be greater than or equal to
+                       )
+    end: int = Field(...,  # Required value; no default
+                     title="Starting Index of Keying Material in Epoch File",
+                     description="Inclusive Starting Index of Keying Material in Epoch File",
+                     ge=0  # Must be greater than or equal to
+                     )
+
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_start_before_end(cls, values):
+        start, end = values.get('start'), values.get('end')
+        if start > end:
+            logger.error(f"End Byte Index \"{end}\" Cannot be "
+                         f"Less Than Start Byte Index \"{start}\"")
+            raise \
+                HTTPException(status_code=400,
+                              detail=f"End Byte Index \"{end}\" Cannot be "
+                                     f"Less Than Start Byte Index \"{start}\""
+                              )
+        return values
+
+
+class KeyIDLedger(KeyID):
+    master_SAE_ID: constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained string; min string length to SAE_ID_MIN_LENGTH
+                          max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
+                          regex=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
+                          ) = Field(...,  # Required value; no default
+                                    title="Master SAE ID",
+                                    description="Master SAE ID Creating this Ledger"
+                                    )
+    slave_SAE_ID: constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained string; min string length to SAE_ID_MIN_LENGTH
+                         max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
+                         regex=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
+                         ) = Field(...,  # Required value; no default
+                                   title="Slave SAE ID",
+                                   description="Slave SAE ID Receiving this Ledger"
+                                   )
+    num_bytes: int = Field(...,  # Required value; no default
+                           title="Total Byte Count of Keying Material",
+                           description="Total Byte Count of Keying Material",
+                           le=settings.MAX_KEY_SIZE,  # Less than or equal to
+                           ge=0  # Greater than or equal to
+                           )
+    ledger_dict: Dict[str, ByteRange] = Field(...,  # Required value; no default
+                                              title="Dictionary of ByteRanges",
+                                              description="Epoch Filename (key) and ByteRange (value) Pairs to Specify Where Keying Material is to be Taken From"
+                                              )
