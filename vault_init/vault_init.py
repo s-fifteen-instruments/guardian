@@ -139,7 +139,6 @@ class VaultClient:
                              common_name="watcher")
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="rest")
-        self.connection_loop(self.write_traefik_tls_config_files())
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
@@ -642,38 +641,6 @@ class VaultClient:
         with open(filepath, "w") as f:
             f.write(policy_str)
         self.vault_create_acl_policy(policy_name_str=policy_name_str)
-
-    def write_traefik_tls_config_files(self):
-        """foo
-        """
-        if settings.KME == settings.KME1_NAME or settings.KME == settings.KME2_NAME:
-            template_filepath = f"{settings.KME}{settings.TRAEFIK_TEMPLATE_FILEPATH_SUFFIX}"
-            dyn_kme1_config_filepath = \
-                f"{settings.KME1_NAME}" \
-                f"{settings.TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX}/" \
-                f"tls.{settings.KME}.yml"
-            dyn_kme2_config_filepath = \
-                f"{settings.KME2_NAME}" \
-                f"{settings.TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX}/" \
-                f"tls.{settings.KME}.yml"
-        else:
-            raise ValueError(f"KME Environment Variable: \"{settings.KME}\" "
-                             "Does not match possible KME names: "
-                             f"\"{settings.KME1_NAME}\" or \"{settings.KME2_NAME}\"; "
-                             f"Set this in the docker-compose.init.yml file"
-                             )
-
-        logger.debug(f"Attempting to read Traefik TLS template: {template_filepath}")
-        template = open(template_filepath, "r").read()
-        tls_str = template
-        tls_str = tls_str.replace("<<<KME>>>", settings.KME)
-
-        logger.debug(f"Attempting to write Traefik TLS config: {dyn_kme1_config_filepath}")
-        with open(dyn_kme1_config_filepath, "w") as f:
-            f.write(tls_str)
-        logger.debug(f"Attempting to write Traefik TLS config: {dyn_kme2_config_filepath}")
-        with open(dyn_kme2_config_filepath, "w") as f:
-            f.write(tls_str)
 
 
 settings = Settings()
