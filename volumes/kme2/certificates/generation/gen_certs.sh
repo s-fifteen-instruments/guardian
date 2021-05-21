@@ -89,7 +89,7 @@ export CA_STATE="Texas"
 export CA_LOCALITY="Austin"
 export CA_ORGANIZATION="Quantum Internet Technologies LLC"
 export CA_UNIT="Quantum Hacking Division"
-export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA"
+export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA ${KME}"
 export CA_EMAIL="admin@example.com"
 
 # Intermediate Certificate Authority Information
@@ -99,7 +99,7 @@ export INT_CA_STATE="${CA_STATE}"
 export INT_CA_LOCALITY="${CA_LOCALITY}"
 export INT_CA_ORGANIZATION="${CA_ORGANIZATION}"
 export INT_CA_UNIT="${CA_UNIT}"
-export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA"
+export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA ${KME}"
 export INT_CA_EMAIL="${CA_EMAIL}"
 
 # Create root Certificate Authority directory and configuration
@@ -108,7 +108,8 @@ cd ${ca_dir}
 mkdir -p certs crl newcerts private
 chmod 0700 private
 touch index.txt
-echo 1000 > serial
+# Start at a different serial than KME1
+echo 2000 > serial
 cp -a ${base_dir}/openssl.root.cnf.template ${ca_dir}/openssl.cnf
 sed -i "s#<<<BASE_DIRECTORY>>>#${base_dir}#g" ${ca_dir}/openssl.cnf
 sed -i "s#<<<COUNTRY_CODE>>>#${CA_COUNTRY_CODE}#g" ${ca_dir}/openssl.cnf
@@ -329,12 +330,12 @@ chmod 0444 intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem
 openssl pkcs12 -export \
     -in intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     -inkey intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
-    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
+    -out intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12 \
     -passout stdin << VAULT_INITCLIENTP12
 
 
 VAULT_INITCLIENTP12
-chmod 0400 intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12
+chmod 0400 intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12
 
 exit 0
 
@@ -348,7 +349,7 @@ elif [ "${ACTION}" == "CSR" ]; then
 
 cd ${ca_dir}
 cp --archive \
-    ${PRODUCTION_DIR}/vault_init/${VAULT_PKI_INT}.csr.pem \
+    ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}/${VAULT_PKI_INT}.csr.pem \
     intermediate/csr
 
 #With the CSR, use root CA to create Vault intermediate CA certificate
@@ -375,7 +376,7 @@ chmod 0444 intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
 
 cp --archive \
     intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem \
-    ${PRODUCTION_DIR}/vault_init
+    ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}/
 
 
 #------------------------------------------------------------------------------
@@ -398,7 +399,7 @@ cp --archive \
 chown -R vault:vault ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 cp --archive \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
-    intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
+    intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12 \
     intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}

@@ -89,7 +89,7 @@ export CA_STATE="Texas"
 export CA_LOCALITY="Austin"
 export CA_ORGANIZATION="Quantum Internet Technologies LLC"
 export CA_UNIT="Quantum Hacking Division"
-export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA"
+export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA ${KME}"
 export CA_EMAIL="admin@example.com"
 
 # Intermediate Certificate Authority Information
@@ -99,7 +99,7 @@ export INT_CA_STATE="${CA_STATE}"
 export INT_CA_LOCALITY="${CA_LOCALITY}"
 export INT_CA_ORGANIZATION="${CA_ORGANIZATION}"
 export INT_CA_UNIT="${CA_UNIT}"
-export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA"
+export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA ${KME}"
 export INT_CA_EMAIL="${CA_EMAIL}"
 
 # Create root Certificate Authority directory and configuration
@@ -329,12 +329,12 @@ chmod 0444 intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem
 openssl pkcs12 -export \
     -in intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     -inkey intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
-    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
+    -out intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12 \
     -passout stdin << VAULT_INITCLIENTP12
 
 
 VAULT_INITCLIENTP12
-chmod 0400 intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12
+chmod 0400 intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12
 
 exit 0
 
@@ -398,7 +398,7 @@ cp --archive \
 chown -R vault:vault ${PRODUCTION_DIR}/${VAULT_SERVER_FQDN}
 cp --archive \
     intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
-    intermediate/private/${VAULT_INIT_CLIENT_NAME}.p12 \
+    intermediate/private/${KME}${VAULT_INIT_CLIENT_NAME}.p12 \
     intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem \
     intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem \
     ${PRODUCTION_DIR}/${VAULT_INIT_CLIENT_NAME}
