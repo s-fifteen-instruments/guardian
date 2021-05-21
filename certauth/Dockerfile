@@ -32,6 +32,6 @@ VOLUME /certificates
 
 # Do not "make clean" unless to remove
 # root CA and intermediate CA entirely
-CMD ["certs", "install"]
+CMD ["make certs", "make install"]
 
-ENTRYPOINT ["make"]
+ENTRYPOINT ["/bin/sh", "-c"]

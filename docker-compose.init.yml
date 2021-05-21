@@ -21,11 +21,13 @@ services:
 
   certauth: &certauth_label
     build: ./certauth
+    environment:
+      - KME=${KME:-SETME}
     working_dir: /certificates/generation
     # WARNING:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities
-    command: ["clean", "certs", "install"]
+    command: ["make clean && export KME=${KME:-SETME}_ && make certs && make install"]
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -37,7 +39,7 @@ services:
 
   certauth_csr:
     <<: *certauth_label
-    command: ["csr"]
+    command: ["make csr"]
 
   vault: &vault_label
     # Use the latest Hashicorp Vault v1.7.x image available
