@@ -4,8 +4,10 @@ tls:
   certificates:
   - certFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
     keyFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.key.pem
-  - certFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
-    keyFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.key.pem
+    stores:
+    - default
+  - certFile: /certificates/{{ env "REMOTE_KME_ID" }}/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/{{ env "REMOTE_KME_ID" }}/rest/rest.key.pem
     stores:
     - default
   options:
@@ -17,7 +19,7 @@ tls:
       clientAuth:
         caFiles:
         - /certificates/{{ env "LOCAL_KME_ID" }}/vault_init/vault_init.ca-chain.cert.pem
-        - /certificates/{{ env "LOCAL_KME_ID" }}/vault_init/vault_init.ca-chain.cert.pem
+        - /certificates/{{ env "REMOTE_KME_ID" }}/vault_init/vault_init.ca-chain.cert.pem
         clientAuthType: RequireAndVerifyClientCert
   stores:
     default:

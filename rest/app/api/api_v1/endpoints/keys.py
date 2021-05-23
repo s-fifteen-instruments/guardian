@@ -20,7 +20,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Body, Path, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Path, Query, Request
 from fastapi.encoders import jsonable_encoder
 
 from pydantic import conint
@@ -122,7 +122,8 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
 
 @router.get("/{slave_SAE_ID}/enc_keys",
             **response_model_settings_dict)
-async def get_key(slave_SAE_ID: str = slave_sae_path,
+async def get_key(background_tasks: BackgroundTasks,
+                  slave_SAE_ID: str = slave_sae_path,
                   number: Optional[int] = number_query,
                   size: Optional[conint(le=settings.MAX_KEY_SIZE,
                                         ge=settings.MIN_KEY_SIZE,
@@ -136,7 +137,8 @@ async def get_key(slave_SAE_ID: str = slave_sae_path,
     key_con = await request.app.state.vclient.\
         fetch_keys(num_keys=number, key_size_bytes=bits2bytes(size),
                    master_SAE_ID=request.state.sae_hostname,
-                   slave_SAE_ID=slave_SAE_ID)
+                   slave_SAE_ID=slave_SAE_ID,
+                   background_tasks=background_tasks)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 
@@ -172,14 +174,18 @@ def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
 
 @router.post("/{slave_SAE_ID}/enc_keys",
              **response_model_settings_dict)
-async def post_key(slave_SAE_ID: str = slave_sae_path,
+async def post_key(background_tasks: BackgroundTasks,
+                   slave_SAE_ID: str = slave_sae_path,
                    key_req: models.KeyRequest = Body(...),
                    request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
     key_con = await request.app.state.vclient.\
         fetch_keys(num_keys=key_req.number,
-                   key_size_bytes=bits2bytes(key_req.size))
+                   key_size_bytes=bits2bytes(key_req.size),
+                   master_SAE_ID=request.state.sae_hostname,
+                   slave_SAE_ID=slave_SAE_ID,
+                   background_tasks=background_tasks)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 

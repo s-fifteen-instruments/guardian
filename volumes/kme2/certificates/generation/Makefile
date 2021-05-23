@@ -19,7 +19,8 @@
 # Generate root CA certs/keys
 certs: export ACTION = CAGEN
 certs:
-	@echo Making Target $@ KME=$(KME)
+	@echo Making Target $@
+	@echo LOCAL_KME_ID=$(LOCAL_KME_ID)
 	date
 	@sh gen_certs.sh
 
@@ -33,7 +34,8 @@ csr:
 # Copy production certs/keys to production directory
 install: export ACTION = INSTALL
 install:
-	@echo Making Target $@ KME=$(KME)
+	@echo Making Target $@
+	@echo LOCAL_KME_ID=$(LOCAL_KME_ID)
 	date
 	@sh gen_certs.sh
 

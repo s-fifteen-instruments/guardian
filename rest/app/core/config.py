@@ -19,7 +19,7 @@
 #
 
 import json
-from pydantic import BaseSettings
+from pydantic import BaseModel, BaseSettings, Field
 from pydantic.env_settings import SettingsSourceCallable
 from math import ceil
 from typing import Tuple
@@ -85,9 +85,6 @@ def bits2bytes(bits: int):
     return bits // 8
 
 
-# https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
-
-
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
@@ -124,7 +121,7 @@ class Settings(BaseSettings):
     REMOTE_KME_CERT_FILEPATH: str = f"/certificates/{REMOTE_KME_ID}/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
     VAULT_URI: str = f"https://{VAULT_NAME}:8200"
-    REMOTE_KME_URI: str = f"https://{REMOTE_KME_ID}/{API_V1_STR}/ledger/{LOCAL_KME_ID}/key_ids"
+    REMOTE_KME_URI: str = f"https://{REMOTE_KME_ID}{API_V1_STR}/ledger/{LOCAL_KME_ID}/key_ids"
     VAULT_KV_ENDPOINT: str = "QKEYS"
     VAULT_QKDE_ID: str = "QKDE0001"
     VAULT_QCHANNEL_ID: str = "ALICEBOB"

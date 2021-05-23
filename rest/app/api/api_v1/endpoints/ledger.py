@@ -37,7 +37,7 @@ router = APIRouter()
 local_kme_id_path = \
     Path(...,  # Required value; no default
          title="Local KME ID",
-         description="Unique Local Key Management Entity (KME) String",
+         description="Unique Local Key Management Entity (KME) ID String",
          min_length=settings.KME_ID_MIN_LENGTH,
          max_length=settings.KME_ID_MAX_LENGTH,
          regex=settings.VALID_KME_REGEX

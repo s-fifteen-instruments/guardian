@@ -92,17 +92,14 @@ services:
   vault_init_phase_2:
     <<: *vault_init_label
     environment:
+      # TODO: Work on env var/init var dependency precedence
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      - CLIENT_ALT_NAMES=172.16.192.*,127.0.0.1,192.168.1.*,${LOCAL_KME_ID:-SETME}
     command: ["vault_init.py", "--second"]
     volumes:
       - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
       - /volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
-      # NOTE: Add in dynamic TLS configuration once certificates
-      # have been generated to avoid Traefik header forwaring issues
-      # when passing TLS information to the rest app. 
-      - /volumes/${LOCAL_KME_ID:-SETME}/traefik/configuration:/${LOCAL_KME_ID:-SETME}/etc/traefik
-      - /volumes/${REMOTE_KME_ID:-SETME}/traefik/configuration:/${REMOTE_KME_ID:-SETME}/etc/traefik
 
   vault_init_phase_3:
     <<: *vault_init_label

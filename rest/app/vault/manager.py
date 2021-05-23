@@ -28,7 +28,7 @@ import hvac
 from typing import Dict, List, Tuple
 import uuid
 
-from fastapi import HTTPException
+from fastapi import BackgroundTasks, HTTPException
 from fastapi.encoders import jsonable_encoder
 
 from app.core.config import logger, settings, _dump_response
@@ -46,7 +46,8 @@ class VaultManager(VaultSemaphore):
         super().__init__()
 
     async def fetch_keys(self, num_keys: int, key_size_bytes: int,
-                         master_SAE_ID: str, slave_SAE_ID: str):
+                         master_SAE_ID: str, slave_SAE_ID: str,
+                         background_tasks: BackgroundTasks):
         """Critical Region
         """
         # Critical Start
@@ -86,7 +87,15 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
         for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
-        task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con))
+
+        # This creates the potential for a race condition if the slave SAE
+        # gets Key IDs from the master SAE and then queries the remote KME
+        # before this local KME gets around to this task. Small chance,
+        # remote KME should then run a query back to this local KME for the
+        # ledger as it will be synchronously submitted before the master
+        # SAE even has keying material.
+        background_tasks.add_task(self.send_remote_key_id_ledger_container,
+                                  key_id_ledger_con)
 
         await asyncio.gather(*task_list)
 
@@ -120,16 +129,17 @@ class VaultManager(VaultSemaphore):
         cert_tuple = (settings.VAULT_CLIENT_CERT_FILEPATH,
                       settings.VAULT_CLIENT_KEY_FILEPATH)
         logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URI}")
-        async with httpx.AsyncClient() as client:
+        logger.debug(f"As a dict: {key_id_ledger_con.dict()}")
+        async with httpx.AsyncClient(cert=cert_tuple,
+                                     verify=settings.REMOTE_KME_CERT_FILEPATH,
+                                     trust_env=False) as client:
             remote_kme_response = \
                 await client.put(url=settings.REMOTE_KME_URI,
-                                 data=jsonable_encoder(key_id_ledger_con),
-                                 verify=settings.REMOTE_KME_CERT_FILEPATH,
-                                 cert=cert_tuple,
-                                 allow_redirects=False,
-                                 trust_env=False)
+                                 json=jsonable_encoder(key_id_ledger_con.dict()),
+                                 allow_redirects=False
+                                 )
             logger.debug("Remote KME response:")
-            _dump_response(remote_kme_response, secret=False)
+            _dump_response(remote_kme_response.json(), secret=False)
             # TODO: Verify KeyIDs that came back
 
     async def vault_commit_local_key_id_ledger(self,

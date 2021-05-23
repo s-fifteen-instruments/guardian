@@ -59,8 +59,6 @@ class Settings(BaseSettings):
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
     CLIENT_ALT_NAMES: str = f"172.16.192.*,127.0.0.1,192.168.1.*,{LOCAL_KME_ID}"
-    TRAEFIK_TEMPLATE_FILEPATH_SUFFIX: str = "/etc/traefik/templates/tls.template.yml"
-    TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX: str = "/etc/traefik/traefik.d"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     MAX_CONN_ATTEMPTS: int = 10
@@ -490,6 +488,7 @@ class VaultClient:
             "exclude_cn_from_sans": "false"
         }
         logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
+        logger.debug(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
         gen_cert_response = \
             self.vclient.secrets.pki.\
             generate_certificate(name=role_str,
