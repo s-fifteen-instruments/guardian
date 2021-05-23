@@ -20,8 +20,9 @@
 
 from fastapi import APIRouter
 
-from app.api.api_v1.endpoints import vconn, keys
+from app.api.api_v1.endpoints import vconn, keys, ledger
 
 api_router = APIRouter()
 api_router.include_router(vconn.router, prefix="/check_vconn", tags=["check_vconn"])
 api_router.include_router(keys.router, prefix="/keys", tags=["keys"])
+api_router.include_router(ledger.router, prefix="/ledger", tags=["ledger"])

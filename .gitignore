@@ -2,5 +2,6 @@ venv/
 extra/
 .mypy_cache
 __pycache__
+*.log
 *.pyc
 SECRETS

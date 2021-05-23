@@ -1,4 +1,3 @@
-#
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
 #
@@ -17,34 +16,61 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
-SCRIPTS := ./scripts
-SERVICES := rest
+##########################
+##### CAN CHANGE ME ######
+##########################
 export KME ?= kme1
+##########################
+##########################
+##########################
+
+##########################
+##### LEAVE ME ALONE #####
+##########################
+SERVICES := rest
+SCRIPTS := ./scripts
+ifeq ($(KME), kme1)
+export LOCAL_KME_ID := kme1
+export REMOTE_KME_ID := kme2
+else ifeq ($(KME), kme2)
+export LOCAL_KME_ID := kme2
+export REMOTE_KME_ID := kme1
+else
+$(error KME input not recognized: $(KME). Please use "kme1" or "kme2"; Exiting)
+endif
 $(info )
-$(info Using KME configuration: '$(KME)')
+$(info Using Local KME configuration: '$(KME)')
 $(info Use the command-line syntax, e.g. 'KME=kme2' to change)
+$(info Environment variables used throughout Guardian:)
+$(info KME: $(KME))
+$(info LOCAL_KME_ID: $(LOCAL_KME_ID))
+$(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info )
 
+# KME rest app
 rest: init
 	$(SCRIPTS)/run.sh
 
+# KME initialization steps
 init:
 	$(SCRIPTS)/init.sh
 
+# KME rest app docker logs
 log:
 	$(SCRIPTS)/log.sh $(SERVICES)
 
+# KME rest app shutdown
 down:
 	$(SCRIPTS)/down.sh
 
+# QKD simulator make more keying material
 keys:
 	$(SCRIPTS)/keys.sh
 
-cycle: clean rest log
-
 .PHONY: clean allclean
+# Clean local and remote KMEs
 allclean: export KME = both
 allclean: clean
+# Clean local KME
 clean: down
 	sudo $(SCRIPTS)/clean.sh $(KME)
-

@@ -34,14 +34,14 @@ class StatusExtention(ForbidBase):
 
 
 class StatusRequest(ForbidBase):
-    source_KME_ID: str = Field(settings.SOURCE_KME_ID,
-                               title="KME ID of the KME",
-                               description="KME ID of the KME",
+    source_KME_ID: str = Field(settings.LOCAL_KME_ID,
+                               title="KME ID of the Local KME",
+                               description="KME ID of the Local KME",
                                min_length=settings.KME_ID_MIN_LENGTH,
                                max_length=settings.KME_ID_MAX_LENGTH,
                                regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                                )
-    target_KME_ID: str = Field(settings.TARGET_KME_ID,
+    target_KME_ID: str = Field(settings.REMOTE_KME_ID,
                                title="KME ID of the Target KME",
                                description="KME ID of the Target KME",
                                min_length=settings.KME_ID_MIN_LENGTH,

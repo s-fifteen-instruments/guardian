@@ -7,10 +7,13 @@ global:
 log:
   level: DEBUG
   format: common
+  # Uncomment to dump to log file instead of to stdout
+  # where Docker picks it up.
   #filePath: /var/log/traefik/traefik.log
 
 accessLog:
   format: common
+  # Uncomment to dump access logs to file
   #filePath: /var/log/traefik/access.log
 
 entryPoints:
@@ -25,9 +28,6 @@ entryPoints:
 
   websecure:
     address: :443
-    #tls:
-      #domains:
-      #- main: kme0001.localhost
 
 providers:
   docker:

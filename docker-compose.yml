@@ -22,31 +22,47 @@ services:
   rest:
     build: ./rest
     environment:
-      - WORKERS_PER_CORE=2
-      - MAX_WORKERS=8
+      # Total number of worker threads; overrides other env vars
       - WEB_CONCURRENCY=1
-      - GUNICORN_CMD_ARGS="--reload-delay 5"
+      # Ceiling on number of allowed worker threads;
+      # overridden by WEB_CONCURRENCY
+      - MAX_WORKERS=8
+      # Number of cores * WORKERs_PER_CORE = total number of workers;
+      # overrride by MAX_WORKERS, WEB_CONCURRENCY
+      - WORKERS_PER_CORE=2
+      # Pass in local and remote KME IDs to rest app container
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
     volumes:
       # Mount a volume that stores the TLS certificates
-      - /volumes/${KME:-SETME}/certificates/production:/certificates
+      # TODO: Pair down mounts for remote client auth only
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
+      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
       # Mount a volume that stores the hex digest files of QKD keys
       # NOTE: Only kme1 generates epoch files in this configuration
-      - /volumes/kme1/qkd/digest_files/${KME:-SETME}:/digest_files
+      # TODO: May be removed if full QKD system provides
+      # keying material on both sides
+      - /volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
     labels:
-      # Enable Traefik for this specific "backend" service
+      # Enable Traefik handling for this specific service
       - traefik.enable=true
       # Define the port inside of the Docker service to use
       - traefik.http.services.restapp.loadbalancer.server.port=80
-      # Make Traefik use this domain in HTTP
+      # web entrypoint defined in the Traefik configuration file
+      # "restapp-http" router redirects to websecure endpoint to force HTTPS
       - traefik.http.routers.restapp-http.entrypoints=web
-      - traefik.http.routers.restapp-http.rule=Host(`${KME:-SETME}`)
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTP entrypoint
+      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ID:-SETME}`)
       # Use the traefik-public network (declared below)
       - traefik.docker.network=traefik-public
-      # Make Traefik use this domain in HTTPS
-      - traefik.http.routers.restapp-https.entrypoints=websecure
-      - traefik.http.routers.restapp-https.rule=Host(`${KME:-SETME}`)
+      # Turn on TLS for our "restapp-https" router
       - traefik.http.routers.restapp-https.tls=true
-      # Pass the SAE client's Common Name and SANs for parsing
+      # websecure entrypoint defined in the Traefik configuration file
+      - traefik.http.routers.restapp-https.entrypoints=websecure
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTPS entrypoint
+      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ID:-SETME}`)
+      # Define middleware "client-cert-info" to pass more header info to app
+      # Pass the SAE client's Common Name and SANs to rest app for parsing
       - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
       - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.sans=true
       - traefik.http.routers.restapp-https.middlewares=client-cert-info
@@ -71,13 +87,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - /volumes/${KME:-SETME}/vault/config:/vault/config
+      - /volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - /volumes/${KME:-SETME}/vault/data:/vault/data
+      - /volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - /volumes/${KME:-SETME}/vault/logs:/vault/logs
+      - /volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - /volumes/${KME:-SETME}/certificates/production:/certificates
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -101,7 +117,7 @@ services:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/${KME:-SETME}/certificates/production:/certificates
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
@@ -118,18 +134,19 @@ services:
       - 443:443
     restart: unless-stopped
     environment:
-      - KME=${KME:-SETME}
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
     volumes:
       # Add the Docker socket as a mounted volume, so that
       # Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/kme1/certificates/production:/certificates/kme1
-      - /volumes/kme2/certificates/production:/certificates/kme2
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
+      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
       # Mount the configuration directory
-      - /volumes/${KME:-SETME}/traefik/configuration:/etc/traefik
+      - /volumes/${LOCAL_KME_ID:-SETME}/traefik/configuration:/etc/traefik
       # Mount the log directory
-      - /volumes/${KME:-SETME}/traefik/logs:/var/log/traefik
+      - /volumes/${LOCAL_KME_ID:-SETME}/traefik/logs:/var/log/traefik
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
@@ -138,7 +155,7 @@ services:
 networks:
 
   # Use the previously created public network "traefik-public", shared with other
-  # services that need to be publicly available via this Traefik
+  # services that need to be publicly available via this Traefik instance
   traefik-public:
     external: true
   # Use the private internal network created by Docker to be shared

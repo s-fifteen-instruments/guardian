@@ -40,9 +40,8 @@ logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
 class Settings(BaseSettings):
     """foo
     """
-    KME: str = "SETME"
-    KME1_NAME: str = "kme1"
-    KME2_NAME: str = "kme2"
+    LOCAL_KME_ID: str = "kme1"
+    REMOTE_KME_ID: str = "kme2"
     VAULT_NAME: str = "vault"
     VAULT_URI: str = f"https://{VAULT_NAME}:8200"
     CERT_DIRPATH: str = "/certificates/production"
@@ -59,7 +58,7 @@ class Settings(BaseSettings):
     SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_NAME}{CA_CHAIN_SUFFIX}"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
     PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
-    CLIENT_ALT_NAMES: str = f"172.16.192.*,127.0.0.1,192.168.1.*,{KME1_NAME},{KME2_NAME}"
+    CLIENT_ALT_NAMES: str = f"172.16.192.*,127.0.0.1,192.168.1.*,{LOCAL_KME_ID},{REMOTE_KME_ID}"
     TRAEFIK_TEMPLATE_FILEPATH_SUFFIX: str = "/etc/traefik/templates/tls.template.yml"
     TRAEFIK_DYNAMIC_CONFIG_DIRPATH_SUFFIX: str = "/etc/traefik/traefik.d"
     SECRET_SHARES: int = 5

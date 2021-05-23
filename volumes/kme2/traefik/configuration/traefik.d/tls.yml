@@ -2,10 +2,10 @@
 # Specifically for TLS settings
 tls:
   certificates:
-  - certFile: /certificates/kme1/rest/rest.ca-chain.cert.pem
-    keyFile: /certificates/kme1/rest/rest.key.pem
-  - certFile: /certificates/kme2/rest/rest.ca-chain.cert.pem
-    keyFile: /certificates/kme2/rest/rest.key.pem
+  - certFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.key.pem
+  - certFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
+    keyFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.key.pem
     stores:
     - default
   options:
@@ -16,11 +16,11 @@ tls:
       preferServerCipherSuites: True
       clientAuth:
         caFiles:
-        - /certificates/kme1/vault_init/vault_init.ca-chain.cert.pem
-        - /certificates/kme2/vault_init/vault_init.ca-chain.cert.pem
+        - /certificates/{{ env "LOCAL_KME_ID" }}/vault_init/vault_init.ca-chain.cert.pem
+        - /certificates/{{ env "LOCAL_KME_ID" }}/vault_init/vault_init.ca-chain.cert.pem
         clientAuthType: RequireAndVerifyClientCert
   stores:
     default:
       defaultCertificate:
-        certFile: /certificates/{{ env "KME" }}/rest/rest.ca-chain.cert.pem
-        keyFile: /certificates/{{ env "KME" }}/rest/rest.key.pem
+        certFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
+        keyFile: /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.key.pem

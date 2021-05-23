@@ -153,3 +153,20 @@ class KeyIDLedger(KeyID):
                                               title="Dictionary of ByteRanges",
                                               description="Epoch Filename (key) and ByteRange (value) Pairs to Specify Where Keying Material is to be Taken From"
                                               )
+
+
+class KeyIDLedgerContainerExtension(ForbidBase):
+    key_id_ledger_extension: Optional[Any] = Field(None,  # Default to nothing
+                                                   title="Addtional Key ID Ledger Container Information",
+                                                   description="Addtional Key ID Ledger Container Information"
+                                                   )
+
+
+class KeyIDLedgerContainer(KeyIDLedgerContainerExtension):
+    ledgers: conlist(KeyIDLedger,  # Constrained list of KeyIDLedgers
+                     min_items=1,  # Min number of KeyIDLedgers
+                     max_items=settings.MAX_KEY_PER_REQUEST  # Max number of KeyIDLedgers
+                     ) = Field(...,  # Required value; no default
+                               title="KeyIDLedger Container",
+                               description="Data Model of API \"ledger\" Method"
+                               )

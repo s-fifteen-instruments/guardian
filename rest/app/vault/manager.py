@@ -22,6 +22,7 @@ import aiofiles
 import asyncio
 import base64
 import hashlib
+import httpx
 import hmac
 import hvac
 from typing import Dict, List, Tuple
@@ -55,12 +56,12 @@ class VaultManager(VaultSemaphore):
         sorted_epoch_file_list = await \
             self.fetch_keying_material(epoch_dict=epoch_status_dict)
 
-        key_con, key_id_ledger_list, updated_epoch_file_list = await self.\
+        key_con, key_id_ledger_con, updated_epoch_file_list = await self.\
             build_key_container(num_keys=num_keys,
                                 key_size_bytes=key_size_bytes,
                                 sorted_epoch_file_list=sorted_epoch_file_list)
 
-        for key_id_ledger in key_id_ledger_list:
+        for key_id_ledger in key_id_ledger_con.ledgers:
             key_id_ledger.master_SAE_ID = master_SAE_ID
             key_id_ledger.slave_SAE_ID = slave_SAE_ID
             _dump_response(jsonable_encoder(key_id_ledger), secret=False)
@@ -83,8 +84,9 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
-        for ledger in key_id_ledger_list:
+        for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+        task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con))
 
         await asyncio.gather(*task_list)
 
@@ -110,6 +112,25 @@ class VaultManager(VaultSemaphore):
             secret_dict[f"{epoch}_end_index"] = byte_range.end
 
         return secret_dict
+
+    async def send_remote_key_id_ledger_container(self, key_id_ledger_con:
+                                                  schemas.KeyIDLedgerContainer):
+        """foo
+        """
+        cert_tuple = (settings.VAULT_CLIENT_CERT_FILEPATH,
+                      settings.VAULT_CLIENT_KEY_FILEPATH)
+        logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URI}")
+        async with httpx.AsyncClient() as client:
+            remote_kme_response = \
+                await client.put(url=settings.REMOTE_KME_URI,
+                                 data=jsonable_encoder(key_id_ledger_con),
+                                 verify=settings.REMOTE_KME_CERT_FILEPATH,
+                                 cert=cert_tuple,
+                                 allow_redirects=False,
+                                 trust_env=False)
+            logger.debug("Remote KME response:")
+            _dump_response(remote_kme_response, secret=False)
+            # TODO: Verify KeyIDs that came back
 
     async def vault_commit_local_key_id_ledger(self,
                                                key_id_ledger: schemas.KeyIDLedger) -> None:
@@ -294,7 +315,7 @@ class VaultManager(VaultSemaphore):
                                   key_size_bytes: int,
                                   sorted_epoch_file_list:
                                   List[schemas.EpochFile]) -> Tuple[schemas.KeyContainer,
-                                                                    List[schemas.KeyIDLedger],
+                                                                    schemas.KeyIDLedgerContainer,
                                                                     List[schemas.EpochFile]]:
         """foo
         """
@@ -310,7 +331,8 @@ class VaultManager(VaultSemaphore):
             key_id_ledger_list.append(key_id_ledger)
 
         key_con = schemas.KeyContainer(keys=key_list)
-        return key_con, key_id_ledger_list, sorted_epoch_file_list
+        key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
+        return key_con, key_id_ledger_con, sorted_epoch_file_list
 
     async def fetch_keying_material(self, epoch_dict:
                                     Dict[str, int]) -> List[schemas.EpochFile]:
