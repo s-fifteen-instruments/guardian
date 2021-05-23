@@ -116,10 +116,10 @@ class Settings(BaseSettings):
     VALID_KME_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
-    VAULT_NAME: str = "vault"
+    VAULT_MAX_CONN_ATTEMPTS: int = 10
     VAULT_CLIENT_CERT_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.ca-chain.cert.pem"
     VAULT_CLIENT_KEY_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.key.pem"
-    VAULT_MAX_CONN_ATTEMPTS: int = 10
+    VAULT_NAME: str = "vault"
     VAULT_SERVER_CERT_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
     REMOTE_KME_CERT_FILEPATH: str = f"/certificates/{REMOTE_KME_ID}/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
