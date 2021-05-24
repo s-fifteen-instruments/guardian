@@ -53,15 +53,16 @@ local_kme_id_path = \
             response_model_exclude_none=True,
             response_model_exclude_unset=True,
             status_code=status.HTTP_201_CREATED)
-def put_key_id_ledger(local_KME_ID: str = local_kme_id_path,
-                      key_id_ledger_con: schemas.KeyIDLedgerContainer = Body(...),
-                      request: Request = Body(...)):
+async def put_key_id_ledger(local_KME_ID: str = local_kme_id_path,
+                            key_id_ledger_con: schemas.KeyIDLedgerContainer = Body(...),
+                            request: Request = Body(...)):
     logger.debug(f"local_KME_ID: {local_KME_ID}")
-    key_id_list = [
-        schemas.KeyID(key_ID="012345678901234567"),
-        schemas.KeyID(key_ID="765432109876543210")
-    ]
-    key_id_req = schemas.KeyIDs(
-        key_IDs=key_id_list
-    )
-    return key_id_req
+    # key_id_list = [
+    #     schemas.KeyID(key_ID="012345678901234567"),
+    #     schemas.KeyID(key_ID="765432109876543210")
+    # ]
+    # key_id_req = schemas.KeyIDs(
+    #     key_IDs=key_id_list
+    # )
+    return await request.app.state.vclient.\
+        vault_commit_local_key_id_ledger_container(key_id_ledger_con=key_id_ledger_con)

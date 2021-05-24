@@ -105,6 +105,22 @@ class VaultManager(VaultSemaphore):
 
         return key_con
 
+    async def \
+        vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
+                                                   schemas.KeyIDLedgerContainer):
+        """foo
+        """
+
+        task_list = list()
+        for ledger in key_id_ledger_con.ledgers:
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+
+        await asyncio.gather(*task_list)
+
+        return schemas.KeyIDs(
+            key_IDs=[ledger.key_ID for ledger in key_id_ledger_con.ledgers]
+        )
+
     @staticmethod
     async def build_vault_ledger_entry(key_id_ledger: schemas.KeyIDLedger):
         """foo
@@ -140,10 +156,19 @@ class VaultManager(VaultSemaphore):
                                  )
             logger.debug("Remote KME response:")
             _dump_response(remote_kme_response.json(), secret=False)
-            # TODO: Verify KeyIDs that came back
 
-    async def vault_commit_local_key_id_ledger(self,
-                                               key_id_ledger: schemas.KeyIDLedger) -> None:
+            # Verify KeyIDs that came back the same
+            key_id_request = schemas.KeyIDs(
+                key_IDs=[ledger.key_ID for ledger in key_id_ledger_con.ledgers]
+            )
+            if key_id_request != remote_kme_response:
+                logger.error("Key ID mismatch between local request and remote response; "
+                             f"Local Request: {key_id_request}; "
+                             f"Remote Response: {remote_kme_response}"
+                             )
+
+    async def vault_commit_local_key_id_ledger(self, key_id_ledger:
+                                               schemas.KeyIDLedger) -> None:
         """foo
         """
         try:
