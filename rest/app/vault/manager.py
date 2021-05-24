@@ -89,6 +89,7 @@ class VaultManager(VaultSemaphore):
         for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
 
+        # NOTE:
         # This creates the potential for a race condition if the slave SAE
         # gets Key IDs from the master SAE and then queries the remote KME
         # before this local KME gets around to this task. Small chance,
@@ -109,11 +110,14 @@ class VaultManager(VaultSemaphore):
     async def query_ledger(self,
                            key_IDs: schemas.KeyIDs,
                            master_SAE_ID: str,
-                           slave_SAE_ID: str) -> Tuple[bool,
-                                                       schemas.KeyIDLedgerContainer]:
+                           slave_SAE_ID: str) -> schemas.KeyIDLedgerContainer:
         """foo
         """
-        key_ids_in_ledger = False
+        # TODO: Either Make KeyIDLedgerContainer and subsequent components
+        # hashable to be able to implement uniqueness check for Key IDs OR
+        # implement a check here ensuring all submitted Key IDs are not
+        # duplicates.
+
         key_id_ledger_con = None
         # Local query for each Key ID in key_ids
         task_list = list()
@@ -125,9 +129,25 @@ class VaultManager(VaultSemaphore):
                                                      )
                        )
         local_query_results = await asyncio.gather(*task_list)
-        logger.debug(f"Ledger Data Results: {local_query_results}")
+        is_valid_list, key_id_ledger_list = map(list, zip(*local_query_results))
+        logger.debug(f"Ledger Entry Results: {local_query_results}")
+        key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
+        logger.debug(f"Ledger Valid List: {is_valid_list}")
+        logger.debug(f"KeyIDLedgerCon: {key_id_ledger_con}")
 
-        return key_ids_in_ledger, key_id_ledger_con
+        if not all(is_valid_list):
+            logger.error("Unathorized. SAE ID of the requestor is "
+                         "not an SAE ID supplied to the \"Get key\" "
+                         "method each time it was called.")
+            # TODO: Raise this for production
+            # raise \
+            #     HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            #                   detail="Unathorized. SAE ID of the requestor is "
+            #                          "not an SAE ID supplied to the \"Get key\" "
+            #                          "method each time it was called."
+            #                   )
+
+        return key_id_ledger_con
 
     async def vault_fetch_ledger_entry(self, key_ID: schemas.KeyID,
                                        master_SAE_ID: str,
@@ -157,7 +177,7 @@ class VaultManager(VaultSemaphore):
             ledger_version = int(key_id_ledger_response["data"]["metadata"]["version"])
             flat_ledger_dict = key_id_ledger_response["data"]["data"]
             ledger_entry = await VaultManager.\
-                parse_vault_ledger_entry(key_ID=key_ID.Key_ID,
+                parse_vault_ledger_entry(key_ID=key_ID.key_ID,
                                          flat_ledger_dict=flat_ledger_dict)
             logger.debug(f"Ledger Current Version: {ledger_version}")
             logger.debug(f"Ledger Entry: {ledger_entry}")
@@ -180,24 +200,30 @@ class VaultManager(VaultSemaphore):
             ledger_master_SAE_ID = flat_ledger_dict.pop("master_SAE_ID")
             ledger_slave_SAE_ID = flat_ledger_dict.pop("slave_SAE_ID")
             ledger_num_bytes = int(flat_ledger_dict.pop("num_bytes"))
-        except Exception:
-            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Metadata")
+        except Exception as e:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Metadata: {e}")
 
         try:
             ledger_dict = dict()
             complete_byte_ranges_list = list()
             # All entries that are left should be a
             # start or end index of a particular epoch
-            for key, value in flat_ledger_dict.items:
+            for key, value in flat_ledger_dict.items():
                 epoch, location, _ = key.split("_")
-                if key not in ledger_dict:
+                logger.debug(f"Parse: Epoch: {epoch}; Location: {location}; ledger_dict: {ledger_dict}")
+                if epoch not in ledger_dict:
+                    logger.debug(f"New Key: Epoch: {epoch}; Location: {location}")
                     if location == "start" or location == "end":
                         # NOTE: One of the entries is incorrect;
                         # this is a placeholder for data validation
                         # until we encounter the next index
                         ledger_dict[epoch] = schemas.ByteRange(start=value,
                                                                end=value)
+                    else:
+                        logger.error("Unparsable key entries in flat_ledger_dict; "
+                                     "Malformed start/end index labels (New)")
                 else:
+                    logger.debug(f"Existing Key: Epoch: {epoch}; Location: {location}")
                     if location == "start":
                         # Leave end index alone
                         ledger_dict[epoch] = schemas.\
@@ -207,18 +233,21 @@ class VaultManager(VaultSemaphore):
                         ledger_dict[epoch] = schemas.\
                             ByteRange(start=ledger_dict[epoch].start,
                                       end=value)
+                    else:
+                        logger.error("Unparsable key entries in flat_ledger_dict; "
+                                     "Malformed start/end index labels (Existing)")
                     complete_byte_ranges_list.append(epoch)
 
-                # Ensure all ByteRanges are completed and no residual keys left
-                # Use set notation; order matters here
-                if ledger_dict.keys() - set(complete_byte_ranges_list):
-                    raise KeyError("Unparsable key entries in flat_ledger_dict: "
-                                   f"Ledger Keys: {ledger_dict.keys()}; "
-                                   f"Completed Byte Ranges: {complete_byte_ranges_list}"
-                                   )
+            # Ensure all ByteRanges are completed and no residual keys left
+            # Use set notation; order matters here
+            if ledger_dict.keys() - set(complete_byte_ranges_list):
+                raise KeyError("Unparsable key entries in flat_ledger_dict: "
+                               f"Ledger Keys: {ledger_dict.keys()}; "
+                               f"Completed Byte Ranges: {complete_byte_ranges_list}"
+                               )
 
-        except Exception:
-            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Byte Ranges")
+        except Exception as e:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Byte Ranges: {e}")
 
         try:
             key_id_ledger = schemas.KeyIDLedger(
@@ -229,8 +258,8 @@ class VaultManager(VaultSemaphore):
                 ledger_dict=ledger_dict
             )
             valid_ledger_entry = True
-        except Exception:
-            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Build Ledger")
+        except Exception as e:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Build Ledger: {e}")
 
         if not valid_ledger_entry:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

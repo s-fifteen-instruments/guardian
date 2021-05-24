@@ -162,6 +162,8 @@ class KeyIDLedgerContainerExtension(ForbidBase):
                                                    )
 
 
+# TODO: Can probably enforce uniqueness if hash is well defined:
+# https://github.com/samuelcolvin/pydantic/issues/2011
 class KeyIDLedgerContainer(KeyIDLedgerContainerExtension):
     ledgers: conlist(KeyIDLedger,  # Constrained list of KeyIDLedgers
                      min_items=1,  # Min number of KeyIDLedgers
