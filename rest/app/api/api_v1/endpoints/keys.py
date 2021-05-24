@@ -147,9 +147,9 @@ async def get_key(background_tasks: BackgroundTasks,
 
 @router.get("/{master_SAE_ID}/dec_keys",
             **response_model_settings_dict)
-def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
-                         key_ID: str = key_id_query,
-                         request: Request = Body(...)):
+async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+                               key_ID: str = key_id_query,
+                               request: Request = Body(...)):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_ID: {key_ID}")
     # Create a KeyIDs so that both GET and POST are handled identically
@@ -202,8 +202,8 @@ async def post_key(background_tasks: BackgroundTasks,
 
 @router.post("/{master_SAE_ID}/dec_keys",
              **response_model_settings_dict)
-def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
-                          key_id_req: models.KeyRequest = Body(...)):
+async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+                                key_id_req: models.KeyRequest = Body(...)):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_id_req), secret=False)}")
     # TODO: Query Target KME for Key IDs

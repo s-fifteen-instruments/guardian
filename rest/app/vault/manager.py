@@ -26,10 +26,10 @@ import httpx
 import hmac
 import hvac
 from pydantic import parse_obj_as
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 import uuid
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 
 from app.core.config import logger, settings, _dump_response
@@ -136,7 +136,7 @@ class VaultManager(VaultSemaphore):
         """foo
         """
         key_id_valid = False
-        ledger_data = None
+        ledger_entry = None
         try:
             mount_point = settings.VAULT_KV_ENDPOINT
             ledger_path = f"{settings.VAULT_QKDE_ID}/" \
@@ -155,16 +155,89 @@ class VaultManager(VaultSemaphore):
             logger.debug(f"ledger_path: {ledger_path} version response:")
             _dump_response(key_id_ledger_response, secret=False)
             ledger_version = int(key_id_ledger_response["data"]["metadata"]["version"])
-            ledger_data = parse_obj_as(schemas.KeyIDLedger,
-                                       key_id_ledger_response["data"]["data"])
+            flat_ledger_dict = key_id_ledger_response["data"]["data"]
+            ledger_entry = await VaultManager.\
+                parse_vault_ledger_entry(key_ID=key_ID.Key_ID,
+                                         flat_ledger_dict=flat_ledger_dict)
             logger.debug(f"Ledger Current Version: {ledger_version}")
-            logger.debug(f"Ledger Data: {ledger_data}")
-            if ledger_data.master_SAE_ID == master_SAE_ID and \
-               ledger_data.slave_SAE_ID == slave_SAE_ID:
+            logger.debug(f"Ledger Entry: {ledger_entry}")
+            if ledger_entry.master_SAE_ID == master_SAE_ID and \
+               ledger_entry.slave_SAE_ID == slave_SAE_ID:
                 key_id_valid = True
-                logger.debug(f"Key ID Valid: \"{ledger_data.Key_ID}\"")
+                logger.debug(f"Key ID Valid: \"{ledger_entry.Key_ID}\"")
 
-        return key_id_valid, ledger_data
+        return key_id_valid, ledger_entry
+
+    @staticmethod
+    async def parse_vault_ledger_entry(key_ID: str,
+                                       flat_ledger_dict: Dict[str, Union[int, str]]):
+        """foo
+        """
+        valid_ledger_entry = False
+        key_id_ledger = None
+        try:
+            ledger_key_ID = flat_ledger_dict.pop("key_ID")
+            ledger_master_SAE_ID = flat_ledger_dict.pop("master_SAE_ID")
+            ledger_slave_SAE_ID = flat_ledger_dict.pop("slave_SAE_ID")
+            ledger_num_bytes = int(flat_ledger_dict.pop("num_bytes"))
+        except Exception:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Metadata")
+
+        try:
+            ledger_dict = dict()
+            complete_byte_ranges_list = list()
+            # All entries that are left should be a
+            # start or end index of a particular epoch
+            for key, value in flat_ledger_dict.items:
+                epoch, location, _ = key.split("_")
+                if key not in ledger_dict:
+                    if location == "start" or location == "end":
+                        # NOTE: One of the entries is incorrect;
+                        # this is a placeholder for data validation
+                        # until we encounter the next index
+                        ledger_dict[epoch] = schemas.ByteRange(start=value,
+                                                               end=value)
+                else:
+                    if location == "start":
+                        # Leave end index alone
+                        ledger_dict[epoch] = schemas.\
+                            ByteRange(start=value, end=ledger_dict[epoch].end)
+                    elif location == "end":
+                        # Leave start index alone
+                        ledger_dict[epoch] = schemas.\
+                            ByteRange(start=ledger_dict[epoch].start,
+                                      end=value)
+                    complete_byte_ranges_list.append(epoch)
+
+                # Ensure all ByteRanges are completed and no residual keys left
+                # Use set notation; order matters here
+                if ledger_dict.keys() - set(complete_byte_ranges_list):
+                    raise KeyError("Unparsable key entries in flat_ledger_dict: "
+                                   f"Ledger Keys: {ledger_dict.keys()}; "
+                                   f"Completed Byte Ranges: {complete_byte_ranges_list}"
+                                   )
+
+        except Exception:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Byte Ranges")
+
+        try:
+            key_id_ledger = schemas.KeyIDLedger(
+                key_ID=ledger_key_ID,
+                master_SAE_ID=ledger_master_SAE_ID,
+                slave_SAE_ID=ledger_slave_SAE_ID,
+                num_bytes=ledger_num_bytes,
+                ledger_dict=ledger_dict
+            )
+            valid_ledger_entry = True
+        except Exception:
+            logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Build Ledger")
+
+        if not valid_ledger_entry:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail=f"Key ID: {key_ID}; Unparsable Vault Ledger Entry"
+                                )
+
+        return key_id_ledger
 
     async def \
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
