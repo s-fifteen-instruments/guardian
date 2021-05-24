@@ -104,8 +104,7 @@ response_model_settings_dict = {
             response_model=models.StatusRequest,
             response_model_exclude_none=True,
             response_model_exclude_unset=False,
-            response_model_exclude_defaults=False,
-            tags=["Status"])
+            response_model_exclude_defaults=False)
 def get_status(slave_SAE_ID: str = slave_sae_path,
                request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
@@ -149,11 +148,19 @@ async def get_key(background_tasks: BackgroundTasks,
 @router.get("/{master_SAE_ID}/dec_keys",
             **response_model_settings_dict)
 def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
-                         key_ID: str = key_id_query):
+                         key_ID: str = key_id_query,
+                         request: Request = Body(...)):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_ID: {key_ID}")
-    # TODO: Query Target KME for Key IDs
-    # TODO: If good, Query Vault for Key IDs
+    # Create a KeyIDs so that both GET and POST are handled identically
+    key_id_req = schemas.KeyIDs(key_IDs=[schemas.KeyID(key_ID=key_ID)])
+    key_ids_in_ledger, key_id_ledger_con = await request.app.state.vclient.\
+        query_ledger(key_IDs=key_id_req,
+                     master_SAE_ID=master_SAE_ID,
+                     slave_SAE_ID=request.state.sae_hostname
+                     )
+    logger.debug(f"Was the Key ID in the Ledger: {key_ids_in_ledger}")
+    logger.debug(f"Resulting Key ID Ledger Container: {key_id_ledger_con}")
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
@@ -196,9 +203,9 @@ async def post_key(background_tasks: BackgroundTasks,
 @router.post("/{master_SAE_ID}/dec_keys",
              **response_model_settings_dict)
 def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
-                          key_req: models.KeyRequest = Body(...)):
+                          key_id_req: models.KeyRequest = Body(...)):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
-    logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
+    logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_id_req), secret=False)}")
     # TODO: Query Target KME for Key IDs
     # TODO: If good, Query Vault for Key IDs
     key_con = schemas.KeyContainer(

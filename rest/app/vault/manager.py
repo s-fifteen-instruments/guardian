@@ -106,6 +106,66 @@ class VaultManager(VaultSemaphore):
 
         return key_con
 
+    async def query_ledger(self,
+                           key_IDs: schemas.KeyIDs,
+                           master_SAE_ID: str,
+                           slave_SAE_ID: str) -> Tuple[bool,
+                                                       schemas.KeyIDLedgerContainer]:
+        """foo
+        """
+        key_ids_in_ledger = False
+        key_id_ledger_con = None
+        # Local query for each Key ID in key_ids
+        task_list = list()
+        for key_ID in key_IDs.key_IDs:
+            task_list.\
+                append(self.vault_fetch_ledger_entry(key_ID=key_ID,
+                                                     master_SAE_ID=master_SAE_ID,
+                                                     slave_SAE_ID=slave_SAE_ID
+                                                     )
+                       )
+        local_query_results = await asyncio.gather(*task_list)
+        logger.debug(f"Ledger Data Results: {local_query_results}")
+
+        return key_ids_in_ledger, key_id_ledger_con
+
+    async def vault_fetch_ledger_entry(self, key_ID: schemas.KeyID,
+                                       master_SAE_ID: str,
+                                       slave_SAE_ID: str) -> Tuple[bool,
+                                                                   schemas.KeyIDLedger]:
+        """foo
+        """
+        key_id_valid = False
+        ledger_data = None
+        try:
+            mount_point = settings.VAULT_KV_ENDPOINT
+            ledger_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                f"{settings.VAULT_LEDGER_ID}/" \
+                f"{key_ID.key_ID}"
+            key_id_ledger_response = self.hvc.secrets.kv.v2.\
+                read_secret_version(path=ledger_path,
+                                    version=None,   # Latest version returned
+                                    mount_point=mount_point)
+        except hvac.exceptions.InvalidPath:
+            logger.debug("There is no information yet at ledger filepath: "
+                         f"{ledger_path}; mount_point: {mount_point}")
+            ledger_version = 0
+        else:
+            logger.debug(f"ledger_path: {ledger_path} version response:")
+            _dump_response(key_id_ledger_response, secret=False)
+            ledger_version = int(key_id_ledger_response["data"]["metadata"]["version"])
+            ledger_data = parse_obj_as(schemas.KeyIDLedger,
+                                       key_id_ledger_response["data"]["data"])
+            logger.debug(f"Ledger Current Version: {ledger_version}")
+            logger.debug(f"Ledger Data: {ledger_data}")
+            if ledger_data.master_SAE_ID == master_SAE_ID and \
+               ledger_data.slave_SAE_ID == slave_SAE_ID:
+                key_id_valid = True
+                logger.debug(f"Key ID Valid: \"{ledger_data.Key_ID}\"")
+
+        return key_id_valid, ledger_data
+
     async def \
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
                                                    schemas.KeyIDLedgerContainer) -> schemas.KeyIDs:
@@ -200,6 +260,7 @@ class VaultManager(VaultSemaphore):
             if "check-and-set parameter did not match the current version" in str(e):
                 logger.error(f"InvalidRequest, Key ID: \"{key_id_ledger.key_ID}\" "
                              f"Ledger Check-And-Set Error; Version Mismatch: {e}")
+                # TODO: For PUT behavior, this should not happen to adhere to idempotence
                 raise \
                     HTTPException(status_code=503,
                                   detail=f"Key ID: \"{key_id_ledger.key_ID}\" "

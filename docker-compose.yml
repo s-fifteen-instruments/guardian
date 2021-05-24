@@ -33,6 +33,8 @@ services:
       # Pass in local and remote KME IDs to rest app container
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      # Useful for client remote ledger put requests
+      - HTTPX_LOG_LEVEL=trace
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
