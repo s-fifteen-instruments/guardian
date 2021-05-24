@@ -25,6 +25,7 @@ import hashlib
 import httpx
 import hmac
 import hvac
+from pydantic import parse_obj_as
 from typing import Dict, List, Tuple
 import uuid
 
@@ -107,19 +108,25 @@ class VaultManager(VaultSemaphore):
 
     async def \
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
-                                                   schemas.KeyIDLedgerContainer):
+                                                   schemas.KeyIDLedgerContainer) -> schemas.KeyIDs:
         """foo
         """
-
+        logger.debug("Received Key ID Ledger Container:")
+        _dump_response(key_id_ledger_con.dict(), secret=False)
         task_list = list()
+        key_id_list = list()
         for ledger in key_id_ledger_con.ledgers:
+            logger.debug(f"Adding Local Ledger Commit Task Key ID: {ledger.key_ID}")
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+            key_id_list.append(schemas.KeyID(key_ID=ledger.key_ID))
 
         await asyncio.gather(*task_list)
 
-        return schemas.KeyIDs(
-            key_IDs=[ledger.key_ID for ledger in key_id_ledger_con.ledgers]
-        )
+        logger.debug(f"Key ID List: {key_id_list}")
+        logger.debug(f"Key IDs: {schemas.KeyIDs(key_IDs=key_id_list)}")
+        key_ids_req = schemas.KeyIDs(key_IDs=key_id_list)
+        logger.debug(f"Key IDs Request: {key_ids_req}")
+        return key_ids_req
 
     @staticmethod
     async def build_vault_ledger_entry(key_id_ledger: schemas.KeyIDLedger):
@@ -159,13 +166,15 @@ class VaultManager(VaultSemaphore):
 
             # Verify KeyIDs that came back the same
             key_id_request = schemas.KeyIDs(
-                key_IDs=[ledger.key_ID for ledger in key_id_ledger_con.ledgers]
+                key_IDs=[schemas.KeyID(key_ID=ledger.key_ID) for ledger in key_id_ledger_con.ledgers]
             )
-            if key_id_request != remote_kme_response:
+            if key_id_request != parse_obj_as(schemas.KeyIDs, remote_kme_response.json()):
                 logger.error("Key ID mismatch between local request and remote response; "
                              f"Local Request: {key_id_request}; "
                              f"Remote Response: {remote_kme_response}"
                              )
+            else:
+                logger.debug("Key IDs match between local request and remote ledger response")
 
     async def vault_commit_local_key_id_ledger(self, key_id_ledger:
                                                schemas.KeyIDLedger) -> None:
