@@ -81,7 +81,7 @@ class VaultSemaphore(VaultClient):
             cas_error = False
         except hvac.exceptions.InvalidRequest as e:
             # Possible but unlikely
-            if "check-and-set parameter did not match the current version" in str(e):
+            if "check-and-set parameter" in str(e):
                 logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
             # Unexpected error has occurred; re-raise it
             else:

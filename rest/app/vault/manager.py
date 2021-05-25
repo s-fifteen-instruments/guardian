@@ -276,11 +276,13 @@ class VaultManager(VaultSemaphore):
                                                      )
                        )
         local_query_results = await asyncio.gather(*task_list)
-        is_valid_list, key_id_ledger_list = map(list, zip(*local_query_results))
+        is_valid_list, key_id_ledger_list, ledger_version_list = \
+            map(list, zip(*local_query_results))
         logger.debug(f"Ledger Entry Results: {local_query_results}")
         key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
         logger.debug(f"Ledger Valid List: {is_valid_list}")
         logger.debug(f"KeyIDLedgerCon: {key_id_ledger_con}")
+        logger.debug(f"Ledger Version List: {ledger_version_list}")
 
         if not all(is_valid_list):
             logger.error("Unathorized. SAE ID of the requestor is "
@@ -299,7 +301,8 @@ class VaultManager(VaultSemaphore):
     async def vault_fetch_ledger_entry(self, key_ID: schemas.KeyID,
                                        master_SAE_ID: str,
                                        slave_SAE_ID: str) -> Tuple[bool,
-                                                                   schemas.KeyIDLedger]:
+                                                                   schemas.KeyIDLedger,
+                                                                   int]:
         """foo
         """
         key_id_valid = False
@@ -333,7 +336,7 @@ class VaultManager(VaultSemaphore):
                 key_id_valid = True
                 logger.debug(f"Key ID Valid: \"{ledger_entry.Key_ID}\"")
 
-        return key_id_valid, ledger_entry
+        return key_id_valid, ledger_entry, ledger_version
 
     @staticmethod
     async def parse_vault_ledger_entry(key_ID: str,
@@ -503,11 +506,16 @@ class VaultManager(VaultSemaphore):
                                                reset_status: bool = False) -> None:
         """foo
         """
-        cas_dict = dict()
-        # If we are resetting status on the ledger, then we should be creating
-        # this entry in Vault (cas=0); if not, don't set
-        if reset_status:
-            cas_dict = {"cas": 0}
+
+        key_id_valid, ledger_entry, ledger_version = await self.\
+            vault_fetch_ledger_entry(key_ID=key_id_ledger.key_ID,
+                                     master_SAE_ID=key_id_ledger.master_SAE_ID,
+                                     slave_SAE_ID=key_id_ledger.slave_SAE_ID)
+
+        if reset_status and ledger_version != 0:
+            logger.error("Unexpected Ledger Status Reset on Existing Ledger: "
+                         f"key_ID: {key_id_ledger.key_ID}; "
+                         f"Version: {ledger_version}")
 
         try:
             mount_point = settings.VAULT_KV_ENDPOINT
@@ -521,14 +529,14 @@ class VaultManager(VaultSemaphore):
                                         build_vault_ledger_entry(key_id_ledger,
                                                                  reset_status=
                                                                  reset_status),
-                                        **cas_dict,
+                                        cas=ledger_version,
                                         mount_point=mount_point
                                         )
             logger.debug(f"Vault Key ID \"{key_id_ledger.key_ID}\" Ledger update response:")
             _dump_response(key_id_ledger_response, secret=False)
         except hvac.exceptions.InvalidRequest as e:
             # Possible but unlikely
-            if "check-and-set parameter did not match the current version" in str(e):
+            if "check-and-set parameter" in str(e):
                 logger.error(f"InvalidRequest, Key ID: \"{key_id_ledger.key_ID}\" "
                              f"Ledger Check-And-Set Error; Version Mismatch: {e}")
                 # TODO: For PUT behavior, this should not happen to adhere to idempotence
@@ -542,7 +550,7 @@ class VaultManager(VaultSemaphore):
             else:
                 raise \
                     HTTPException(status_code=503,
-                                  detail=f"Uexpected Error: {e}"
+                                  detail=f"Unexpected Error: {e}"
                                   )
 
     async def vault_update_epoch_file(self, epoch_file: schemas.EpochFile):
@@ -597,13 +605,13 @@ class VaultManager(VaultSemaphore):
             cas_error = False
         except hvac.exceptions.InvalidRequest as e:
             # Possible but unlikely
-            if "check-and-set parameter did not match the current version" in str(e):
+            if "check-and-set parameter" in str(e):
                 logger.warning(f"InvalidRequest, Check-And-Set Error; Version Mismatch: {e}")
             # Unexpected error has occurred; re-raise it
             else:
                 raise \
                     HTTPException(status_code=503,
-                                  detail=f"Uexpected Error: {e}"
+                                  detail=f"Unexpected Error: {e}"
                                   )
 
         return cas_error
