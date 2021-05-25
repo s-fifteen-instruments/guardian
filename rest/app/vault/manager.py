@@ -88,6 +88,8 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
         for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+        # task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
+        #                                                           key_id_ledger_con))
 
         # NOTE:
         # This creates the potential for a race condition if the slave SAE
@@ -114,11 +116,11 @@ class VaultManager(VaultSemaphore):
 
         # Determine ledger statuses before epoch file reservation
         ledger_status_dict = dict()
-        err_msg = "Not all Key IDs are available for consumption"
+        err_msg = "Not all Key IDs are available for consumption: "
         for ledger in key_id_ledger_con.ledgers:
             if ledger.status != "available":
                 ledger_status_dict[ledger.key_ID] = False
-                err_msg += f"{jsonable_encoder(ledger)}"
+                err_msg += f"Key ID: \"{ledger.key_ID}\"; Key Status: \"{ledger.status}\"; "
             else:
                 ledger_status_dict[ledger.key_ID] = True
 
@@ -278,10 +280,23 @@ class VaultManager(VaultSemaphore):
                            slave_SAE_ID: str) -> schemas.KeyIDLedgerContainer:
         """foo
         """
-        # TODO: Either Make KeyIDLedgerContainer and subsequent components
-        # hashable to be able to implement uniqueness check for Key IDs OR
-        # implement a check here ensuring all submitted Key IDs are not
-        # duplicates.
+        # Find Key ID request duplicates
+        key_id_list = list()
+        duplicate_key_id_list = list()
+        err_msg = "Duplicate key IDs in Request; Key IDs must be unique: "
+        for key_id in key_IDs.key_IDs:
+            if key_id.key_ID not in key_id_list:
+                key_id_list.append(key_id.key_ID)
+            else:
+                duplicate_key_id_list.append(key_id.key_ID)
+                err_msg += f"Key ID: {key_id.key_ID}; "
+
+        # Check for key ID duplicates
+        if duplicate_key_id_list:
+            logger.error(err_msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=err_msg
+                                )
 
         key_id_ledger_con = None
         # Local query for each Key ID in key_ids
@@ -294,14 +309,29 @@ class VaultManager(VaultSemaphore):
                                                      )
                        )
         local_query_results = await asyncio.gather(*task_list)
-        is_valid_list, key_id_ledger_list, ledger_version_list = \
+        key_id_list, is_valid_list, key_id_ledger_list, ledger_version_list = \
             map(list, zip(*local_query_results))
         logger.debug(f"Ledger Entry Results: {local_query_results}")
-        key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
+        logger.debug(f"Ledger Key ID List: {key_id_list}")
         logger.debug(f"Ledger Valid List: {is_valid_list}")
-        logger.debug(f"KeyIDLedgerCon: {key_id_ledger_con}")
         logger.debug(f"Ledger Version List: {ledger_version_list}")
 
+        # Check for missing keys
+        missing_keys = False
+        err_msg = "One or more keys specified are not found on local KME: "
+        for index, version in enumerate(ledger_version_list):
+            if version == 0:
+                err_msg += f"Key ID: {key_id_list[index]}; "
+                missing_keys = True
+
+        # Some keys are not present
+        if missing_keys:
+            logger.error(err_msg)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=err_msg
+                                )
+
+        # Some keys did not pass validation
         if not all(is_valid_list):
             logger.error("Unathorized. SAE ID of the requestor is "
                          "not an SAE ID supplied to the \"Get key\" "
@@ -313,6 +343,10 @@ class VaultManager(VaultSemaphore):
             #                          "not an SAE ID supplied to the \"Get key\" "
             #                          "method each time it was called."
             #                   )
+
+        # Only construct after validation
+        key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
+        logger.debug(f"KeyIDLedgerCon: {key_id_ledger_con}")
 
         return key_id_ledger_con
 
@@ -354,7 +388,7 @@ class VaultManager(VaultSemaphore):
                 key_id_valid = True
                 logger.debug(f"Key ID Valid: \"{ledger_entry.key_ID}\"")
 
-        return key_id_valid, ledger_entry, ledger_version
+        return key_ID.key_ID, key_id_valid, ledger_entry, ledger_version
 
     @staticmethod
     async def parse_vault_ledger_entry(key_ID: str,
@@ -525,7 +559,7 @@ class VaultManager(VaultSemaphore):
         """foo
         """
 
-        key_id_valid, ledger_entry, ledger_version = await self.\
+        key_id, key_id_valid, ledger_entry, ledger_version = await self.\
             vault_fetch_ledger_entry(key_ID=key_id_ledger,  # Works b/c KeyIDLedger inherits from KeyID
                                      master_SAE_ID=key_id_ledger.master_SAE_ID,
                                      slave_SAE_ID=key_id_ledger.slave_SAE_ID)
@@ -553,16 +587,16 @@ class VaultManager(VaultSemaphore):
             logger.debug(f"Vault Key ID \"{key_id_ledger.key_ID}\" Ledger update response:")
             _dump_response(key_id_ledger_response, secret=False)
         except hvac.exceptions.InvalidRequest as e:
-            # Possible but unlikely
+            # Possible only if another request is attempting to update ledger at
+            # the same time. Maybe TODO: Put into cas while loop?
             if "check-and-set parameter" in str(e):
                 logger.error(f"InvalidRequest, Key ID: \"{key_id_ledger.key_ID}\" "
                              f"Ledger Check-And-Set Error; Version Mismatch: {e}")
-                # TODO: For PUT behavior, this should not happen to adhere to idempotence
                 raise \
                     HTTPException(status_code=503,
                                   detail=f"Key ID: \"{key_id_ledger.key_ID}\" "
                                          "Ledger Check-And-Set Error; "
-                                         "Expecting Version 0; "
+                                         f"Expecting Version {ledger_version}; "
                                          f"Version Mismatch: {e}"
                                   )
             else:

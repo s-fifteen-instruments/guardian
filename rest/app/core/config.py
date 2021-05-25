@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     MAX_EX_MANADATORY_COUNT: int = 2
     MAX_EX_OPTIONAL_COUNT: int = 2
     MAX_KEY_COUNT: int = 250000000
-    MAX_KEY_PER_REQUEST: int = 4
+    MAX_KEY_PER_REQUEST: int = 100
     MAX_KEY_SIZE: int = 80000  # Bits
     MAX_SAE_ID_COUNT: int = 2
     MIN_KEY_SIZE: int = 8  # Bits
