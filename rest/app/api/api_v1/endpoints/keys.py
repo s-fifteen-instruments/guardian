@@ -161,6 +161,8 @@ async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
                      )
     logger.debug("Resulting Key ID Ledger Container: ")
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
+    key_con = await request.app.state.vclient.\
+        ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(
@@ -215,6 +217,8 @@ async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
                      )
     logger.debug("Resulting Key ID Ledger Container: ")
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
+    key_con = await request.app.state.vclient.\
+        ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
     key_con = schemas.KeyContainer(
         keys=[
             schemas.KeyPair(

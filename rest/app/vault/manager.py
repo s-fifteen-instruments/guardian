@@ -107,6 +107,121 @@ class VaultManager(VaultSemaphore):
 
         return key_con
 
+    async def ledger_fetch_keys(self, key_id_ledger_con:
+                                schemas.KeyIDLedgerContainer):
+        """foo
+        """
+        worker_uid, epoch_status_dict = await self.\
+            vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con)
+
+        # Critical End
+        self.vault_release_epoch_files(worker_uid=worker_uid,
+                                       epoch_dict=epoch_status_dict)
+
+    async def vault_ledger_claim_epoch_files(self, key_id_ledger_con:
+                                             schemas.KeyIDLedgerContainer):
+        """foo
+        """
+        epoch_list = await self.\
+            extract_epoch_names_from_ledger_con(key_id_ledger_con=key_id_ledger_con)
+
+        attempt_count = 0
+        cas_error = True
+        while cas_error:
+            attempt_count += 1
+            # First, attempt to read status endpoint
+            mount_point = settings.VAULT_KV_ENDPOINT
+            status_path = f"{settings.VAULT_QKDE_ID}/" \
+                f"{settings.VAULT_QCHANNEL_ID}/" \
+                "status"
+            status_version, status_data = \
+                self.vault_read_secret_version(filepath=status_path,
+                                               mount_point=mount_point
+                                               )
+            # Next, determine if all epoch files are
+            # present and available for reservation
+            missing_files_list, reserved_files_list, epoch_dict = await VaultManager.\
+                check_epoch_status(requested_epoch_list=epoch_list,
+                                   current_status_dict=status_data)
+            if missing_files_list:
+                logger.error("Ledger Requested Epoch Files are Missing "
+                             f"in Vault Status; Req Epochs: {epoch_list}")
+                raise \
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                  detail="Ledger Requested Epoch Files are Missing "
+                                         f"in Vault Status; Req Epochs: {epoch_list}; "
+                                         f"Missing Epochs: {missing_files_list}"
+                                  )
+
+            if reserved_files_list:
+                logger.debug(f"Awaiting Epoch Files to Become Available: "
+                             f"Req Epochs: {epoch_list}; "
+                             f"Reserved Epochs: {reserved_files_list}")
+                if attempt_count > settings.MAX_NUM_RESERVE_ATTEMPTS:
+                    logger.error("Reached Maximum number of Reservation Attempts: "
+                                 f"{settings.MAX_NUM_RESERVE_ATTEMPTS} while attempting "
+                                 f"to reserve epoch files: {epoch_list}")
+                    raise \
+                        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                      detail="Reached Maximum number of Reservation Attempts: "
+                                             f"{settings.MAX_NUM_RESERVE_ATTEMPTS} while attempting "
+                                             f"to reserve epoch files: {epoch_list}"
+                                      )
+                else:
+                    continue  # Attempt another read and see
+
+            # All epoch files are present and available by this point
+
+            # Build the updated version of the secret to be committed
+            worker_uid, updated_status_data = VaultManager.\
+                construct_claimed_status(data_index=status_data,
+                                         epoch_dict=epoch_dict)
+
+            # Commit the status back to Vault to claim the epoch_dict
+            cas_error = self.\
+                vault_commit_secret(path=status_path, secret=updated_status_data,
+                                    version=status_version, mount_point=mount_point)
+
+        return worker_uid, epoch_dict
+
+    @staticmethod
+    async def check_epoch_status(requested_epoch_list: List[str],
+                                 current_status_dict: Dict[str, Union[str, int]]):
+       """foo
+       """
+       present_files_list = list()
+       missing_files_list = list()
+       available_files_list = list()
+       reserved_files_list = list()
+       epoch_dict = dict()
+       for req_epoch in requested_epoch_list:
+           if req_epoch in current_status_dict:
+               present_files_list.append(req_epoch)
+               # This epoch file is free and displaying number of bytes for consuming
+               # Worker UIDs should be strings
+               if isinstance(current_status_dict[req_epoch], int):
+                   available_files_list.append(req_epoch)
+                   epoch_dict[req_epoch] = current_status_dict[req_epoch]
+               else:
+                   reserved_files_list.append(req_epoch)
+           else:
+               missing_files_list.append(req_epoch)
+
+       return missing_files_list, reserved_files_list, epoch_dict
+
+    async def \
+        extract_epoch_names_from_ledger_con(self, key_id_ledger_con:
+                                            schemas.KeyIDLedgerContainer) -> List[str]:
+        """foo
+        """
+        epoch_list = list()
+        for ledger in key_id_ledger_con.ledgers:
+            for epoch in ledger.ledger_dict.keys():
+                epoch_list.append(epoch)
+
+        epoch_list = sorted(list(set(epoch_list)))
+        return epoch_list
+
     async def query_ledger(self,
                            key_IDs: schemas.KeyIDs,
                            master_SAE_ID: str,
