@@ -105,12 +105,15 @@ class Settings(BaseSettings):
     MIN_KEY_SIZE: int = 8  # Bits
     SAE_ID_MAX_LENGTH: int = 32
     SAE_ID_MIN_LENGTH: int = 3
+    STATUS_MIN_LENGTH: int = 8
+    STATUS_MAX_LENGTH: int = 9
     LOCAL_KME_ID: str = "kme1"
     REMOTE_KME_ID: str = "kme2"
     VALID_HOSTNAME_REGEX: str = r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
     VALID_IP_ADDRESS_REGEX: str = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
     VALID_SAE_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VALID_KME_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
+    VALID_STATUS_REGEX: str = r"^consumed$|^available$"
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
     VAULT_MAX_CONN_ATTEMPTS: int = 10

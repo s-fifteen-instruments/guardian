@@ -117,7 +117,7 @@ class VaultManager(VaultSemaphore):
         sorted_epoch_file_list = await \
             self.fetch_keying_material(epoch_dict=epoch_status_dict)
 
-        key_con, updated_epoch_file_list = await self.\
+        key_con, updated_epoch_file_list, updated_key_id_ledger_con = await self.\
             build_ledger_key_container(key_id_ledger_con=key_id_ledger_con,
                                        sorted_epoch_file_list=sorted_epoch_file_list)
 
@@ -139,6 +139,8 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+        for ledger in updated_key_id_ledger_con.ledgers:
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
 
         await asyncio.gather(*task_list)
 
@@ -342,6 +344,7 @@ class VaultManager(VaultSemaphore):
         key_id_ledger = None
         try:
             ledger_key_ID = flat_ledger_dict.pop("key_ID")
+            ledger_status = flat_ledger_dict.pop("status")
             ledger_master_SAE_ID = flat_ledger_dict.pop("master_SAE_ID")
             ledger_slave_SAE_ID = flat_ledger_dict.pop("slave_SAE_ID")
             ledger_num_bytes = int(flat_ledger_dict.pop("num_bytes"))
@@ -397,6 +400,7 @@ class VaultManager(VaultSemaphore):
         try:
             key_id_ledger = schemas.KeyIDLedger(
                 key_ID=ledger_key_ID,
+                status=ledger_status,
                 master_SAE_ID=ledger_master_SAE_ID,
                 slave_SAE_ID=ledger_slave_SAE_ID,
                 num_bytes=ledger_num_bytes,
@@ -415,7 +419,8 @@ class VaultManager(VaultSemaphore):
 
     async def \
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
-                                                   schemas.KeyIDLedgerContainer) -> schemas.KeyIDs:
+                                                   schemas.KeyIDLedgerContainer,
+                                                   reset_status: bool = False) -> schemas.KeyIDs:
         """foo
         """
         logger.debug("Received Key ID Ledger Container:")
@@ -424,7 +429,11 @@ class VaultManager(VaultSemaphore):
         key_id_list = list()
         for ledger in key_id_ledger_con.ledgers:
             logger.debug(f"Adding Local Ledger Commit Task Key ID: {ledger.key_ID}")
-            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger,
+                                                                   reset_status=
+                                                                   reset_status
+                                                                   )
+                             )
             key_id_list.append(schemas.KeyID(key_ID=ledger.key_ID))
 
         await asyncio.gather(*task_list)
@@ -436,10 +445,16 @@ class VaultManager(VaultSemaphore):
         return key_ids_req
 
     @staticmethod
-    async def build_vault_ledger_entry(key_id_ledger: schemas.KeyIDLedger):
+    async def build_vault_ledger_entry(key_id_ledger: schemas.KeyIDLedger,
+                                       reset_status: bool = False):
         """foo
         """
+        if reset_status:
+            logger.debug(f"Resetting KeyIDLedger \"{key_id_ledger.key_ID}\" Status to \"available\"")
+            key_id_ledger.status = "available"
+
         secret_dict = {
+            "status": f"{key_id_ledger.status}",
             "key_ID": f"{key_id_ledger.key_ID}",
             "master_SAE_ID": f"{key_id_ledger.master_SAE_ID}",
             "slave_SAE_ID": f"{key_id_ledger.slave_SAE_ID}",
@@ -484,9 +499,16 @@ class VaultManager(VaultSemaphore):
                 logger.debug("Key IDs match between local request and remote ledger response")
 
     async def vault_commit_local_key_id_ledger(self, key_id_ledger:
-                                               schemas.KeyIDLedger) -> None:
+                                               schemas.KeyIDLedger,
+                                               reset_status: bool = False) -> None:
         """foo
         """
+        cas_dict = dict()
+        # If we are resetting status on the ledger, then we should be creating
+        # this entry in Vault (cas=0); if not, don't set
+        if reset_status:
+            cas_dict = {"cas": 0}
+
         try:
             mount_point = settings.VAULT_KV_ENDPOINT
             epoch_path = f"{settings.VAULT_QKDE_ID}/" \
@@ -496,8 +518,10 @@ class VaultManager(VaultSemaphore):
             key_id_ledger_response = self.hvc.secrets.kv.v2.\
                 create_or_update_secret(path=epoch_path,
                                         secret=await VaultManager.
-                                        build_vault_ledger_entry(key_id_ledger),
-                                        cas=0,  # This should be the first entry for this Key ID
+                                        build_vault_ledger_entry(key_id_ledger,
+                                                                 reset_status=
+                                                                 reset_status),
+                                        **cas_dict,
                                         mount_point=mount_point
                                         )
             logger.debug(f"Vault Key ID \"{key_id_ledger.key_ID}\" Ledger update response:")
@@ -603,7 +627,8 @@ class VaultManager(VaultSemaphore):
                               schemas.KeyIDLedger,
                               sorted_epoch_file_list:
                               List[schemas.EpochFile]) -> Tuple[schemas.KeyPair,
-                                                                List[schemas.EpochFile]]:
+                                                                List[schemas.EpochFile],
+                                                                schemas.KeyIDLedger]:
         """foo
         """
         key_buffer = bytes()
@@ -622,13 +647,16 @@ class VaultManager(VaultSemaphore):
             # Write epoch_file back
             sorted_epoch_file_list[index] = epoch_file
 
+        # Update ledger status to consumed
+        key_id_ledger.status = "consumed"
+
         key_pair = \
             schemas.KeyPair(
                 key_ID=key_id_ledger.key_ID,
                 key=await VaultManager.b64_encode_key(raw_key=key_buffer)
             )
 
-        return key_pair, sorted_epoch_file_list
+        return key_pair, sorted_epoch_file_list, key_id_ledger
 
     async def build_key_pair(self,
                              key_size_bytes: int,
@@ -687,6 +715,7 @@ class VaultManager(VaultSemaphore):
                                    )
         key_id_ledger = \
             schemas.KeyIDLedger(key_ID=key_id,
+                                status="consumed",
                                 master_SAE_ID="UPDATETHIS",
                                 slave_SAE_ID="UPDATETHIS",
                                 num_bytes=key_size_bytes,
@@ -700,20 +729,26 @@ class VaultManager(VaultSemaphore):
                                    schemas.KeyIDLedgerContainer,
                                    sorted_epoch_file_list:
                                    List[schemas.EpochFile]) -> Tuple[schemas.KeyContainer,
-                                                                     List[schemas.EpochFile]]:
+                                                                     List[schemas.EpochFile],
+                                                                     schemas.KeyIDLedgerContainer]:
         """foo
         """
         key_list = list()
+        updated_ledger_list = list()
         for ledger in key_id_ledger_con.ledgers:
-            key_pair, sorted_epoch_file_list = await \
+            key_pair, sorted_epoch_file_list, updated_ledger = await \
                 self.ledger_build_key_pair(key_id_ledger=ledger,
                                            sorted_epoch_file_list=
                                            sorted_epoch_file_list)
             key_list.append(key_pair)
 
+        # Update each ledger's status
+        for updated_ledger in updated_ledger_list:
+            key_id_ledger_con.ledgers[updated_ledger.key_ID] = updated_ledger
+
         key_con = schemas.KeyContainer(keys=key_list)
 
-        return key_con, sorted_epoch_file_list
+        return key_con, sorted_epoch_file_list, key_id_ledger_con
 
     async def build_key_container(self, num_keys: int,
                                   key_size_bytes: int,

@@ -58,6 +58,7 @@ async def put_key_id_ledger(local_KME_ID: str = local_kme_id_path,
                             request: Request = Body(...)):
     logger.debug(f"local_KME_ID: {local_KME_ID}")
     key_ids_req = await request.app.state.vclient.\
-        vault_commit_local_key_id_ledger_container(key_id_ledger_con=key_id_ledger_con)
+        vault_commit_local_key_id_ledger_container(key_id_ledger_con=key_id_ledger_con,
+                                                   reset_status=True)
     logger.debug(f"Committed the following Key IDs to the local ledger: {key_ids_req}")
     return key_ids_req

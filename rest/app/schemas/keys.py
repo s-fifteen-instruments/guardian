@@ -129,6 +129,13 @@ class ByteRange(ForbidBase):
 
 
 class KeyIDLedger(KeyID):
+    status: constr(min_length=settings.STATUS_MIN_LENGTH,  # Constrained string; min string length to STATUS_MIN_LENGTH
+                   max_length=settings.STATUS_MAX_LENGTH,  # max string length to STATUS_MAX_LENGTH
+                   regex=settings.VALID_STATUS_REGEX
+                   ) = Field(...,  # Required value; no default
+                             title="Local Consumption Status of KeyIDLedger",
+                             description="Local Consumption Status of KeyIDLedger"
+                             )
     master_SAE_ID: constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained string; min string length to SAE_ID_MIN_LENGTH
                           max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
                           regex=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
