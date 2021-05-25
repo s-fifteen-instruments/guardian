@@ -117,6 +117,7 @@ class Settings(BaseSettings):
     VAULT_BACKOFF_FACTOR: float = 1.0
     VAULT_BACKOFF_MAX: float = 8.0
     VAULT_MAX_CONN_ATTEMPTS: int = 10
+    MAX_NUM_RESERVE_ATTEMPTS: int = 10
     VAULT_CLIENT_CERT_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.ca-chain.cert.pem"
     VAULT_CLIENT_KEY_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.key.pem"
     VAULT_NAME: str = "vault"

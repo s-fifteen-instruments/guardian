@@ -5,9 +5,9 @@ path "<<<KV_MOUNT_POINT>>>/data/<<<QKDE_ID>>>/<<<QCHANNEL_ID>>>/*" {
     capabilities = ["read", "update"]
 }
 
-# Allow the client to create and read key ID ledger paths
+# Allow the client to create, read, and update key ID ledger paths
 path "<<<KV_MOUNT_POINT>>>/data/<<<QKDE_ID>>>/<<<QCHANNEL_ID>>>/<<<LEDGER_ID>>>/*" {
-    capabilities = ["create", "read"]
+    capabilities = ["create", "read", "update"]
 }
 
 # Allow client to read epoch file metadata paths and delete associated data

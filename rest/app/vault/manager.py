@@ -111,6 +111,24 @@ class VaultManager(VaultSemaphore):
                                 schemas.KeyIDLedgerContainer):
         """foo
         """
+
+        # Determine ledger statuses before epoch file reservation
+        ledger_status_dict = dict()
+        err_msg = "Not all Key IDs are available for consumption"
+        for ledger in key_id_ledger_con.ledgers:
+            if ledger.status != "available":
+                ledger_status_dict[ledger.key_ID] = False
+                err_msg += f"{jsonable_encoder(ledger)}"
+            else:
+                ledger_status_dict[ledger.key_ID] = True
+
+        # Ensure all keys are available before continuing
+        if not all(ledger_status_dict.values()):
+            logger.error(err_msg)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=err_msg
+                                )
+
         worker_uid, epoch_status_dict = await self.\
             vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con)
 
@@ -334,7 +352,7 @@ class VaultManager(VaultSemaphore):
             if ledger_entry.master_SAE_ID == master_SAE_ID and \
                ledger_entry.slave_SAE_ID == slave_SAE_ID:
                 key_id_valid = True
-                logger.debug(f"Key ID Valid: \"{ledger_entry.Key_ID}\"")
+                logger.debug(f"Key ID Valid: \"{ledger_entry.key_ID}\"")
 
         return key_id_valid, ledger_entry, ledger_version
 
@@ -508,7 +526,7 @@ class VaultManager(VaultSemaphore):
         """
 
         key_id_valid, ledger_entry, ledger_version = await self.\
-            vault_fetch_ledger_entry(key_ID=key_id_ledger.key_ID,
+            vault_fetch_ledger_entry(key_ID=key_id_ledger,  # Works b/c KeyIDLedger inherits from KeyID
                                      master_SAE_ID=key_id_ledger.master_SAE_ID,
                                      slave_SAE_ID=key_id_ledger.slave_SAE_ID)
 
