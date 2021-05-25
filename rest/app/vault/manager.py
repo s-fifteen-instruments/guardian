@@ -114,9 +114,39 @@ class VaultManager(VaultSemaphore):
         worker_uid, epoch_status_dict = await self.\
             vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con)
 
+        sorted_epoch_file_list = await \
+            self.fetch_keying_material(epoch_dict=epoch_status_dict)
+
+        key_con, updated_epoch_file_list = await self.\
+            build_ledger_key_container(key_id_ledger_con=key_id_ledger_con,
+                                       sorted_epoch_file_list=sorted_epoch_file_list)
+
+        updated_epoch_status_dict = dict()
+        fully_consumed_epoch_list = list()
+        partially_consumed_epoch_dict = dict()
+        for epoch, num_bytes in epoch_status_dict.items():
+            for epoch_file in updated_epoch_file_list:
+                if epoch == epoch_file.epoch:
+                    updated_epoch_status_dict[epoch] = epoch_file.num_bytes
+                    if epoch_file.num_bytes == 0:
+                        fully_consumed_epoch_list.append(epoch)
+                    else:
+                        partially_consumed_epoch_dict[epoch] = epoch_file
+                    break
+
+        task_list = list()
+        for epoch in fully_consumed_epoch_list:
+            task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
+        for epoch, epoch_file in partially_consumed_epoch_dict.items():
+            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+
+        await asyncio.gather(*task_list)
+
         # Critical End
         self.vault_release_epoch_files(worker_uid=worker_uid,
                                        epoch_dict=epoch_status_dict)
+
+        return key_con
 
     async def vault_ledger_claim_epoch_files(self, key_id_ledger_con:
                                              schemas.KeyIDLedgerContainer):
@@ -568,6 +598,38 @@ class VaultManager(VaultSemaphore):
         logger.debug(f"Vault epoch file \"{epoch}\" delete response:")
         _dump_response(epoch_file_response, secret=True)
 
+    async def \
+        ledger_build_key_pair(self, key_id_ledger:
+                              schemas.KeyIDLedger,
+                              sorted_epoch_file_list:
+                              List[schemas.EpochFile]) -> Tuple[schemas.KeyPair,
+                                                                List[schemas.EpochFile]]:
+        """foo
+        """
+        key_buffer = bytes()
+        for epoch, byte_range in sorted(key_id_ledger.ledger_dict.items()):
+            for index, epoch_file in enumerate(sorted_epoch_file_list):
+                if epoch == epoch_file.epoch:
+                    key_buffer += epoch_file.key[byte_range.start:
+                                                 byte_range.end]
+                    # Fill consumed section with NULL character "\0"
+                    null_replacement = b"\0" * (byte_range.end - byte_range.start)
+                    epoch_file.key = epoch_file.key[:byte_range.start] + \
+                        null_replacement + epoch_file.key[byte_range.end:]
+                    epoch_file.num_bytes -= len(null_replacement)
+                    epoch_file = await self.recompute_digest(epoch_file=epoch_file)
+                    break  # out of inner loop
+            # Write epoch_file back
+            sorted_epoch_file_list[index] = epoch_file
+
+        key_pair = \
+            schemas.KeyPair(
+                key_ID=key_id_ledger.key_ID,
+                key=await VaultManager.b64_encode_key(raw_key=key_buffer)
+            )
+
+        return key_pair, sorted_epoch_file_list
+
     async def build_key_pair(self,
                              key_size_bytes: int,
                              sorted_epoch_file_list:
@@ -632,6 +694,26 @@ class VaultManager(VaultSemaphore):
                                 )
 
         return key_pair, key_id_ledger, sorted_epoch_file_list
+
+    async def \
+        build_ledger_key_container(self, key_id_ledger_con:
+                                   schemas.KeyIDLedgerContainer,
+                                   sorted_epoch_file_list:
+                                   List[schemas.EpochFile]) -> Tuple[schemas.KeyContainer,
+                                                                     List[schemas.EpochFile]]:
+        """foo
+        """
+        key_list = list()
+        for ledger in key_id_ledger_con.ledgers:
+            key_pair, sorted_epoch_file_list = await \
+                self.ledger_build_key_pair(key_id_ledger=ledger,
+                                           sorted_epoch_file_list=
+                                           sorted_epoch_file_list)
+            key_list.append(key_pair)
+
+        key_con = schemas.KeyContainer(keys=key_list)
+
+        return key_con, sorted_epoch_file_list
 
     async def build_key_container(self, num_keys: int,
                                   key_size_bytes: int,

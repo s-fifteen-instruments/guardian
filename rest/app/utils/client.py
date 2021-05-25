@@ -33,6 +33,7 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     sae_hostname = request.url.hostname
     sae_common_name = ""
     sae_san = ""
+    #  logger.debug(f"Headers: {request.headers['x-forwarded-tls-client-cert-info']}")
     try:
         # Header should be forwarded by Traefik
         sae_common_name = request.headers["x-forwarded-tls-client-cert-info"]
@@ -50,7 +51,6 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
         logger.warn(f"Unparsable sae common name in sae certificate:\n{sae_common_name}")
         logger.exception(err)
     try:
-        logger.debug(f"Headers: {request.headers['x-forwarded-tls-client-cert-info']}")
         # Header should be forwarded by Traefik
         sae_san = request.headers["x-forwarded-tls-client-cert-info"]
         # sae SAN should be forwarded specifically

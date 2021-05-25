@@ -163,15 +163,15 @@ async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
     key_con = await request.app.state.vclient.\
         ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
-    key_con = schemas.KeyContainer(
-        keys=[
-            schemas.KeyPair(
-                key_ID=key_ID,
-                key="Nice_Key"
-            ),
-        ],
-        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
-    )
+    # key_con = schemas.KeyContainer(
+    #     keys=[
+    #         schemas.KeyPair(
+    #             key_ID=key_ID,
+    #             key="Nice_Key"
+    #         ),
+    #     ],
+    #     key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
+    # )
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
 
@@ -219,18 +219,18 @@ async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
     key_con = await request.app.state.vclient.\
         ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
-    key_con = schemas.KeyContainer(
-        keys=[
-            schemas.KeyPair(
-                key_ID="A_Key_ID01234567890123456",
-                key="A_Key"
-            ),
-            schemas.KeyPair(
-                key_ID="B_Key_ID01234567890123456",
-                key="B_Key"
-            )
-        ],
-        key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
-    )
+    # key_con = schemas.KeyContainer(
+    #     keys=[
+    #         schemas.KeyPair(
+    #             key_ID="A_Key_ID01234567890123456",
+    #             key="A_Key"
+    #         ),
+    #         schemas.KeyPair(
+    #             key_ID="B_Key_ID01234567890123456",
+    #             key="B_Key"
+    #         )
+    #     ],
+    #     key_container_extension={"foo": 1, "bar": "two", "baz": ["A", 3.14]}
+    # )
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
     return key_con
