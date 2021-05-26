@@ -36,7 +36,10 @@ export STALL="sleep \${WAIT}"
 export STARTUP="${UP} && ${STALL} && ${LOG}"
 export SHUTDOWN="${STALL} && ${STOP} && ${REMOVE}"
 
-S=qkd                    WAIT=0 F=-f eval ${STARTUP}
+if [ "${KME}" = "kme1" ]; then
+  S=qkd                    WAIT=0 F=-f eval ${STARTUP}
+fi
+
 S="watcher notifier"     WAIT=1 F=   eval ${STARTUP}
 S="watcher notifier qkd" WAIT=3      eval ${SHUTDOWN}
 

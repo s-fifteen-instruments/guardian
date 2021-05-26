@@ -26,6 +26,7 @@ import httpx
 import hmac
 import hvac
 from pydantic import parse_obj_as
+import time
 from typing import Dict, List, Tuple, Union
 import uuid
 
@@ -88,8 +89,8 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
         for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
-        # task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
-        #                                                           key_id_ledger_con))
+        task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
+                                                                  key_id_ledger_con))
 
         # NOTE:
         # This creates the potential for a race condition if the slave SAE
@@ -98,8 +99,8 @@ class VaultManager(VaultSemaphore):
         # remote KME should then run a query back to this local KME for the
         # ledger as it will be synchronously submitted before the master
         # SAE even has keying material.
-        background_tasks.add_task(self.send_remote_key_id_ledger_container,
-                                  key_id_ledger_con)
+        # background_tasks.add_task(self.send_remote_key_id_ledger_container,
+        #                           key_id_ledger_con)
 
         await asyncio.gather(*task_list)
 
@@ -131,12 +132,15 @@ class VaultManager(VaultSemaphore):
                                 detail=err_msg
                                 )
 
+        # Use Vault status file to reserve epoch files for manipulation
         worker_uid, epoch_status_dict = await self.\
             vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con)
 
+        # Query Vault for each epoch file's keying material
         sorted_epoch_file_list = await \
             self.fetch_keying_material(epoch_dict=epoch_status_dict)
 
+        # Constructing key container based on ledger container instructions
         key_con, updated_epoch_file_list, updated_key_id_ledger_con = await self.\
             build_ledger_key_container(key_id_ledger_con=key_id_ledger_con,
                                        sorted_epoch_file_list=sorted_epoch_file_list)
@@ -156,7 +160,7 @@ class VaultManager(VaultSemaphore):
 
         task_list = list()
         for epoch in fully_consumed_epoch_list:
-            task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
+           task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
         for ledger in updated_key_id_ledger_con.ledgers:
@@ -220,6 +224,7 @@ class VaultManager(VaultSemaphore):
                                              f"to reserve epoch files: {epoch_list}"
                                       )
                 else:
+                    time.sleep(settings.RESERVE_SLEEP_TIME)
                     continue  # Attempt another read and see
 
             # All epoch files are present and available by this point
@@ -683,7 +688,7 @@ class VaultManager(VaultSemaphore):
         _dump_response(epoch_file_response, secret=True)
 
     async def \
-        ledger_build_key_pair(self, key_id_ledger:
+        build_ledger_key_pair(self, key_id_ledger:
                               schemas.KeyIDLedger,
                               sorted_epoch_file_list:
                               List[schemas.EpochFile]) -> Tuple[schemas.KeyPair,
@@ -797,12 +802,12 @@ class VaultManager(VaultSemaphore):
         updated_ledger_list = list()
         for ledger in key_id_ledger_con.ledgers:
             key_pair, sorted_epoch_file_list, updated_ledger = await \
-                self.ledger_build_key_pair(key_id_ledger=ledger,
+                self.build_ledger_key_pair(key_id_ledger=ledger,
                                            sorted_epoch_file_list=
                                            sorted_epoch_file_list)
             key_list.append(key_pair)
 
-        # Update each ledger's status
+        # Update each ledger's status to reflect "consumed"
         for updated_ledger in updated_ledger_list:
             key_id_ledger_con.ledgers[updated_ledger.key_ID] = updated_ledger
 
@@ -879,6 +884,9 @@ class VaultManager(VaultSemaphore):
             is_key_intact = await VaultManager.check_key_hmac(epoch_file=epoch_file)
             logger.debug(f"Is Epoch File Key Intact: {is_key_intact}")
             if not is_key_intact:
+                logger.error("Key HMACs are inconsistent for epoch "
+                             f"file: {epoch_file.epoch}")
+
                 raise \
                     HTTPException(status_code=503,
                                   detail="Key HMACs are inconsistent for epoch "

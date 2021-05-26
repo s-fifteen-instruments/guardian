@@ -58,7 +58,7 @@ logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)  # ,
 
 class Settings(BaseSettings):
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
-    DELETE_EPOCH_FILES: bool = False
+    DELETE_EPOCH_FILES: bool = True
     EPOCH_FILES_DIRPATH: str = "/epoch_files"
     DIGEST_FILES_DIRPATH: str = "/digest_files"
     NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"

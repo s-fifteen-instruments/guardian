@@ -123,7 +123,7 @@ echo "Last raw key cluster: $lastpackage"
 # now we need to wait, as the error correction takes some time.
 # Ideally, one would realize that at some point, all final key files are
 # generated, then kill the error correction processes
-while [[ ! -f $FKEYB/$lastpackage ]]
+while [[ ! -f $FKEYB/$lastpackage ]] || [[ ! -f $FKEYA/$lastpackage ]]
 do
   echo "sleeping"
   sleep 1; # wait until the last final key file shows up
