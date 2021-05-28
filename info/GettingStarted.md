@@ -22,7 +22,7 @@ cd guardian
 
 Address the prerequisites above.
 
-Next, on each KME host, ensure the KME variable matches the KME host (`kme1` or `kme2`) in the top-level [Makefile](Makefile):
+Next, on each KME host, ensure the KME variable matches the KME host (`kme1` or `kme2`) in the top-level [Makefile](../Makefile):
 
 ```Makefile
 ##########################
@@ -55,7 +55,7 @@ make clean && make init
 This process is almost identical to KME host `kme1`, except that we ingest keying material from the initial QKDE run sequence instead of running another session.
 
 
-There are many steps in this process. Refer to the [init script](scripts/init.sh) and the [docker-compose init](docker-compose.init.yml) files for specific details.
+There are many steps in this process. Refer to the [init script](../scripts/init.sh) and the [docker-compose init](../docker-compose.init.yml) files for specific details.
 
 Intialization need only be run once on each KME host, assuming no errors or issues. A dot file will be created the prevents initialization from rerunning and overwriting the now existing configuration. To start over from scratch, issue a `make clean` on each host.
 
@@ -85,7 +85,7 @@ make log
 to begin a log session that follows output in real-time. Issue a `CONTROL+C` (or equivalent on your OS) to end the log following session.
 
 
-Refer to the [run script](scripts/run.sh) and the [docker-compose](docker-compose.yml) files for specific details.
+Refer to the [run script](../scripts/run.sh) and the [docker-compose](../docker-compose.yml) files for specific details.
 
 # Creating Additional Keying Material
 
