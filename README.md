@@ -1,4 +1,7 @@
+# Welcome
 
+* Please refer to the [Getting Started](info/GettingStarted.md) page for installation, initalization, and running.
+* Please refer to the [Interacting](info/Interacting.md) page for more on querying the KMEs for documentation and use.
 
 # License
 
