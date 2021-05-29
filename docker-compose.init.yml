@@ -35,7 +35,10 @@ services:
       - internal-private
     volumes:
       - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
-      - ./certauth/SECRETS:/SECRETS
+        # Prevents erroneous creation of directory on init if file not present
+      - type: bind
+        source: ./common/CERTAUTH_SECRETS
+        target: /SECRETS
 
   certauth_csr:
     <<: *certauth_label
