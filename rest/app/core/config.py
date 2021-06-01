@@ -19,7 +19,7 @@
 #
 
 import json
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from math import ceil
 from typing import Tuple
