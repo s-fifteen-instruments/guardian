@@ -41,7 +41,7 @@ SRCA=${hec_data_dir}/rawkey.hec ; SRCB=${lec_data_dir}/rawkey.lec
 FKEYA=${hec_data_dir}/finalkey.hec ; FKEYB=${lec_data_dir}/finalkey.lec
 
 # then, some parameters for the error correction process
-ECMINBITS=5000; # minimal number of raw bits to process in error correction
+ECMINBITS=${ec_min_bits}; # minimal number of raw bits to process in error correction
 
 # generate the communication pipes
 mkfifo AtoB.pipe BtoA.pipe Acmd.pipe Bcmd.pipe Alog.pipe Blog.pipe

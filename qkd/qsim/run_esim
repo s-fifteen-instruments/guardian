@@ -32,14 +32,6 @@ source config
 mkdir -p ${data_dir}/hec
 mkdir -p ${data_dir}/lec
 
-
-export           num_events=5E4       # Total number of events to simulate
-export source_emission_rate=1E3       # Event rate [events/second]
-export      lec_time_offset=1E0       # LEC party time offset [nanoseconds]
-export        lec_loss_frac=0.0       # LEC Loss Fraction [0(no loss)<=fraction<=1(all loss)]
-export           error_rate=0.0       # Simulated QBER [0<=fraction<=1]
-export  relative_freq_drift=0.0
-
 ./esim                            \
 -n ${num_events}                  \
 -e ${source_emission_rate}        \
