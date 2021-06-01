@@ -20,7 +20,9 @@ version: "3.7"
 services:
 
   rest:
-    build: ./rest
+    build:
+      context: ./
+      dockerfile: ./rest/Dockerfile
     environment:
       # Total number of worker threads; overrides other env vars
       - WEB_CONCURRENCY=1
@@ -110,7 +112,9 @@ services:
 
 
   unsealer:
-    build: ./unsealer
+    build:
+      context: ./
+      dockerfile: ./unsealer/Dockerfile
     command: ["unsealer.py"]
     labels:
       # Disable Traefik for this specific "backend" service

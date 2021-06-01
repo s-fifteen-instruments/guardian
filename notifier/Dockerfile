@@ -20,9 +20,11 @@ LABEL author="Cyrus Proctor"
 
 # NOTE: 0 does not imply buffering
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
+ENV TOP_DIR=./notifier
 
-COPY ["./requirements.txt", "${HOME}/"]
+COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
 # Set a volume to the epoch file directory to process
 VOLUME /epoch_files
@@ -36,7 +38,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/notifier \
     && cd ${HOME}/code/notifier
 
-COPY ["./notifier_config.py", "./notifier.py", "${HOME}/code/notifier/"]
+COPY ["${TOP_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/notifier

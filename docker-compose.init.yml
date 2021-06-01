@@ -20,9 +20,9 @@ version: "3.7"
 services:
 
   certauth: &certauth_label
-    build: ./certauth
-      #environment:
-      #- LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
+    build: 
+      context: ./
+      dockerfile: ./certauth/Dockerfile
     working_dir: /certificates/generation
     # WARNING:
     # Entrypoint is set to "make"; only 'make clean' to remove
@@ -84,7 +84,9 @@ services:
     command: ["/vault/config/client_auth.sh"]
 
   vault_init: &vault_init_label
-    build: ./vault_init
+    build:
+      context: ./
+      dockerfile: ./vault_init/Dockerfile
     command: ["vault_init.py", "--first"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -112,7 +114,9 @@ services:
     command: ["vault_auth.py"]
 
   qkd:
-    build: ./qkd
+    build:
+      context: ./
+      dockerfile: ./qkd/Dockerfile
     command: ["distclean", "ctest"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -124,7 +128,9 @@ services:
       - /volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
 
   notifier:
-    build: ./notifier
+    build:
+      context: ./
+      dockerfile: ./notifier/Dockerfile
     command: ["notifier.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -136,7 +142,9 @@ services:
       - /volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
  
   watcher:
-    build: ./watcher
+    build:
+      context: ./
+      dockerfile: ./watcher/Dockerfile
     command: ["watcher.py"]
     labels:
       # Disable Traefik for this specific "backend" service

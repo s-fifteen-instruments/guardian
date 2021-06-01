@@ -24,7 +24,10 @@ FROM python:3.8-alpine3.10
 LABEL maintainer="Cyrus Proctor"
 LABEL originalauthorr="Sebastian Ramirez <tiangolo@gmaiil.com>"
 
-COPY ["start.sh", "gunicorn_conf.py", "start-reload.sh", "requirements.txt", "/"]
+ENV TOP_DIR=./rest
+
+COPY ["${TOP_DIR}/start.sh", "${TOP_DIR}/gunicorn_conf.py",\
+      "${TOP_DIR}/start-reload.sh", "${TOP_DIR}/requirements.txt", "/"]
 RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
     && pip install --no-cache-dir "uvicorn[standard]" gunicorn fastapi \
     && pip install --no-cache-dir -r /requirements.txt \
@@ -32,7 +35,7 @@ RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
     && chmod +x /start-reload.sh \
     && chmod +x /start.sh
 
-COPY ["./app", "/app"]
+COPY ["${TOP_DIR}/app", "/app"]
 # WORKDIR /app/
 
 ENV PYTHONPATH=/app

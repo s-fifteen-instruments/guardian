@@ -18,10 +18,17 @@
 FROM python:3-alpine
 LABEL author="Cyrus Proctor"
 
-COPY ["./vault_init_config.py", "./requirements.txt", "./"]
+# NOTE: 0 does not imply a false value
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TOP_DIR=./vault_init
+
+COPY ["${TOP_DIR}/vault_init_config.py", "${TOP_DIR}/requirements.txt", "./"]
 
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.
+# NOTE: UID/GID set based on Hashicorp Vault Dockerfile behavior:
+# https://github.com/hashicorp/docker-vault/blob/master/0.X/Dockerfile v1.7.2
 RUN addgroup vault                                       && \
     adduser --system vaultinit --ingroup vault --uid 101 && \
     mkdir -p /certificates                               && \
@@ -30,9 +37,7 @@ RUN addgroup vault                                       && \
 VOLUME /certificates
 VOLUME /vault/policies
 
-# USER vaultinit
-
-COPY ["./vault_init.py", "./vault_auth.py", "./"]
+COPY ["${TOP_DIR}/vault_init.py", "./"]
 
 CMD ["vault_init.py"]
 
