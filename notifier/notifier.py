@@ -20,51 +20,57 @@
 #
 
 
+import logging as logger
 import os
 import sys
 import time
 
+from notifier_config import settings
 
-class notifierClient:
+
+logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
+
+
+class NotifierClient:
     """foo
     """
-    EPOCH_FILES_DIRPATH: str = "/epoch_files"
-    EPOCH_DELAY_INTERVAL: float = 2**29 / 1E9  # One qcrypto epoch
-    NOTIFY_PIPE_FILEPATH: str = "/epoch_files/notify.pipe"
 
     def __init__(self):
         """foo
         """
         try:
-            os.mkfifo(notifierClient.NOTIFY_PIPE_FILEPATH)
+            os.mkfifo(settings.NOTIFY_PIPE_FILEPATH)
         except OSError:
-            print(f"FIFO {notifierClient.NOTIFY_PIPE_FILEPATH} already exists")
+            logger.info(f"FIFO {settings.NOTIFY_PIPE_FILEPATH} already exists")
         epoch_file_list = list(self.list_epoch_files())
         if len(epoch_file_list) > 0:
-            with open(notifierClient.NOTIFY_PIPE_FILEPATH, "w") as FIFO:
+            with open(settings.NOTIFY_PIPE_FILEPATH, "w") as FIFO:
                 num_epoch_delay: int = 0
                 last_file_hex: int = hex(0)
                 for epoch_file_name in epoch_file_list:
                     current_file_hex = int(epoch_file_name, 16)
                     if last_file_hex == hex(0):
                         last_file_hex = current_file_hex
-                    num_epoch_delay = 0  # int(current_file_hex - last_file_hex)
-                    print(num_epoch_delay, epoch_file_name, file=sys.stderr)
+                    num_epoch_delay = 0
+                    if settings.REAL_TIME_DELAY:
+                        num_epoch_delay = int(current_file_hex - last_file_hex)
+                    logger.info(f"Notification Delay [s]: {num_epoch_delay * settings.EPOCH_DELAY_INTERVAL}; "
+                                f"Epoch Filename: {epoch_file_name}")
                     FIFO.write(epoch_file_name + "\n")
                     FIFO.flush()
-                    time.sleep(notifierClient.EPOCH_DELAY_INTERVAL * num_epoch_delay)
+                    time.sleep(settings.EPOCH_DELAY_INTERVAL * num_epoch_delay)
                     last_file_hex = current_file_hex
         else:
-            print("No files to notify about", file=sys.stderr)
+            logger.info("No files to notify about")
 
     def list_epoch_files(self):
         """foo
         """
-        all_files = sorted(os.listdir(notifierClient.EPOCH_FILES_DIRPATH))
+        all_files = sorted(os.listdir(settings.EPOCH_FILES_DIRPATH))
         for file in all_files:
             if not file.startswith(".") and not file.endswith(".pipe"):
                 yield file
 
 
 if __name__ == "__main__":
-    notifier = notifierClient()
+    notifier = NotifierClient()

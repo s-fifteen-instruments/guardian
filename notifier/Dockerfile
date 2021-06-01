@@ -22,16 +22,21 @@ LABEL author="Cyrus Proctor"
 ENV PYTHONUNBUFFERED=1
 ENV HOME=/root
 
+COPY ["./requirements.txt", "${HOME}/"]
+
 # Set a volume to the epoch file directory to process
 VOLUME /epoch_files
 
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
+        py-pip \
+#    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r ${HOME}/requirements.txt \
     && mkdir -p ${HOME}/code/notifier \
     && cd ${HOME}/code/notifier
 
-COPY ["./notifier.py", "${HOME}/code/notifier/"]
+COPY ["./notifier_config.py", "./notifier.py", "${HOME}/code/notifier/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/notifier
