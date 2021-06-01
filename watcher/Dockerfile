@@ -23,7 +23,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
 
-COPY ./requirements.txt ${HOME}/
+COPY ["./requirements.txt", "${HOME}/"]
 
 # Set a volume to the epoch file directory to process
 VOLUME /epoch_files
@@ -39,7 +39,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher
 
-COPY ["./watcher.py", "${HOME}/code/watcher/"]
+COPY ["./watcher_config.py", "./watcher.py", "${HOME}/code/watcher/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/watcher
