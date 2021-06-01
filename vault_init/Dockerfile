@@ -18,7 +18,7 @@
 FROM python:3-alpine
 LABEL author="Cyrus Proctor"
 
-COPY ["./requirements.txt", "./"]
+COPY ["./vault_init_config.py", "./requirements.txt", "./"]
 
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.
