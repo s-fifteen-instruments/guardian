@@ -39,6 +39,9 @@ services:
       - type: bind
         source: ./common/CERTAUTH_SECRETS
         target: /SECRETS
+      - type: bind
+        source: ./common/CERTAUTH_CONFIG
+        target: /CONFIG
 
   certauth_csr:
     <<: *certauth_label

@@ -47,6 +47,24 @@ else
   source ${SECRETS_FILEPATH}
 fi
 
+# Filepath must match docker-compose CONFIG volume mount point
+export CONFIG_FILEPATH=/CONFIG
+if [ ! -f "${SECRETS_FILEPATH}" ]; then
+  echo -e "\n\n"
+  echo "================================================"
+  echo "================================================"
+  echo "'${CONFG_FILEPATH}' file is not mounted."
+  echo "Please follow README instructions for proper initialization."
+  echo "Exiting without certificate generation."
+  echo "================================================"
+  echo "================================================"
+  echo -e "\n\n"
+  exit -1
+else
+  echo "Sourcing ${CONFG_FILEPATH}"
+  source ${CONFIG_FILEPATH}
+fi
+
 set -ex
 
 export base_dir=`pwd`
@@ -81,26 +99,6 @@ if [ -d "${ca_dir}" ]; then
   echo -e "\n\n"
   exit 0
 fi
-
-# Root Certificate Authority Information
-# Set as necessary
-export CA_COUNTRY_CODE="US"
-export CA_STATE="Texas"
-export CA_LOCALITY="Austin"
-export CA_ORGANIZATION="Quantum Internet Technologies LLC"
-export CA_UNIT="Quantum Hacking Division"
-export CA_COMMON_NAME="${CA_ORGANIZATION} Root CA ${LOCAL_KME_ID}"
-export CA_EMAIL="admin@example.com"
-
-# Intermediate Certificate Authority Information
-# Set as necessary
-export INT_CA_COUNTRY_CODE="${CA_COUNTRY_CODE}"
-export INT_CA_STATE="${CA_STATE}"
-export INT_CA_LOCALITY="${CA_LOCALITY}"
-export INT_CA_ORGANIZATION="${CA_ORGANIZATION}"
-export INT_CA_UNIT="${CA_UNIT}"
-export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA ${LOCAL_KME_ID}"
-export INT_CA_EMAIL="${CA_EMAIL}"
 
 # Create root Certificate Authority directory and configuration
 mkdir -p ${ca_dir}
@@ -168,6 +166,9 @@ sed -i "s#<<<ORGANIZATION>>>#${INT_CA_ORGANIZATION}#g" ${int_ca_dir}/openssl.cnf
 sed -i "s#<<<UNTI>>>#${INT_CA_UNIT}#g" ${int_ca_dir}/openssl.cnf
 sed -i "s#<<<COMMON_NAME>>>#${INT_CA_COMMON_NAME}#g" ${int_ca_dir}/openssl.cnf
 sed -i "s#<<<EMAIL>>>#${INT_CA_EMAIL}#g" ${int_ca_dir}/openssl.cnf
+# Substitute " qqq" as dummy placeholder to allow multi-line sed
+export ALT_NAMES=$(echo "${ALT_NAMES}" | sed "s#\$# qqq#g")
+sed -i "s/<<<ALT_NAMES>>>/$(echo ${ALT_NAMES})/g;s/ qqq/\n/g" ${int_ca_dir}/openssl.cnf
 
 # Create the intermediate CA private key "intermediate.key.pem"
 cd ${ca_dir}
