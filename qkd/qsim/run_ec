@@ -22,7 +22,7 @@
 set -x
 
 export override=true
-source config
+source qkd_config
 
 # This code is to test the operation of the error correction deamon. It runs
 # two copies of the error correction deamon, and assumes that raw keys are

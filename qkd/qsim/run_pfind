@@ -26,7 +26,7 @@
 set -x
 
 export override=true
-source config
+source qkd_config
 
 
 # Find second common epoch

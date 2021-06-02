@@ -24,7 +24,7 @@
 
 set -x
 
-source config
+source qkd_config
 
 if [ ${2:-x} = "full" ]; then
   export full_run="-s"

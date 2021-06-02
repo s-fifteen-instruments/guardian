@@ -22,7 +22,7 @@
 set -x
 
 export override=true
-source config
+source qkd_config
 
 # Find second common epoch
 export start_epoch=`comm -12 <(ls ${hec_data_dir}/t1.hec) <(ls ${lec_data_dir}/t2.lec) | head -n 2 | tail -n 1`

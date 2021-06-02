@@ -24,7 +24,7 @@
 
 set -x
 
-source config
+source qkd_config
 
 mkdir -p ${data_dir}/t1.${count_type}
 

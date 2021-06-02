@@ -27,7 +27,7 @@
 set -x
 
 export override=true
-source config
+source qkd_config
 
 mkdir -p ${data_dir}/hec
 mkdir -p ${data_dir}/lec

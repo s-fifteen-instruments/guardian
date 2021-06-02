@@ -23,6 +23,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
 ENV TOP_DIR=./notifier
+ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
@@ -38,7 +39,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/notifier \
     && cd ${HOME}/code/notifier
 
-COPY ["${TOP_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
+COPY ["${COMMON_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/notifier

@@ -23,6 +23,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
 ENV TOP_DIR=./unsealer
+ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
@@ -38,7 +39,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/unsealer \
     && cd ${HOME}/code/unsealer
 
-COPY ["${TOP_DIR}/unsealer_config.py", "${TOP_DIR}/unsealer.py", "${HOME}/code/unsealer/"]
+COPY ["${COMMON_DIR}/unsealer_config.py", "${TOP_DIR}/unsealer.py", "${HOME}/code/unsealer/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/unsealer

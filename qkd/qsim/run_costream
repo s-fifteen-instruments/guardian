@@ -21,7 +21,7 @@
 set -x
 
 export override=true
-source config
+source qkd_config
 
 # -d All type-2 packets saved in dir
 # -D All type-1 packets saved in dir

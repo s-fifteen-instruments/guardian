@@ -21,7 +21,7 @@
 
 set -x
 
-source config
+source qkd_config
 
 if [ "${count_type}" = "hec" ]; then
   export out_dir=kme1

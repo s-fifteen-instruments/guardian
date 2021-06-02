@@ -23,6 +23,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
 ENV TOP_DIR=./watcher
+ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
@@ -40,7 +41,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher
 
-COPY ["${TOP_DIR}/watcher_config.py", "${TOP_DIR}/watcher.py", "${HOME}/code/watcher/"]
+COPY ["${COMMON_DIR}/watcher_config.py", "${TOP_DIR}/watcher.py", "${HOME}/code/watcher/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/watcher

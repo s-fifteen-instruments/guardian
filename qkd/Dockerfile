@@ -21,11 +21,12 @@ LABEL author="Cyrus Proctor"
 ARG CC=gcc
 ENV HOME=/root
 ENV TOP_DIR=./qkd
+ENV COMMON_DIR=./common
 
 # Set a volume to the location of qsim output
 VOLUME ${HOME}/code/qsim/epoch_files
 
-COPY ["${TOP_DIR}/qsim/", "${HOME}/code/qsim/"]
+COPY ["${COMMON_DIR}/qkd_config", "${TOP_DIR}/qsim/", "${HOME}/code/qsim/"]
 COPY ["${TOP_DIR}/rnd.c.patch", "${HOME}/code/rnd.c.patch"]
 
 # Ensure basic packages are installed for building and running qsim
