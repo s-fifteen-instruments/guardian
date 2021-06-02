@@ -28,7 +28,7 @@ from pydantic import conint
 from app.utils import calculator, client
 from app import schemas
 from app import models
-from app.core.config import logger, settings, _dump_response, bits2bytes
+from app.core.rest_config import logger, settings, _dump_response, bits2bytes
 
 
 router = APIRouter()

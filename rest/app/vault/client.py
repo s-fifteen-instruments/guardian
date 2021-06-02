@@ -22,7 +22,7 @@ import hvac
 import requests
 import time
 
-from app.core.config import logger, settings, _dump_response
+from app.core.rest_config import logger, settings, _dump_response
 
 
 class VaultClient:
@@ -32,37 +32,37 @@ class VaultClient:
         """foo
         """
         self.hvc: hvac.Client = \
-            hvac.Client(url=settings.VAULT_URI,
+            hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
                         cert=(settings.VAULT_CLIENT_CERT_FILEPATH,
                               settings.VAULT_CLIENT_KEY_FILEPATH),
                         verify=settings.VAULT_SERVER_CERT_FILEPATH)
 
         self.is_vault_initialized = self.connection_loop(self.vault_check_init)
         if not self.is_vault_initialized:
-            logger.error(f"Vault instance at {settings.VAULT_URI} is not initialized")
+            logger.error(f"Vault instance at {settings.GLOBAL.VAULT_SERVER_URL} is not initialized")
             raise hvac.exceptions.VaultNotInitialized("Vault is not initialized")
 
         self.is_vault_sealed = self.connection_loop(self.vault_check_seal)
         if self.is_vault_sealed:
-            logger.error(f"Vault instance at {settings.VAULT_URI} is sealed")
+            logger.error(f"Vault instance at {settings.GLOBAL.VAULT_SERVER_URL} is sealed")
             raise hvac.exceptions.VaultDown("Vault Instance is sealed")
 
         self.connection_loop(self.vault_tls_client_auth)
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
             logger.error(f"Attempt at Client Authentication with Vault"
-                         f"Instance {settings.VAULT_URI} has failed")
+                         f"Instance {settings.GLOBAL.VAULT_SERVER_URL} has failed")
             raise hvac.exceptions.Unauthorized("Reauthorization to Vault has failed.")
 
         logger.debug(f"Client authentication successful with Vault"
-                     f"Instance at {settings.VAULT_URI}")
+                     f"Instance at {settings.GLOBAL.VAULT_SERVER_URL}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
         """
-        self.max_attempts: int = settings.VAULT_MAX_CONN_ATTEMPTS
-        self.backoff_factor: float = settings.VAULT_BACKOFF_FACTOR
-        self.backoff_max: float = settings.VAULT_BACKOFF_MAX
+        self.max_attempts: int = settings.GLOBAL.VAULT_MAX_CONN_ATTEMPTS
+        self.backoff_factor: float = settings.GLOBAL.BACKOFF_FACTOR
+        self.backoff_max: float = settings.GLOBAL.BACKOFF_MAX
 
         attempt_num: int = 0
         total_stall_time: float = 0.0
@@ -124,11 +124,11 @@ class VaultClient:
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
             logger.error(f"Attempt at Client Reauthentication with Vault"
-                         f"Instance {settings.VAULT_URI} has failed")
+                         f"Instance {settings.GLOBAL.VAULT_SERVER_URL} has failed")
             raise hvac.exceptions.Unauthorized("Reauthorization to Vault has failed.")
 
         logger.debug(f"Client Reauthentication successful with Vault"
-                     f"Instance at {settings.VAULT_URI}")
+                     f"Instance at {settings.GLOBAL.VAULT_SERVER_URL}")
 
     def vault_check_init(self) -> bool:
         """foo

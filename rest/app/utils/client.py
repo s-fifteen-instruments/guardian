@@ -23,7 +23,7 @@ import urllib
 
 from fastapi import Request
 
-from app.core.config import logger
+from app.core.rest_config import logger
 
 
 def parse_sae_client_info(request: Request) -> typing.Dict:

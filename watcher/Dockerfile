@@ -41,7 +41,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/watcher \
     && cd ${HOME}/code/watcher
 
-COPY ["${COMMON_DIR}/watcher_config.py", "${TOP_DIR}/watcher.py", "${HOME}/code/watcher/"]
+COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/watcher_config.py", "${TOP_DIR}/watcher.py", "${HOME}/code/watcher/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/watcher

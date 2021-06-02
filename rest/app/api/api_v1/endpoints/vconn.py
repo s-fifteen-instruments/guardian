@@ -24,7 +24,7 @@ from fastapi import APIRouter
 from fastapi import Request
 
 from app import schemas
-from app.core.config import logger
+from app.core.rest_config import logger
 
 
 router = APIRouter()

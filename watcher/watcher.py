@@ -91,10 +91,10 @@ class watcherClient:
         """foo
         """
         self.vclient: hvac.Client = \
-            hvac.Client(url=settings.VAULT_SERVER_URI,
+            hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
                         cert=(settings.CLIENT_CERT_FILEPATH,
                               settings.CLIENT_KEY_FILEPATH),
-                        verify=settings.SERVER_CERT_FILEPATH)
+                        verify=settings.GLOBAL.SERVER_CERT_FILEPATH)
         mount_point = "cert"
         logger.debug("Attempt TLS client login")
         auth_response = self.vclient.auth_tls(mount_point=mount_point,
@@ -247,7 +247,7 @@ class watcherClient:
         """
         # Compute the hash-based message authentication code of the
         # raw key using a SHA3 512-bit hash.
-        mac = hmac.new(key=settings.DIGEST_KEY,
+        mac = hmac.new(key=settings.GLOBAL.DIGEST_KEY,
                        digestmod=hashlib.sha3_512)
         mac.update(message)
         message_hexdigest = mac.hexdigest()
@@ -275,9 +275,9 @@ class watcherClient:
         """foo
         """
         cas_error = False
-        mount_point = settings.VAULT_KV_ENDPOINT
-        qkey_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        qkey_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
             f"{epoch}"
         full_path = f"{mount_point}/data/{qkey_path}"
 
@@ -310,9 +310,9 @@ class watcherClient:
             logger.debug(f"Compute the HMAC hexdigest of epoch key: \"{epoch}\":")
             key_hexdigest = watcherClient.compute_hmac_hexdigest(raw_key)
             # Ensure the digest directory exists; make it if not
-            pathlib.Path(f"{settings.DIGEST_FILES_DIRPATH}").mkdir(parents=True, exist_ok=True)
+            pathlib.Path(f"{settings.GLOBAL.DIGEST_FILES_DIRPATH}").mkdir(parents=True, exist_ok=True)
             # Write out the hexdigest to a file for later comparison
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+            digest_filepath = f"{settings.GLOBAL.DIGEST_FILES_DIRPATH}/" \
                 f"{epoch}.digest"
             watcherClient.write_hexdigest(key_hexdigest, digest_filepath)
             # Base64 encode the raw bytes and decode the resulting byte
@@ -426,9 +426,9 @@ class watcherClient:
         cas_error = True
         while cas_error:
             # First attempt to read status endpoint
-            mount_point = settings.VAULT_KV_ENDPOINT
-            status_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
                 "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
@@ -462,9 +462,9 @@ class watcherClient:
         """foo
         """
         # Initialization
-        self.backoff_factor: float = settings.BACKOFF_FACTOR
-        self.backoff_max: float = settings.BACKOFF_MAX
-        self.max_num_attempts: int = settings.MAX_NUM_ATTEMPTS
+        self.backoff_factor: float = settings.GLOBAL.BACKOFF_FACTOR
+        self.backoff_max: float = settings.GLOBAL.BACKOFF_MAX
+        self.max_num_attempts: int = settings.NOTIFY_MAX_NUM_ATTEMPTS
         attempt_num: int = 0
         total_stall_time: float = 0.0
         total_notify_sleep_time: float = 0.0
@@ -486,14 +486,14 @@ class watcherClient:
             total_stall_time = total_stall_time + stall_time
             try:
                 # Attempt to open the notify pipe read-only, non-blocking
-                with open(os.open(settings.NOTIFY_PIPE_FILEPATH,
+                with open(os.open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
-                    logger.debug(f"{settings.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
+                    logger.debug(f"{settings.GLOBAL.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
                     # Notify pipe was successfully opened; iterate until otherwise
                     while not self.KILL_NOW:
                         # Break out of inner loop if notify pipe no longer exists
-                        if not os.path.exists(settings.NOTIFY_PIPE_FILEPATH):
-                            logger.info(f"{settings.NOTIFY_PIPE_FILEPATH} does not exist. Retrying...")
+                        if not os.path.exists(settings.GLOBAL.NOTIFY_PIPE_FILEPATH):
+                            logger.info(f"{settings.GLOBAL.NOTIFY_PIPE_FILEPATH} does not exist. Retrying...")
                             break
                         if total_notify_sleep_time > \
                            settings.NOTIFY_SLEEP_TIME_DELTA * \
@@ -510,7 +510,7 @@ class watcherClient:
                             total_stall_time = 0.0
                             total_notify_sleep_time = 0.0
                             # Data should point us to a final key epoch filename
-                            epoch_filepath = f"{settings.EPOCH_FILES_DIRPATH}/{data}"
+                            epoch_filepath = f"{settings.GLOBAL.EPOCH_FILES_DIRPATH}/{data}"
                             # Name of thread worker callback function and argument filepath
                             args = (self.process_epoch_file,
                                     epoch_filepath)

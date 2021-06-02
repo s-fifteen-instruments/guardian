@@ -39,12 +39,12 @@ class NotifierClient:
         """foo
         """
         try:
-            os.mkfifo(settings.NOTIFY_PIPE_FILEPATH)
+            os.mkfifo(settings.GLOBAL.NOTIFY_PIPE_FILEPATH)
         except OSError:
-            logger.info(f"FIFO {settings.NOTIFY_PIPE_FILEPATH} already exists")
+            logger.info(f"FIFO {settings.GLOBAL.NOTIFY_PIPE_FILEPATH} already exists")
         epoch_file_list = list(self.list_epoch_files())
         if len(epoch_file_list) > 0:
-            with open(settings.NOTIFY_PIPE_FILEPATH, "w") as FIFO:
+            with open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH, "w") as FIFO:
                 num_epoch_delay: int = 0
                 last_file_hex: int = hex(0)
                 for epoch_file_name in epoch_file_list:
@@ -66,7 +66,7 @@ class NotifierClient:
     def list_epoch_files(self):
         """foo
         """
-        all_files = sorted(os.listdir(settings.EPOCH_FILES_DIRPATH))
+        all_files = sorted(os.listdir(settings.GLOBAL.EPOCH_FILES_DIRPATH))
         for file in all_files:
             if not file.startswith(".") and not file.endswith(".pipe"):
                 yield file

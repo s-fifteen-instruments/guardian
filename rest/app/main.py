@@ -24,7 +24,7 @@ import time
 from fastapi import FastAPI, Request
 
 from app.api.api_v1.api import api_router
-from app.core.config import logger, settings
+from app.core.rest_config import logger, settings
 from app.vault.manager import VaultManager
 from app.utils import client
 

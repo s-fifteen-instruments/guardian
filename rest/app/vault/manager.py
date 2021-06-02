@@ -33,7 +33,7 @@ import uuid
 from fastapi import BackgroundTasks, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 
-from app.core.config import logger, settings, _dump_response
+from app.core.rest_config import logger, settings, _dump_response
 from app import schemas
 
 from .semaphore import VaultSemaphore
@@ -186,9 +186,9 @@ class VaultManager(VaultSemaphore):
         while cas_error:
             attempt_count += 1
             # First, attempt to read status endpoint
-            mount_point = settings.VAULT_KV_ENDPOINT
-            status_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
                 "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
@@ -365,10 +365,10 @@ class VaultManager(VaultSemaphore):
         key_id_valid = False
         ledger_entry = None
         try:
-            mount_point = settings.VAULT_KV_ENDPOINT
-            ledger_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
-                f"{settings.VAULT_LEDGER_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            ledger_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+                f"{settings.GLOBAL.VAULT_LEDGER_ID}/" \
                 f"{key_ID.key_ID}"
             key_id_ledger_response = self.hvc.secrets.kv.v2.\
                 read_secret_version(path=ledger_path,
@@ -533,13 +533,13 @@ class VaultManager(VaultSemaphore):
         """
         cert_tuple = (settings.VAULT_CLIENT_CERT_FILEPATH,
                       settings.VAULT_CLIENT_KEY_FILEPATH)
-        logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URI}")
+        logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URL}")
         logger.debug(f"As a dict: {key_id_ledger_con.dict()}")
         async with httpx.AsyncClient(cert=cert_tuple,
                                      verify=settings.REMOTE_KME_CERT_FILEPATH,
                                      trust_env=False) as client:
             remote_kme_response = \
-                await client.put(url=settings.REMOTE_KME_URI,
+                await client.put(url=settings.REMOTE_KME_URL,
                                  json=jsonable_encoder(key_id_ledger_con.dict()),
                                  allow_redirects=False
                                  )
@@ -575,10 +575,10 @@ class VaultManager(VaultSemaphore):
                          f"Version: {ledger_version}")
 
         try:
-            mount_point = settings.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
-                f"{settings.VAULT_LEDGER_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+                f"{settings.GLOBAL.VAULT_LEDGER_ID}/" \
                 f"{key_id_ledger.key_ID}"
             key_id_ledger_response = self.hvc.secrets.kv.v2.\
                 create_or_update_secret(path=epoch_path,
@@ -622,9 +622,9 @@ class VaultManager(VaultSemaphore):
         """
         cas_error = True
         try:
-            mount_point = settings.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
                 f"{epoch_file.epoch}"
 
             epoch_file_metadata_response = \
@@ -676,9 +676,9 @@ class VaultManager(VaultSemaphore):
     async def vault_destroy_epoch_file(self, epoch: str):
         """foo
         """
-        mount_point = settings.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
             f"{epoch}"
         epoch_file_response = \
             self.hvc.secrets.kv.v2.\
@@ -854,9 +854,9 @@ class VaultManager(VaultSemaphore):
     async def vault_fetch_epoch_file(self, epoch) -> schemas.EpochFile:
         """foo
         """
-        mount_point = settings.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
             f"{epoch}"
         epoch_file_response = \
             self.hvc.secrets.kv.v2.read_secret(path=epoch_path,
@@ -913,7 +913,7 @@ class VaultManager(VaultSemaphore):
         """
         epoch_file.digest = await VaultManager.compute_hmac_hexdigest(message=epoch_file.key)
         if settings.DIGEST_COMPARE_TO_FILE and settings.DIGEST_COMPARE:
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+            digest_filepath = f"{settings.GLOBAL.DIGEST_FILES_DIRPATH}/" \
                               f"{epoch_file.epoch}.digest"
             await VaultManager.write_hexdigest(hexdigest=epoch_file.digest,
                                                filepath=digest_filepath
@@ -934,7 +934,7 @@ class VaultManager(VaultSemaphore):
             hmac.compare_digest(computed_key_hexdigest, epoch_file.digest)
 
         if settings.DIGEST_COMPARE_TO_FILE:
-            digest_filepath = f"{settings.DIGEST_FILES_DIRPATH}/" \
+            digest_filepath = f"{settings.GLOBAL.DIGEST_FILES_DIRPATH}/" \
                               f"{epoch_file.epoch}.digest"
             file_store_key_hexdigest = await \
                 VaultManager.read_hexdigest(filepath=digest_filepath)
@@ -949,7 +949,7 @@ class VaultManager(VaultSemaphore):
     async def compute_hmac_hexdigest(message: bytes, digestmod = hashlib.sha3_512) -> str:
         """foo
         """
-        mac = hmac.new(key=settings.DIGEST_KEY,
+        mac = hmac.new(key=settings.GLOBAL.DIGEST_KEY,
                        digestmod=hashlib.sha3_512)
         mac.update(message)
         message_hexdigest = mac.hexdigest()

@@ -39,7 +39,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/notifier \
     && cd ${HOME}/code/notifier
 
-COPY ["${COMMON_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
+COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/notifier

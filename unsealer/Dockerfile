@@ -39,7 +39,7 @@ RUN apk update --no-cache \
     && mkdir -p ${HOME}/code/unsealer \
     && cd ${HOME}/code/unsealer
 
-COPY ["${COMMON_DIR}/unsealer_config.py", "${TOP_DIR}/unsealer.py", "${HOME}/code/unsealer/"]
+COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/unsealer_config.py", "${TOP_DIR}/unsealer.py", "${HOME}/code/unsealer/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/unsealer

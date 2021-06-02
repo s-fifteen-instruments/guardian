@@ -22,33 +22,18 @@
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
+from global_config import GlobalSettings
 
 
-class Settings(BaseSettings):
-    DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
+class WatcherSettings(BaseSettings):
+    GLOBAL: GlobalSettings = GlobalSettings()
     DELETE_EPOCH_FILES: bool = True
-    EPOCH_FILES_DIRPATH: str = "/epoch_files"
-    DIGEST_FILES_DIRPATH: str = "/digest_files"
-    NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"
-    VAULT_SERVER_NAME: str = "vault"
-    VAULT_SERVER_URI: str = f"https://{VAULT_SERVER_NAME}:8200"
     CLIENT_NAME: str = "watcher"
-    CERT_DIRPATH: str = "/certificates/production"
-    CLIENT_DIRPATH: str = f"{CERT_DIRPATH}/{CLIENT_NAME}"
-    CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
-    KEY_SUFFIX: str = ".key.pem"
-    CLIENT_CERT_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{CA_CHAIN_SUFFIX}"
-    CLIENT_KEY_FILEPATH: str = f"{CLIENT_DIRPATH}/{CLIENT_NAME}{KEY_SUFFIX}"
-    SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_SERVER_NAME}/{VAULT_SERVER_NAME}{CA_CHAIN_SUFFIX}"
-    BACKOFF_FACTOR: float = 1.0
-    BACKOFF_MAX: float = 8.0
-    MAX_NUM_ATTEMPTS: int = 100
+    CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
+    CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.KEY_SUFFIX}"
+    NOTIFY_MAX_NUM_ATTEMPTS: int = 100
     NOTIFY_SLEEP_TIME: float = 0.5  # seconds
     NOTIFY_SLEEP_TIME_DELTA: float = 30.0  # seconds
-    VAULT_KEY_CHUNK_SIZE: int = 32  # bytes
-    VAULT_KV_ENDPOINT: str = "QKEYS"
-    VAULT_QKDE_ID: str = "QKDE0001"
-    VAULT_QCHANNEL_ID: str = "ALICEBOB"
 
     # Make environment settings take precedence over __init__ and file
     class Config:
@@ -62,4 +47,4 @@ class Settings(BaseSettings):
             return env_settings, init_settings, file_secret_settings
 
 
-settings = Settings()
+settings = WatcherSettings()

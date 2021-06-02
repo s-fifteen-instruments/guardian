@@ -24,7 +24,7 @@ import uuid
 
 from fastapi import HTTPException
 
-from app.core.config import logger, settings, _dump_response
+from app.core.rest_config import logger, settings, _dump_response
 
 from .client import VaultClient
 
@@ -199,9 +199,9 @@ class VaultSemaphore(VaultClient):
     def vault_calculate_total_bytes(self) -> int:
         """foo
         """
-        mount_point = settings.VAULT_KV_ENDPOINT
-        status_path = f"{settings.VAULT_QKDE_ID}/" \
-            f"{settings.VAULT_QCHANNEL_ID}/" \
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
             "status"
         status_version, status_data = \
             self.vault_read_secret_version(filepath=status_path,
@@ -220,9 +220,9 @@ class VaultSemaphore(VaultClient):
         cas_error = True
         while cas_error:
             # First, attempt to read status endpoint
-            mount_point = settings.VAULT_KV_ENDPOINT
-            status_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
                 "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
@@ -251,9 +251,9 @@ class VaultSemaphore(VaultClient):
         cas_error = True
         while cas_error:
             # First, attempt to read status endpoint
-            mount_point = settings.VAULT_KV_ENDPOINT
-            status_path = f"{settings.VAULT_QKDE_ID}/" \
-                f"{settings.VAULT_QCHANNEL_ID}/" \
+            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
                 "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,

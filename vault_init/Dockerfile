@@ -24,7 +24,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV TOP_DIR=./vault_init
 ENV COMMON_DIR=./common
 
-COPY ["${COMMON_DIR}/vault_init_config.py", "${TOP_DIR}/requirements.txt", "./"]
+COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/vault_init_config.py", "${TOP_DIR}/requirements.txt", "./"]
 
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.

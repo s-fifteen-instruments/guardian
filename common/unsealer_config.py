@@ -19,33 +19,18 @@
 #
 #
 
+from global_config import GlobalSettings
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
 
-class Settings(BaseSettings):
-    VAULT_NAME: str = "vault"
-    VAULT_INIT_NAME: str = "vault_init"
-    VAULT_URI: str = f"https://{VAULT_NAME}:8200"
-    CERT_DIRPATH: str = "/certificates"
-    ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
-    POLICIES_DIRPATH: str = "/vault/policies"
-    LOG_DIRPATH: str = "/vault/logs"
-    CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
-    KEY_SUFFIX: str = ".key.pem"
-    CSR_SUFFIX: str = ".csr.pem"
-    VAULT_SECRETS_FILEPATH: str = f"{ADMIN_DIRPATH}/{VAULT_NAME}/SECRETS"
-    CLIENT_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_INIT_NAME}{CA_CHAIN_SUFFIX}"
-    CLIENT_KEY_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_INIT_NAME}{KEY_SUFFIX}"
-    SERVER_CERT_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/{VAULT_NAME}{CA_CHAIN_SUFFIX}"
-    PKI_INT_CSR_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CSR_SUFFIX}"
-    PKI_INT_CERT_PEM_FILEPATH: str = f"{CERT_DIRPATH}/{VAULT_INIT_NAME}/pki_int{CA_CHAIN_SUFFIX}"
-    SECRET_SHARES: int = 5
-    SECRET_THRESHOLD: int = 3
-    MAX_CONN_ATTEMPTS: int = 10
-    BACKOFF_FACTOR: float = 1.0
-    BACKOFF_MAX: float = 64.0  # seconds
+class UnsealerSettings(BaseSettings):
+    GLOBAL: GlobalSettings = GlobalSettings()
+    CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
+    CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.KEY_SUFFIX}"
+    PKI_INT_CSR_PEM_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/pki_int{GLOBAL.CSR_SUFFIX}"
+    PKI_INT_CERT_PEM_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/pki_int{GLOBAL.CA_CHAIN_SUFFIX}"
     TIME_WINDOW: float = 30.0  # seconds
 
     # Make environment settings take precedence over __init__ and file
@@ -60,4 +45,4 @@ class Settings(BaseSettings):
             return env_settings, init_settings, file_secret_settings
 
 
-settings = Settings()
+settings = UnsealerSettings()

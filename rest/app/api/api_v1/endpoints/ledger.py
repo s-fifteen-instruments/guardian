@@ -23,7 +23,7 @@ from fastapi import APIRouter, Body, Path, Request, status
 
 
 from app import schemas
-from app.core.config import logger, settings
+from app.core.rest_config import logger, settings
 
 
 router = APIRouter()

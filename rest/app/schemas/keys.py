@@ -22,7 +22,7 @@ from fastapi import HTTPException
 from pydantic import conlist, constr, Field, root_validator
 from typing import Any, Dict, Optional
 
-from app.core.config import logger, settings, bits2bytes, padded_base64_length
+from app.core.rest_config import logger, settings, bits2bytes, padded_base64_length
 from app.schemas.base import ForbidBase
 
 

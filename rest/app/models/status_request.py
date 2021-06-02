@@ -22,7 +22,7 @@ from typing import Any, Optional
 
 from pydantic import conint, Field
 
-from app.core.config import settings
+from app.core.rest_config import settings
 from app.schemas.base import ForbidBase
 
 
@@ -34,14 +34,14 @@ class StatusExtention(ForbidBase):
 
 
 class StatusRequest(ForbidBase):
-    source_KME_ID: str = Field(settings.LOCAL_KME_ID,
+    source_KME_ID: str = Field(settings.GLOBAL.LOCAL_KME_ID,
                                title="KME ID of the Local KME",
                                description="KME ID of the Local KME",
                                min_length=settings.KME_ID_MIN_LENGTH,
                                max_length=settings.KME_ID_MAX_LENGTH,
                                regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                                )
-    target_KME_ID: str = Field(settings.REMOTE_KME_ID,
+    target_KME_ID: str = Field(settings.GLOBAL.REMOTE_KME_ID,
                                title="KME ID of the Target KME",
                                description="KME ID of the Target KME",
                                min_length=settings.KME_ID_MIN_LENGTH,

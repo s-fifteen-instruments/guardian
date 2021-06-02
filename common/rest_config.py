@@ -19,13 +19,15 @@
 #
 
 import json
+from math import ceil
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
-from math import ceil
 from typing import Tuple
 
 import logging
 from fastapi.logger import logger as logger
+
+from app.core.global_config import GlobalSettings
 
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
 gunicorn_logger = logging.getLogger("gunicorn")
@@ -85,17 +87,16 @@ def bits2bytes(bits: int):
     return bits // 8
 
 
-class Settings(BaseSettings):
+class RestSettings(BaseSettings):
+    GLOBAL: GlobalSettings = GlobalSettings()
     API_V1_STR: str = "/api/v1"
-    DIGEST_KEY: bytes = b"TODO: Change me; no hard code"
-    DIGEST_FILES_DIRPATH: str = "/digest_files"
     DIGEST_COMPARE_TO_FILE: bool = True
     DIGEST_COMPARE: bool = True
-    KEY_ID_MAX_LENGTH: int = 128
-    KEY_ID_MIN_LENGTH: int = 16
+    KEY_ID_MAX_LENGTH: int = 128  # Number of characters
+    KEY_ID_MIN_LENGTH: int = 16  # Number of characters
     KEY_SIZE: int = 32  # Bits
-    KME_ID_MAX_LENGTH: int = 32
-    KME_ID_MIN_LENGTH: int = 3
+    KME_ID_MAX_LENGTH: int = 32  # Number of characters
+    KME_ID_MIN_LENGTH: int = 3  # Number of characters
     MAX_EX_MANADATORY_COUNT: int = 2
     MAX_EX_OPTIONAL_COUNT: int = 2
     MAX_KEY_COUNT: int = 250000000
@@ -103,34 +104,24 @@ class Settings(BaseSettings):
     MAX_KEY_SIZE: int = 80000  # Bits
     MAX_SAE_ID_COUNT: int = 2
     MIN_KEY_SIZE: int = 8  # Bits
-    SAE_ID_MAX_LENGTH: int = 32
-    SAE_ID_MIN_LENGTH: int = 3
-    STATUS_MIN_LENGTH: int = 8
-    STATUS_MAX_LENGTH: int = 9
-    LOCAL_KME_ID: str = "kme1"
-    REMOTE_KME_ID: str = "kme2"
+    SAE_ID_MAX_LENGTH: int = 32  # Number of characters
+    SAE_ID_MIN_LENGTH: int = 3  # Number of characters
+    STATUS_MIN_LENGTH: int = 8  # Number of characters
+    STATUS_MAX_LENGTH: int = 9  # Number of characters
     VALID_HOSTNAME_REGEX: str = r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
     VALID_IP_ADDRESS_REGEX: str = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
     VALID_SAE_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VALID_KME_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VALID_STATUS_REGEX: str = r"^consumed$|^available$"
-    VAULT_BACKOFF_FACTOR: float = 1.0
-    VAULT_BACKOFF_MAX: float = 8.0
-    VAULT_MAX_CONN_ATTEMPTS: int = 10
     MAX_NUM_RESERVE_ATTEMPTS: int = 10
     RESERVE_SLEEP_TIME: float = 0.05  # seconds
-    VAULT_CLIENT_CERT_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.ca-chain.cert.pem"
-    VAULT_CLIENT_KEY_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/rest/rest.key.pem"
-    VAULT_NAME: str = "vault"
-    VAULT_SERVER_CERT_FILEPATH: str = f"/certificates/{LOCAL_KME_ID}/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
-    REMOTE_KME_CERT_FILEPATH: str = f"/certificates/{REMOTE_KME_ID}/{VAULT_NAME}/{VAULT_NAME}.ca-chain.cert.pem"
+    CLIENT_NAME: str = "rest"
+    VAULT_CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.LOCAL_KME_ID}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
+    VAULT_CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.LOCAL_KME_ID}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.KEY_SUFFIX}"
+    VAULT_SERVER_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.LOCAL_KME_ID}/{GLOBAL.VAULT_NAME}/{GLOBAL.VAULT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
+    REMOTE_KME_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.REMOTE_KME_ID}/{GLOBAL.VAULT_NAME}/{GLOBAL.VAULT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
-    VAULT_URI: str = f"https://{VAULT_NAME}:8200"
-    REMOTE_KME_URI: str = f"https://{REMOTE_KME_ID}{API_V1_STR}/ledger/{LOCAL_KME_ID}/key_ids"
-    VAULT_KV_ENDPOINT: str = "QKEYS"
-    VAULT_QKDE_ID: str = "QKDE0001"
-    VAULT_QCHANNEL_ID: str = "ALICEBOB"
-    VAULT_LEDGER_ID: str = "LEDGER"
+    REMOTE_KME_URL: str = f"https://{GLOBAL.REMOTE_KME_ID}{API_V1_STR}/ledger/{GLOBAL.LOCAL_KME_ID}/key_ids"
 
     # Make environment settings take precedence over __init__ and file
     class Config:
@@ -144,4 +135,4 @@ class Settings(BaseSettings):
             return env_settings, init_settings, file_secret_settings
 
 
-settings = Settings()
+settings = RestSettings()

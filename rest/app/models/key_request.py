@@ -22,7 +22,7 @@ from typing import Optional
 
 from pydantic import conint, conlist, constr, Field
 
-from app.core.config import settings
+from app.core.rest_config import settings
 from app.schemas.base import IgnoreBase, ForbidBase
 
 

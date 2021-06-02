@@ -37,8 +37,7 @@ RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
     && chmod +x /start.sh
 
 COPY ["${TOP_DIR}/app", "/app"]
-COPY ["${COMMON_DIR}/rest_config.py", "/app/core/config.py"]
-# WORKDIR /app/
+COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/rest_config.py", "/app/core/"]
 
 ENV PYTHONPATH=/app
 

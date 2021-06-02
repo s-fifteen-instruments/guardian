@@ -19,16 +19,16 @@
 #
 #
 
+from global_config import GlobalSettings
 
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
 
-class Settings(BaseSettings):
-    EPOCH_FILES_DIRPATH: str = "/epoch_files"
+class NotifierSettings(BaseSettings):
+    GLOBAL: GlobalSettings = GlobalSettings()
     EPOCH_DELAY_INTERVAL: float = 2**29 / 1E9  # One qcrypto epoch
-    NOTIFY_PIPE_FILEPATH: str = "/epoch_files/notify.pipe"
     REAL_TIME_DELAY: bool = False
 
     # Make environment settings take precedence over __init__ and file
@@ -43,4 +43,4 @@ class Settings(BaseSettings):
             return env_settings, init_settings, file_secret_settings
 
 
-settings = Settings()
+settings = NotifierSettings()

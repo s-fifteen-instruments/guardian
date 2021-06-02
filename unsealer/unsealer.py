@@ -80,17 +80,17 @@ class UnsealerClient:
         """foo
         """
         self.vclient: hvac.Client = \
-            hvac.Client(url=settings.VAULT_URI,
+            hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
                         cert=(settings.CLIENT_CERT_FILEPATH,
                               settings.CLIENT_KEY_FILEPATH),
-                        verify=settings.SERVER_CERT_FILEPATH)
+                        verify=settings.GLOBAL.SERVER_CERT_FILEPATH)
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
         """
-        self.max_attempts: int = settings.MAX_CONN_ATTEMPTS
-        self.backoff_factor: float = settings.BACKOFF_FACTOR
-        self.backoff_max: float = settings.BACKOFF_MAX
+        self.max_attempts: int = settings.GLOBAL.VAULT_MAX_CONN_ATTEMPTS
+        self.backoff_factor: float = settings.GLOBAL.BACKOFF_FACTOR
+        self.backoff_max: float = settings.GLOBAL.BACKOFF_MAX
 
         attempt_num: int = 0
         total_stall_time: float = 0.0
@@ -166,7 +166,7 @@ class UnsealerClient:
         if self.vclient.sys.is_sealed():
             if not hasattr(self, "unseal_keys"):
                 self.unseal_keys = \
-                    json.loads(open(settings.VAULT_SECRETS_FILEPATH,
+                    json.loads(open(settings.GLOBAL.VAULT_SECRETS_FILEPATH,
                                     "r").read())["keys"]
             # TODO: Secret Exposure
             self.unseal_response = \

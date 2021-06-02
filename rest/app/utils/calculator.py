@@ -20,7 +20,7 @@
 
 from fastapi import HTTPException, Request
 
-from app.core.config import logger, settings, bits2bytes
+from app.core.rest_config import logger, settings, bits2bytes
 # from app.schemas.keys import KeyContainer
 
 

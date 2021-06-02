@@ -40,8 +40,8 @@ services:
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
-      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETME}
+      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETME}
       # Mount a volume that stores the hex digest files of QKD keys
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
@@ -123,7 +123,7 @@ services:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
+      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
