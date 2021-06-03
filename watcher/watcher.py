@@ -72,8 +72,6 @@ class watcherClient:
         self.executor = \
             cf.ThreadPoolExecutor(max_workers=self._threads,
                                   thread_name_prefix=self.__class__.__name__)
-        # Authenticate with the vault server
-        self.vault_client_auth()
         self.mainloop()
 
     def exit_gracefully(self, signum, frame):
@@ -485,6 +483,9 @@ class watcherClient:
             # Keep track of total stall time waiting on notify pipe creation
             total_stall_time = total_stall_time + stall_time
             try:
+                # Authenticate with the vault server
+                if not self.vclient.is_authenticated():
+                    self.vault_client_auth()
                 # Attempt to open the notify pipe read-only, non-blocking
                 with open(os.open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
@@ -541,7 +542,10 @@ class watcherClient:
                             total_notify_sleep_time += notify_sleep_time
 
             except FileNotFoundError:
-                logger.info(f"FIFO not found; Sleep time {stall_time}; Attempt Number: {attempt_num}/{self.max_num_attempts}: Total Stall Time: {total_stall_time} s")
+                logger.info(f"FIFO not found; Sleep time {stall_time}; Attempt Number: {attempt_num}/{self.max_num_attempts}; Total Stall Time: {total_stall_time} s")
+                time.sleep(stall_time)
+            except hvac.exceptions.VaultDown as e:
+                logger.info(f"Vault instance is currently sealed: {e}; Attempt Number {attempt_num}/{self.max_num_attempts}; Total Stall Time: {total_stall_time} s")
                 time.sleep(stall_time)
 
 
