@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
-set -x
+set -ex
 
 # Absolute filepath to this script
 FILEPATH=$(readlink -f "${0}")
@@ -31,7 +31,10 @@ if [ "${KME}" = "kme2" ]; then
   # the source files on kme1 once the transfer is
   # complete. This prevents reingestion of previously
   # ingested epoch files which can cause sync issues.
-  rsync --remove-source-files -avz \
-    ${REMOTE_KME_DIRPATH:-SETME}/volumes/kme1/qkd/epoch_files/kme2/* 
+  # Ignore missing arguments suppresses the link_stat
+  # error message that arises if there are no epoch
+  # files to transfer.
+  rsync --remove-source-files --ignore-missing-args -avz \
+    ${REMOTE_KME_DIRPATH:-SETME}/volumes/kme1/qkd/epoch_files/kme2/* \ 
     ${DIRPATH}/../volumes/kme1/qkd/epoch_files/kme2/
 fi

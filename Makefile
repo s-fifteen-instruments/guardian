@@ -27,7 +27,7 @@ export KME ?= kme1
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
-export REMOTE_KME_DIRPATH ?= bob@kme1:/home/bob/code/guardian
+export REMOTE_KME_DIRPATH ?= bob@kme2:/home/bob/code/guardian
 ##########################
 ##########################
 ##########################
@@ -50,6 +50,10 @@ endif
 $(info )
 $(info Using Local KME configuration: '$(KME)')
 $(info Use the command-line syntax, e.g. 'KME=kme2' to change)
+$(info )
+$(info Remote KME Repository Location: '$(REMOTE_KME_DIRPATH)')
+$(info Use the command-line syntax, e.g. 'REMOTE_KME_DIRPATH=alice@kme1:/home/alice/code/guardian' to change)
+$(info )
 $(info Environment variables used throughout Guardian:)
 $(info KME: $(KME))
 $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
