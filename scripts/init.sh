@@ -65,6 +65,10 @@ elif [ "${KME}" = "kme2" ]; then
   S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
   S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+
+  # NOTE: Only necessary when using rsync to remotely transfer keying material
+  /bin/sh ${DIRPATH}/transfer_keys.sh
+
   S="watcher notifier" WAIT=1 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 

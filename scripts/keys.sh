@@ -40,6 +40,11 @@ if [ "${KME}" = "kme1" ]; then
   S=qkd                    WAIT=0 F=-f eval ${STARTUP}
 fi
 
+if [ "${KME}" = "kme2" ]; then
+  # NOTE: Only necessary when using rsync to remotely transfer keying material
+  /bin/sh ${DIRPATH}/transfer_keys.sh
+fi
+
 S="watcher notifier"     WAIT=1 F=   eval ${STARTUP}
 S="watcher notifier qkd" WAIT=3      eval ${SHUTDOWN}
 

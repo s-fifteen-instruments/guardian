@@ -64,7 +64,8 @@ down:
 	$(SCRIPTS)/down.sh
 
 # QKD simulator make more keying material
-keys:
+# Needs local Vault instance up and unsealed
+keys: rest
 	$(SCRIPTS)/keys.sh
 
 .PHONY: clean allclean

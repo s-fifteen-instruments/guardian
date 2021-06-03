@@ -1,43 +1,25 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
-
 set -x
 
-source qkd_config
-
-if [ "${count_type}" = "hec" ]; then
-  export out_dir=kme1
-elif [ "${count_type}" = "lec" ]; then
-  export out_dir=kme2
-else
-  echo "Unknown count_type: ${count_type}; exiting..."
-  exit -1
+if [ "${KME}" = "kme2" ]; then
+  rsync --remove-source-files -avz alice@kme1:/home/alice/code/guardian/volumes/kme1/qkd/epoch_files/kme2/* /home/bob/code/guardian/volumes/kme1/qkd/epoch_files/kme2/
 fi
-
-mkdir -p ./epoch_files/${out_dir}/
-cp -a ${data_dir}/finalkey.${count_type}/* ./epoch_files/${out_dir}/
-
-# NOTE (AKA Hack): These are only necessary when using rsync to remotely
-# transfer epoch files instead of using a true QKD system.  These write
-# permissions allow for convienent transfer and removal without need of a
-# priviledged transfer service.
-chmod 0777 ./epoch_files/${out_dir}/
-chmod 0666 ./epoch_files/${out_dir}/*

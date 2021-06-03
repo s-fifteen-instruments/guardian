@@ -44,9 +44,15 @@ class NotifierClient:
             logger.info(f"FIFO {settings.GLOBAL.NOTIFY_PIPE_FILEPATH} already exists")
         epoch_file_list = list(self.list_epoch_files())
         if len(epoch_file_list) > 0:
+            logger.debug("There are epoch files to process")
+            # NOTE: This open will block until the FIFO is opened by watcher
+            # on the other side. Watcher will not open the FIFO until a Vault
+            # instance is up and unsealed for writing keying material.
             with open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH, "w") as FIFO:
+                logger.debug("FIFO Opened for writing")
                 num_epoch_delay: int = 0
                 last_file_hex: int = hex(0)
+                logger.debug(f"Epoch File List: {epoch_file_list}")
                 for epoch_file_name in epoch_file_list:
                     current_file_hex = int(epoch_file_name, 16)
                     if last_file_hex == hex(0):
