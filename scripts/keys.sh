@@ -45,7 +45,7 @@ if [ "${KME}" = "kme2" ]; then
   /bin/sh ${DIRPATH}/transfer_keys.sh
 fi
 
-S="watcher notifier"     WAIT=1 F=   eval ${STARTUP}
-S="watcher notifier qkd" WAIT=3      eval ${SHUTDOWN}
+S="watcher notifier"     WAIT=5 F=   eval ${STARTUP}
+S="watcher notifier qkd" WAIT=1      eval ${SHUTDOWN}
 
 # NOTE: This assumes a Vault instance is up and unsealed.

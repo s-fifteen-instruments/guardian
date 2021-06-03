@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
-set -x
+set -ex
 
 # Absolute filepath to this script
 FILEPATH=$(readlink -f "${0}")
@@ -28,5 +28,5 @@ DIRPATH=$(dirname "${FILEPATH}")
 mkdir -p ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
 rsync -avz \
   ${REMOTE_KME_DIRPATH:-SETME}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem \
-  ${DIRPATH}/../volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem
+  ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem
 
