@@ -18,23 +18,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 #
-
-# Absolute filepath to this script
-FILEPATH=$(readlink -f "${0}")
-# Absolute dirpath to this script
-DIRPATH=$(dirname "${FILEPATH}")
-# Check for docker daemon and docker-compose
-. "${DIRPATH}/docker_check.sh"
-
-trap 'sigint' INT
-
-sigint() {
-  echo "SIGINT received; exiting"
-  exit 0
-}
-
 set -x
-# Ensure remote certificate CA chains are locally stored
-/bin/sh ${DIRPATH}/transfer_certs.sh
-export CONFIG_FILE="docker-compose.yml"
-docker-compose -f ${CONFIG_FILE} up -d --build
+
+if [ "${KME}" = "kme1" ]; then
+  mkdir -p /home/alice/code/guardian/volumes/kme2/certificates/production/rest
+  rsync -avz bob@kme2:/home/bob/code/guardian/volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem /home/alice/code/guardian/volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem
+fi
+
+if [ "${KME}" = "kme2" ]; then
+  mkdir -p /home/bob/code/guardian/volumes/kme1/certificates/production/rest
+  rsync -avz alice@kme1:/home/alice/code/guardian/volumes/kme1/certificates/production/rest/rest.ca-chain.cert.pem /home/bob/code/guardian/volumes/kme1/certificates/production/rest/rest.ca-chain.cert.pem
+fi
