@@ -90,6 +90,12 @@ class VaultClient:
                              common_name="watcher")
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="rest")
+        # NOTE: The SAE client will not interact directly with the
+        # Vault instance. Therefore, no need to create an ACL policy.
+        # NOTE: An SAE CSR may need to be signed instead of using this
+        # cert and key combination. This is for convenience.
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="sae")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """foo
