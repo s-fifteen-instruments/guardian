@@ -478,9 +478,12 @@ class watcherClient:
         workers = {}
         # Exception list
         self.exception_list = list()
+        is_vault_sealed = True
         # Watch for notifications unless max attempts has been reached waiting
-        # for the creation of the notify pipe or a signal was received to stop
-        while not self.KILL_NOW and attempt_num < self.max_num_attempts:
+        # for the creation of the notify pipe or a signal was received to stop.
+        # Only stop if the Vault instance has been unsealed giving a chance to
+        # ingest the epoch files. Docker will send a SIGKILL after 10 seconds.
+        while (not self.KILL_NOW or is_vault_sealed) and attempt_num < self.max_num_attempts:
             # Keep track of number of attemps to open notify pipe
             attempt_num = attempt_num + 1
             # Exponential backoff waiting for notificaiton pipe
@@ -492,6 +495,8 @@ class watcherClient:
             try:
                 # Authenticate with the vault server
                 self.vault_client_auth()
+                # If we're past auth, the Vault instance is not sealed any more
+                is_vault_sealed = False
                 # Attempt to open the notify pipe read-only, non-blocking
                 with open(os.open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
@@ -552,6 +557,7 @@ class watcherClient:
                 time.sleep(stall_time)
             except hvac.exceptions.VaultDown as e:
                 logger.info(f"Vault instance is currently sealed: {e}; Attempt Number {attempt_num}/{self.max_num_attempts}; Total Stall Time: {total_stall_time} s")
+                is_vault_sealed = True
                 time.sleep(stall_time)
 
 

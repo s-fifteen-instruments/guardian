@@ -25,7 +25,7 @@ FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
-mkdir -p ${DIRPATH}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
+mkdir -p ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
 rsync -avz \
   ${REMOTE_KME_DIRPATH:-SETME}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem \
   ${DIRPATH}/../volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem
