@@ -20,12 +20,13 @@
 #
 set -x
 
-if [ "${KME}" = "kme1" ]; then
-  mkdir -p /home/alice/code/guardian/volumes/kme2/certificates/production/rest
-  rsync -avz bob@kme2:/home/bob/code/guardian/volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem /home/alice/code/guardian/volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem
-fi
+# Absolute filepath to this script
+FILEPATH=$(readlink -f "${0}")
+# Absolute dirpath to this script
+DIRPATH=$(dirname "${FILEPATH}")
 
-if [ "${KME}" = "kme2" ]; then
-  mkdir -p /home/bob/code/guardian/volumes/kme1/certificates/production/rest
-  rsync -avz alice@kme1:/home/alice/code/guardian/volumes/kme1/certificates/production/rest/rest.ca-chain.cert.pem /home/bob/code/guardian/volumes/kme1/certificates/production/rest/rest.ca-chain.cert.pem
-fi
+mkdir -p ${DIRPATH}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
+rsync -avz \
+  ${REMOTE_KME_DIRPATH:-SETME}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem \
+  ${DIRPATH}/../volumes/kme2/certificates/production/rest/rest.ca-chain.cert.pem
+

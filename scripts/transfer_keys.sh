@@ -20,6 +20,18 @@
 #
 set -x
 
+# Absolute filepath to this script
+FILEPATH=$(readlink -f "${0}")
+# Absolute dirpath to this script
+DIRPATH=$(dirname "${FILEPATH}")
+
 if [ "${KME}" = "kme2" ]; then
-  rsync --remove-source-files -avz alice@kme1:/home/alice/code/guardian/volumes/kme1/qkd/epoch_files/kme2/* /home/bob/code/guardian/volumes/kme1/qkd/epoch_files/kme2/
+  # kme1 generates the simulated QKD epoch files
+  # Transfer kme2's epoch files over and remove
+  # the source files on kme1 once the transfer is
+  # complete. This prevents reingestion of previously
+  # ingested epoch files which can cause sync issues.
+  rsync --remove-source-files -avz \
+    ${REMOTE_KME_DIRPATH:-SETME}/volumes/kme1/qkd/epoch_files/kme2/* 
+    ${DIRPATH}/../volumes/kme1/qkd/epoch_files/kme2/
 fi

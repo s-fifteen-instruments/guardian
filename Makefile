@@ -18,11 +18,20 @@
 #
 ##########################
 ##### CAN CHANGE ME ######
+## OR SET ME IN THE ENV ##
 ##########################
+# - Choose "kme1" or "kme2" for the local KME identity.
 export KME ?= kme1
+# - Location of Remote KME's guardian git repository
+# - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
+# - It is expected that passwordless SSH access is set up to this location.
+# - Use a full absolute path. Do not use env variables or tilde (~) as
+#   they will not necessarily expand correctly in a remote context.
+export REMOTE_KME_DIRPATH ?= bob@kme1:/home/bob/code/guardian
 ##########################
 ##########################
 ##########################
+
 
 ##########################
 ##### LEAVE ME ALONE #####
