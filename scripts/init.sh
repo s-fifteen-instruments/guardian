@@ -42,7 +42,20 @@ export STALL="sleep \${WAIT}"
 export STARTUP="${UP} && ${STALL} && ${LOG}"
 export SHUTDOWN="${STALL} && ${DOWN}"
 
-docker network create traefik-public
+# +--------------------+----------------------+-----------------+-----------------+
+# |   Expression       |       parameter      |     parameter   |    parameter    |
+# |   in script:       |   Set and Not Null   |   Set But Null  |      Unset      |
+# +--------------------+----------------------+-----------------+-----------------+
+# | ${parameter:=word} | substitute parameter | assign word     | assign word     |
+# +--------------------+----------------------+-----------------+-----------------+
+# Expecting a set, non-null response if the network is already present
+NETWORK_PRESENT=`docker network ls -q --filter name=traefik-public`
+if [ "${NETWORK_PRESENT:=missing}" == "missing" ]; then
+  echo "Creating the \"traefik-public\" network"
+  docker network create traefik-public
+else
+  echo "The \"traefik-public\" network is already present"
+fi
 
 if [ "${KME}" = "kme1" ]; then
 
