@@ -88,6 +88,13 @@ class watcherClient:
     def vault_client_auth(self):
         """foo
         """
+        try:
+          if self.vclient.is_authenticated():
+              logger.debug("Vault client already authenticated.")
+              return None
+        except AttributeError:
+            logger.info("No Vault client created yet; creating")
+
         self.vclient: hvac.Client = \
             hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
                         cert=(settings.CLIENT_CERT_FILEPATH,
@@ -484,8 +491,7 @@ class watcherClient:
             total_stall_time = total_stall_time + stall_time
             try:
                 # Authenticate with the vault server
-                if not self.vclient.is_authenticated():
-                    self.vault_client_auth()
+                self.vault_client_auth()
                 # Attempt to open the notify pipe read-only, non-blocking
                 with open(os.open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
