@@ -40,13 +40,13 @@ services:
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETME}
-      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETME}
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETME}
+      - ./volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETME}
       # Mount a volume that stores the hex digest files of QKD keys
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
-      - /volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
     labels:
       # Enable Traefik handling for this specific service
       - traefik.enable=true
@@ -91,13 +91,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -123,7 +123,7 @@ services:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
@@ -147,12 +147,12 @@ services:
       # Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
-      - /volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
+      - ./volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
       # Mount the configuration directory
-      - /volumes/${LOCAL_KME_ID:-SETME}/traefik/configuration:/etc/traefik
+      - ./volumes/${LOCAL_KME_ID:-SETME}/traefik/configuration:/etc/traefik
       # Mount the log directory
-      - /volumes/${LOCAL_KME_ID:-SETME}/traefik/logs:/var/log/traefik
+      - ./volumes/${LOCAL_KME_ID:-SETME}/traefik/logs:/var/log/traefik
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS

@@ -34,7 +34,7 @@ services:
     networks:
       - internal-private
     volumes:
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
         # Prevents erroneous creation of directory on init if file not present
       - type: bind
         source: ./common/CERTAUTH_SECRETS
@@ -59,13 +59,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false
@@ -94,8 +94,8 @@ services:
     networks:
       - internal-private
     volumes:
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
 
   vault_init_phase_2:
     <<: *vault_init_label
@@ -106,8 +106,8 @@ services:
         #- CLIENT_ALT_NAMES=172.16.192.*,127.0.0.1,192.168.1.*,${LOCAL_KME_ID:-SETME}
     command: ["vault_init.py", "--second"]
     volumes:
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
-      - /volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
 
   vault_init_phase_3:
     <<: *vault_init_label
@@ -125,7 +125,7 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - /volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
+      - ./volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
 
   notifier:
     build:
@@ -139,7 +139,7 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - /volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
+      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
  
   watcher:
     build:
@@ -153,9 +153,9 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - /volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
-      - /volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
-      - /volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
 
 
 networks:
