@@ -1,0 +1,4 @@
+volumes/kme1/vault/data;775;100;1000
+volumes/kme1/vault/logs;775;100;1000
+volumes/kme2/vault/data;775;100;1000
+volumes/kme2/vault/logs;775;100;1000

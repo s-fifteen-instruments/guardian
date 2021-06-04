@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#
+# A hook script called by "git commit" with no arguments. The hook should
+# exit with non-zero status after issuing an appropriate message if it wants
+# to stop the commit.
+
+SELF_DIR=`git rev-parse --show-toplevel`
+DATABASE=$SELF_DIR/.permissions
+
+# Clear the permissions database file
+> $DATABASE
+
+# Record current user's UID and GID
+USER_UID=`id -u`
+USER_GID=`id -g`
+
+echo -n "Backing-up file permissions..."
+
+IFS_OLD=$IFS; IFS=$'\n'
+for DIR in `git ls-files | xargs -n 1 dirname | uniq | grep -v "^\."`; do
+   # Save the permissions of all the directories in the index
+   # if the directory is not owned by the current $USER_UID:$USER_GID
+   DIR_UID=`stat -c "%u" $DIR`
+   DIR_GID=`stat -c "%g" $DIR`
+   if [ "${DIR_UID}" != "${USER_UID}" ] || [ "${DIR_GID}" != "${USER_GID}" ]; then
+     echo $DIR";"`stat -c "%a;%u;%g" $DIR` >> $DATABASE
+   fi
+done
+for FILE in `git ls-files`; do
+   # Save the permissions of all the files in the index
+   # if the file is not owned by the current $USER_UID:$USER_GID
+   FILE_UID=`stat -c "%u" $FILE`
+   FILE_GID=`stat -c "%g" $FILE`
+   if [ "${FILE_UID}" != "${USER_UID}" ] || [ "${FILE_GID}" != "${USER_GID}" ]; then
+     echo $FILE";"`stat -c "%a;%u;%g" $FILE` >> $DATABASE
+   fi
+done
+IFS=$IFS_OLD
+
+# Add the permissions database file to the index
+git add $DATABASE
+
+echo "OK"

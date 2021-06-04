@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+SELF_DIR=`git rev-parse --show-toplevel`
+DATABASE=$SELF_DIR/.permissions
+
+echo -n "Restoring file permissions..."
+
+IFS_OLD=$IFS; IFS=$'\n'
+while read -r LINE || [[ -n "$LINE" ]];
+do
+   FILE=`echo $LINE | cut -d ";" -f 1`
+   PERMISSIONS=`echo $LINE | cut -d ";" -f 2`
+   UID=`echo $LINE | cut -d ";" -f 3`
+   GID=`echo $LINE | cut -d ";" -f 4`
+
+   # Set the file permissions
+   # sudo chmod $PERMISSIONS $FILE
+
+   # Set the file owner and groups
+   sudo chown $UID:$GID $FILE
+
+done < $DATABASE
+IFS=$IFS_OLD
+
+echo "OK"
+
+exit 0
+
