@@ -22,8 +22,6 @@
 # exit with non-zero status after issuing an appropriate message if it wants
 # to stop the commit.
 
-set -x
-
 SELF_DIR=`git rev-parse --show-toplevel`
 DATABASE=$SELF_DIR/.permissions
 
