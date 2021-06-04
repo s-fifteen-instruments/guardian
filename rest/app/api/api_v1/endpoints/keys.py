@@ -138,7 +138,7 @@ async def get_key(background_tasks: BackgroundTasks,
                    master_SAE_ID=request.state.sae_hostname,
                    slave_SAE_ID=slave_SAE_ID,
                    background_tasks=background_tasks)
-    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
     return key_con
 
 
@@ -163,7 +163,7 @@ async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
     key_con = await request.app.state.vclient.\
         ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
-    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
     return key_con
 
 
@@ -186,7 +186,7 @@ async def post_key(background_tasks: BackgroundTasks,
                    master_SAE_ID=request.state.sae_hostname,
                    slave_SAE_ID=slave_SAE_ID,
                    background_tasks=background_tasks)
-    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
     return key_con
 
 
@@ -210,5 +210,5 @@ async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
     key_con = await request.app.state.vclient.\
         ledger_fetch_keys(key_id_ledger_con=key_id_ledger_con)
-    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=False)}")
+    logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
     return key_con

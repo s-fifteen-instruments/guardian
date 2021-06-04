@@ -56,7 +56,7 @@ class VaultSemaphore(VaultClient):
             secret_version = 0
         else:
             logger.debug(f"filepath: {filepath} version response:")
-            _dump_response(data_response, secret=False)
+            _dump_response(data_response, secret=True)
             current_version = int(data_response["data"]["metadata"]["version"])
             logger.debug(f"Current Version: {current_version}")
             secret_version = current_version
