@@ -19,14 +19,18 @@
 #
 #
 
-from global_config import GlobalSettings
+import logging
+import os
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
+from global_config import GlobalSettings
+
 
 class UnsealerSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    UNSEALER_LOG_LEVEL: str = os.environ.get("UNSEALER_LOG_LEVEL", str(logging.info))
     CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
     CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.KEY_SUFFIX}"
     PKI_INT_CSR_PEM_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/pki_int{GLOBAL.CSR_SUFFIX}"

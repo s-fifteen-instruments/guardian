@@ -20,6 +20,7 @@
 
 import json
 from math import ceil
+import os
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
@@ -28,20 +29,6 @@ import logging
 from fastapi.logger import logger as logger
 
 from app.core.global_config import GlobalSettings
-
-gunicorn_error_logger = logging.getLogger("gunicorn.error")
-gunicorn_logger = logging.getLogger("gunicorn")
-uvicorn_access_logger = logging.getLogger("uvicorn.access")
-uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
-
-logger.handlers = gunicorn_error_logger.handlers
-
-if __name__ != "__main__":
-    # Production operation
-    # logger.setLevel(gunicorn_logger.level)
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.DEBUG)
 
 
 def _is_json(response):
@@ -89,6 +76,7 @@ def bits2bytes(bits: int):
 
 class RestSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    REST_LOG_LEVEL: str = os.environ.get("REST_LOG_LEVEL", str(logging.info))
     API_V1_STR: str = "/api/v1"
     DIGEST_COMPARE_TO_FILE: bool = True
     DIGEST_COMPARE: bool = True
@@ -136,3 +124,11 @@ class RestSettings(BaseSettings):
 
 
 settings = RestSettings()
+
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+gunicorn_logger = logging.getLogger("gunicorn")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+
+logger.handlers = gunicorn_error_logger.handlers
+logger.setLevel(int(settings.REST_LOG_LEVEL))

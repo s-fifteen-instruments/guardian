@@ -19,15 +19,18 @@
 #
 #
 
-from global_config import GlobalSettings
-
+import os
+import logging
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
+from global_config import GlobalSettings
+
 
 class NotifierSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    NOTIFY_LOG_LEVEL: str = os.environ.get("NOTIFY_LOG_LEVEL", str(logging.info))
     EPOCH_DELAY_INTERVAL: float = 2**29 / 1E9  # One qcrypto epoch
     REAL_TIME_DELAY: bool = False
 

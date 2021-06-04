@@ -28,7 +28,7 @@ import time
 from notifier_config import settings
 
 
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
+logger.basicConfig(stream=sys.stdout, level=int(settings.NOTIFY_LOG_LEVEL))
 
 
 class NotifierClient:

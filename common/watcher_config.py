@@ -19,14 +19,18 @@
 #
 #
 
+import logging
+import os
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
+
 from global_config import GlobalSettings
 
 
 class WatcherSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    WATCHER_LOG_LEVEL: str = os.environ.get("WATCHER_LOG_LEVEL", str(logging.info))
     DELETE_EPOCH_FILES: bool = True
     CLIENT_NAME: str = "watcher"
     CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"

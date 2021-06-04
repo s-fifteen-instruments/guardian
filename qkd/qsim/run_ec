@@ -24,6 +24,12 @@ set -x
 export override=true
 source qkd_config
 
+if [ "${QKD_LOG_LEVEL}" == "debug" ]; then
+  verbosity=5
+else
+  verbosity=1
+fi
+
 # This code is to test the operation of the error correction deamon. It runs
 # two copies of the error correction deamon, and assumes that raw keys are
 # stored in directories rawkeydir1 and rawkeydir2, respectively.
@@ -61,7 +67,7 @@ ${ERRCD}         \
 -q Aecresp.pipe  \
 -Q Aecquery.pipe \
 -E 0.05          \
--V 1             \
+-V ${verbosity}  \
 -I               &
 Apid=$!
 
@@ -75,7 +81,7 @@ ${ERRCD}         \
 -q Becresp.pipe  \
 -Q Becquery.pipe \
 -E 0.05          \
--V 1             \
+-V ${verbosity}  \
 -I               &
 Bpid=$!
 

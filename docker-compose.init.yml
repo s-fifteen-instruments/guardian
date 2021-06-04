@@ -24,6 +24,8 @@ services:
       context: ./
       dockerfile: ./certauth/Dockerfile
     working_dir: /certificates/generation
+    env_file:
+      - common/log.env
     # WARNING:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities
@@ -50,6 +52,8 @@ services:
   vault: &vault_label
     # Use the latest Hashicorp Vault v1.7.x image available
     image: vault:${VAULT_TAG:-latest}
+    env_file:
+      - common/log.env
     ports:
       # Listen on port 8200
       - 8200:8200
@@ -87,6 +91,8 @@ services:
     build:
       context: ./
       dockerfile: ./vault_init/Dockerfile
+    env_file:
+      - common/log.env
     command: ["vault_init.py", "--first"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -99,11 +105,11 @@ services:
 
   vault_init_phase_2:
     <<: *vault_init_label
+    env_file:
+      - common/log.env
     environment:
-      # TODO: Work on env var/init var dependency precedence
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
-        #- CLIENT_ALT_NAMES=172.16.192.*,127.0.0.1,192.168.1.*,${LOCAL_KME_ID:-SETME}
     command: ["vault_init.py", "--second"]
     volumes:
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
@@ -117,6 +123,8 @@ services:
     build:
       context: ./
       dockerfile: ./qkd/Dockerfile
+    env_file:
+      - common/log.env
     command: ["distclean", "ctest"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -131,6 +139,8 @@ services:
     build:
       context: ./
       dockerfile: ./notifier/Dockerfile
+    env_file:
+      - common/log.env
     command: ["notifier.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -145,6 +155,8 @@ services:
     build:
       context: ./
       dockerfile: ./watcher/Dockerfile
+    env_file:
+      - common/log.env
     command: ["watcher.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -153,6 +165,7 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
+      # TODO: Does watcher need digest file mounts like this now?
       - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
       - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates

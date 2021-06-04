@@ -19,7 +19,8 @@
 #
 #
 
-
+import logging
+import os
 from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 from pydantic import BaseSettings
@@ -30,6 +31,7 @@ class VaultInitSettings(BaseSettings):
     """Additional vault_init specific configuration settings.
     """
     GLOBAL: GlobalSettings = GlobalSettings()
+    VAULT_INIT_LOG_LEVEL: str = os.environ.get("VAULT_INIT_LOG_LEVEL", str(logging.info))
     CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
     CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.KEY_SUFFIX}"
     SECRET_SHARES: int = 5

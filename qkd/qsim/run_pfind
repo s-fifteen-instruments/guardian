@@ -45,6 +45,7 @@ if [ "${num_shared_epochs}" -le "0" ]; then
   exit -1
 fi
 
+# Leave verbosity alone to extract the correct time offset value
 export timediff=`\
 ${base_dir}/pfind         \
 -D ${hec_data_dir}/t1.hec \

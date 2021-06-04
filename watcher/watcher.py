@@ -27,12 +27,10 @@ import hmac
 import hvac
 import json
 import logging as logger
-# import getpass
 import multiprocessing
 import os
 import pathlib
 import signal
-# import socket
 import sys
 import struct
 import time
@@ -40,19 +38,7 @@ import traceback
 
 from watcher_config import settings
 
-# Consider https://documentation.solarwinds.com/en/success_center/papertrail/content/kb/configuration/configuring-centralized-logging-from-python-apps.htm?cshid=pt-configuration-configuring-centralized-logging-from-python-apps
-#  hostname = socket.gethostname()
-#  user = user = getpass.getuser()
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)  # ,
-#                     format="%(levelname)s " +
-#                     "%(threadName)s " +
-#                     f"{hostname}: " +
-#                     f"{user}: " +
-#                     "%(asctime)s: " +
-#                     "%(filename)s;" +
-#                     "%(funcName)s();" +
-#                     "%(lineno)d: " +
-#                     "%(message)s")
+logger.basicConfig(stream=sys.stdout, level=int(settings.WATCHER_LOG_LEVEL))
 
 
 class watcherClient:

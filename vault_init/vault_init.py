@@ -33,7 +33,7 @@ import requests
 
 from vault_init_config import settings
 
-logger.basicConfig(stream=sys.stdout, level=logger.DEBUG)
+logger.basicConfig(stream=sys.stdout, level=int(settings.VAULT_INIT_LOG_LEVEL))
 
 
 class VaultClient:

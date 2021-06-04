@@ -23,6 +23,8 @@ services:
     build:
       context: ./
       dockerfile: ./rest/Dockerfile
+    env_file:
+      - common/log.env
     environment:
       # Total number of worker threads; overrides other env vars
       - WEB_CONCURRENCY=1
@@ -35,8 +37,6 @@ services:
       # Pass in local and remote KME IDs to rest app container
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
-      # Useful for client remote ledger put requests
-      - HTTPX_LOG_LEVEL=trace
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
@@ -82,6 +82,8 @@ services:
   vault: &vault_label
     # Use the latest Hashicorp Vault v1.7.x image available
     image: vault:${VAULT_TAG:-latest}
+    env_file:
+      - common/log.env
     ports:
       # Listen on port 8200
       - 8200:8200
@@ -115,6 +117,8 @@ services:
     build:
       context: ./
       dockerfile: ./unsealer/Dockerfile
+    env_file:
+      - common/log.env
     command: ["unsealer.py"]
     labels:
       # Disable Traefik for this specific "backend" service
@@ -133,15 +137,17 @@ services:
   traefik:
     # Use the latest Traefik v2.4.x image available
     image: traefik:${TRAEFIK_TAG:-latest}
+    env_file:
+      - common/log.env
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
     ports:
       # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
       - 80:80
       # Listen on port 443, default for HTTPS
       - 443:443
     restart: unless-stopped
-    environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
     volumes:
       # Add the Docker socket as a mounted volume, so that
       # Traefik can read the labels of other services

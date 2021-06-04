@@ -31,7 +31,7 @@ import requests
 
 from unsealer_config import settings
 
-logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+logger.basicConfig(stream=sys.stdout, level=int(settings.UNSEALER_LOG_LEVEL))
 
 
 class UnsealerClient:

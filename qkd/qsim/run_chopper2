@@ -26,6 +26,12 @@ set -x
 
 source qkd_config
 
+if [ "${QKD_LOG_LEVEL}" == "debug" ]; then
+  verbosity=3
+else
+  verbosity=0
+fi
+
 mkdir -p ${data_dir}/t1.${count_type}
 
 mkdir -p ${data_dir}/t1.${count_type}
@@ -38,5 +44,5 @@ ${base_dir}/chopper2 \
 -i ${data_dir}/events.${count_type}.out \
 -D ${data_dir}/t1.${count_type} \
 -l ${data_dir}/c2.${count_type}.log \
--V 3
+-V ${verbosity}
 

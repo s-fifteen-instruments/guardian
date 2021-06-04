@@ -23,6 +23,12 @@ set -x
 export override=true
 source qkd_config
 
+if [ "${QKD_LOG_LEVEL}" == "debug" ]; then
+  verbosity=5
+else
+  verbosity=1
+fi
+
 # -d All type-2 packets saved in dir
 # -D All type-1 packets saved in dir
 # -f All type-3 packets saved in dir
@@ -75,7 +81,7 @@ ${base_dir}/costream            \
 -m ${hec_data_dir}/t3.hec.log   \
 -M ${hec_data_dir}/t4.hec.log   \
 -n ${hec_data_dir}/costream.log \
--V 5                            \
+-V ${verbosity}                 \
 -G 3                            \
 -w 16                           \
 -u 30                           \

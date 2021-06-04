@@ -29,6 +29,12 @@ set -x
 export override=true
 source qkd_config
 
+if [ "${QKD_LOG_LEVEL}" == "debug" ]; then
+  verbosity=-vvv
+else
+  verbosity=-v
+fi
+
 mkdir -p ${data_dir}/hec
 mkdir -p ${data_dir}/lec
 
@@ -41,5 +47,5 @@ mkdir -p ${data_dir}/lec
 -m ${error_rate}                  \
 -F ${data_dir}/hec/events.hec.out \
 -f ${data_dir}/lec/events.lec.out \
--v
+${verbosity}
 
