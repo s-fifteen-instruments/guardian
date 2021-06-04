@@ -47,7 +47,7 @@ def _is_json(response):
 def _dump_response(response, secret: bool = True):
     """foo
     """
-    if not secret:
+    if not secret or settings.GLOBAL.SHOW_SECRETS:
         if response:
             if _is_json(response):
                 logger.debug(f"""{json.dumps(response,

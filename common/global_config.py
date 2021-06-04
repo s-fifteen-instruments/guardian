@@ -28,6 +28,7 @@ class GlobalSettings(BaseSettings):
     """
     LOCAL_KME_ID: str = os.environ.get("LOCAL_KME_ID", "kme1")
     REMOTE_KME_ID: str = os.environ.get("REMOTE_KME_ID", "kme2")
+    SHOW_SECRETS: bool = False
     VAULT_NAME: str = "vault"
     VAULT_SERVER_URL: str = f"https://{VAULT_NAME}:8200"
     CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
