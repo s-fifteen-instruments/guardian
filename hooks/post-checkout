@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+
 SELF_DIR=`git rev-parse --show-toplevel`
 DATABASE=$SELF_DIR/.permissions
 
@@ -26,16 +27,18 @@ echo -n "Restoring file permissions..."
 IFS_OLD=$IFS; IFS=$'\n'
 while read -r LINE || [[ -n "$LINE" ]];
 do
-   FILE=`echo $LINE | cut -d ";" -f 1`
-   PERMISSIONS=`echo $LINE | cut -d ";" -f 2`
-   UID=`echo $LINE | cut -d ";" -f 3`
-   GID=`echo $LINE | cut -d ";" -f 4`
+    FILE=`echo $LINE | cut -d ";" -f 1`
+    PERMISSIONS=`echo $LINE | cut -d ";" -f 2`
+    USER_ID=`echo $LINE | cut -d ";" -f 3`
+    GROUP_ID=`echo $LINE | cut -d ";" -f 4`
 
-   # Set the file permissions
-   # sudo chmod $PERMISSIONS $FILE
+    # Set the file permissions
+    # sudo chmod $PERMISSIONS $FILE
 
-   # Set the file owner and groups
-   sudo chown $UID:$GID $FILE
+    set -x
+    # Set the file owner and groups
+    sudo chown $USER_ID:$GROUP_ID $FILE
+    set +x
 
 done < $DATABASE
 IFS=$IFS_OLD

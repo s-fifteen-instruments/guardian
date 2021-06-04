@@ -22,6 +22,8 @@
 # exit with non-zero status after issuing an appropriate message if it wants
 # to stop the commit.
 
+set -x
+
 SELF_DIR=`git rev-parse --show-toplevel`
 DATABASE=$SELF_DIR/.permissions
 
@@ -41,7 +43,9 @@ for DIR in `git ls-files | xargs -n 1 dirname | uniq | grep -v "^\."`; do
    DIR_UID=`stat -c "%u" $DIR`
    DIR_GID=`stat -c "%g" $DIR`
    if [ "${DIR_UID}" != "${USER_UID}" ] || [ "${DIR_GID}" != "${USER_GID}" ]; then
+     set -x
      echo $DIR";"`stat -c "%a;%u;%g" $DIR` >> $DATABASE
+     set +x
    fi
 done
 for FILE in `git ls-files`; do
@@ -50,7 +54,9 @@ for FILE in `git ls-files`; do
    FILE_UID=`stat -c "%u" $FILE`
    FILE_GID=`stat -c "%g" $FILE`
    if [ "${FILE_UID}" != "${USER_UID}" ] || [ "${FILE_GID}" != "${USER_GID}" ]; then
+     set -x
      echo $FILE";"`stat -c "%a;%u;%g" $FILE` >> $DATABASE
+     set +x
    fi
 done
 IFS=$IFS_OLD
