@@ -25,7 +25,6 @@ if [ -z ${1} ]; then
   exit -1
 fi
 
-pushd .git && rm -rf ./hooks && ln -s ../hooks && popd
-# git config core.filemode false
+pushd .git && rm -rf ./hooks && ln -s ../scripts/hooks && popd
 git checkout ${1}
 
