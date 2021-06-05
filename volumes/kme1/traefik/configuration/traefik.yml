@@ -5,7 +5,7 @@ global:
   sendAnonymousUsage: False
 
 log:
-  level: INFO
+  level: DEBUG
   format: common
   # Uncomment to dump to log file instead of to stdout
   # where Docker picks it up.

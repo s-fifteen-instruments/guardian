@@ -26,6 +26,7 @@ import logging as logger
 import hvac
 import os
 import pathlib
+import subprocess
 import stat
 import sys
 import time
@@ -480,6 +481,8 @@ class VaultClient:
                                      client_cert=cert_pem_str,
                                      client_private_key=private_key_pem_str,
                                      ca_chain=ca_chain_pem_str)
+        VaultClient.create_pkcs12_file(dirpath=client_admin_dirpath,
+                                       common_name=common_name)
 
     @staticmethod
     def write_client_credentials(dirpath: str, common_name: str,
@@ -599,6 +602,34 @@ class VaultClient:
         with open(filepath, "w") as f:
             f.write(policy_str)
         self.vault_create_acl_policy(policy_name_str=policy_name_str)
+
+    @staticmethod
+    def create_pkcs12_file(dirpath: str, common_name: str):
+        """foo
+        """
+        ca_chain_file = f"{dirpath}/{common_name}{settings.GLOBAL.CA_CHAIN_SUFFIX}"
+        key_file = f"{dirpath}/{common_name}{settings.GLOBAL.KEY_SUFFIX}"
+        p12_file = f"{dirpath}/{common_name}.p12"
+        p1 = subprocess.Popen(["openssl", "pkcs12", "-export",
+                               "-in", f"{ca_chain_file}",
+                               "-inkey", f"{key_file}",
+                               "-out", f"{p12_file}",
+                               "-name", f"{settings.GLOBAL.LOCAL_KME_ID}_{common_name}",
+                               "-caname", f"{settings.GLOBAL.LOCAL_KME_ID}_CA",
+                               "-passout", "stdin"
+                               ],
+                              stdin=subprocess.PIPE,
+                              stdout=subprocess.PIPE
+                              )
+        p1.stdin.write(b"\n\n")
+        out, err = p1.communicate()
+        logger.debug(f"PKCS#12 Output: \"{out}\"")
+        if err:
+            logger.error(f"PKCS#12 Error: \"{err}\"")
+        # Make the p12 file world readable
+        os.chmod(p12_file, (stat.S_IRUSR | stat.S_IWUSR |
+                            stat.S_IRGRP | stat.S_IROTH)
+                 )
 
 
 if __name__ == "__main__":

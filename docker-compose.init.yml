@@ -29,7 +29,7 @@ services:
     # WARNING:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities
-    command: ["make clean && export LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}_ && make certs && make install"]
+    command: ["make clean && export LOCAL_KME_ID=${LOCAL_KME_ID:-SETME} && make certs && make install"]
     labels:
       # Disable Traefik for this specific "backend" service
       - traefik.enable=false

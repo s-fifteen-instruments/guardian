@@ -32,6 +32,7 @@ COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/vault_init_config.py", "$
 # https://github.com/hashicorp/docker-vault/blob/master/0.X/Dockerfile v1.7.2
 RUN addgroup vault                                       && \
     adduser --system vaultinit --ingroup vault --uid 101 && \
+    apk add --no-cache openssl                           && \
     mkdir -p /certificates                               && \
     pip install --no-cache-dir -r ./requirements.txt
 
