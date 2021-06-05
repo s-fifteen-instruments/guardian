@@ -1,5 +1,17 @@
 # Traefik dynamic configuration file
 # Specifically for TLS settings
+http:
+  routers:
+    dashboard-http:
+      rule: Host(`traefik.{{ env "LOCAL_KME_ID" }}`)
+      entryPoints: web
+      service: api@internal
+    dashboard-https:
+      rule: Host(`traefik.{{ env "LOCAL_KME_ID" }}`)
+      entryPoints: websecure
+      tls: True
+      service: api@internal
+
 tls:
   certificates:
     # KME server-side identity

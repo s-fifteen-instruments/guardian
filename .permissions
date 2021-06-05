@@ -5,5 +5,3 @@ volumes/kme2/vault/data;775;100;1000
 volumes/kme2/vault/logs;775;100;1000
 volumes/kme1/vault/config/client_auth.sh;775;100;1000
 volumes/kme1/vault/config/vault-config.hcl;664;100;1000
-volumes/kme1/vault/data/.gitignore;664;100;1000
-volumes/kme1/vault/logs/.gitignore;664;100;1000

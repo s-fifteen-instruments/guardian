@@ -4,6 +4,9 @@ global:
   checkNewVersion: True
   sendAnonymousUsage: False
 
+api:
+  dashboard: True
+
 log:
   level: DEBUG
   format: common
@@ -13,8 +16,7 @@ log:
 
 accessLog:
   format: common
-  # Uncomment to dump access logs to file
-  #filePath: /var/log/traefik/access.log
+  filePath: /var/log/traefik/access.log
 
 entryPoints:
   web:
