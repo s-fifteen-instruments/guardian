@@ -30,9 +30,6 @@ services:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities
     command: ["make clean && export LOCAL_KME_ID=${LOCAL_KME_ID:-SETME} && make certs && make install"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     networks:
       - internal-private
     volumes:
@@ -70,9 +67,6 @@ services:
       - ./volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     # Server Configuration: /vault/config/vault-config.hcl
     command: ["server"]
     networks:
@@ -94,9 +88,6 @@ services:
     env_file:
       - common/log.env
     command: ["vault_init.py", "--first"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     networks:
       - internal-private
     volumes:
@@ -126,9 +117,6 @@ services:
     env_file:
       - common/log.env
     command: ["distclean", "ctest"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     networks:
       - internal-private
     volumes:
@@ -142,9 +130,6 @@ services:
     env_file:
       - common/log.env
     command: ["notifier.py"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     networks:
       - internal-private
     volumes:
@@ -158,9 +143,6 @@ services:
     env_file:
       - common/log.env
     command: ["watcher.py"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     networks:
       - internal-private
     volumes:

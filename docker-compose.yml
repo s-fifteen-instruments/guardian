@@ -79,7 +79,7 @@ services:
       - internal-private
 
 
-  vault: &vault_label
+  vault:
     # Use the latest Hashicorp Vault v1.7.x image available
     image: vault:${VAULT_TAG:-latest}
     env_file:
@@ -101,8 +101,6 @@ services:
       # Mount a volume that stores the TLS certificates
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
     labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
       # Picked up by the unsealer service
       - unsealer=watch
     # Server Configuration: /vault/config/vault-config.hcl
@@ -120,9 +118,6 @@ services:
     env_file:
       - common/log.env
     command: ["unsealer.py"]
-    labels:
-      # Disable Traefik for this specific "backend" service
-      - traefik.enable=false
     volumes:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
