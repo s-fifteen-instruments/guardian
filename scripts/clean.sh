@@ -33,7 +33,7 @@ if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
   rm -rf ./volumes/kme1/certificates/production/vault_init
   rm -rf ./volumes/kme1/certificates/production/rest
   rm -rf ./volumes/kme1/certificates/production/watcher
-  rm -rf ./volumes/kme1/certificates/production/sae
+  rm -rf ./volumes/kme1/certificates/production/sae1
   rm -rf ./volumes/kme1/certificates/production/admin
   rm -rf ./volumes/kme1/certificates/generation/root
   rm -rf ./volumes/kme1/vault/data/file
@@ -42,6 +42,7 @@ if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
   rm -f  ./volumes/kme1/vault/policies/rest.policy.hcl
   rm -rf ./volumes/kme1/qkd/epoch_files/*
   rm -rf ./volumes/kme1/qkd/digest_files/*
+  rm -f  ./volumes/kme1/traefik/logs/access.log
   # For remote client CA chain
   rm -rf ./volumes/kme2/certificates/production/rest
 
@@ -53,7 +54,7 @@ if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
   rm -rf ./volumes/kme2/certificates/production/vault_init
   rm -rf ./volumes/kme2/certificates/production/rest
   rm -rf ./volumes/kme2/certificates/production/watcher
-  rm -rf ./volumes/kme2/certificates/production/sae
+  rm -rf ./volumes/kme2/certificates/production/sae2
   rm -rf ./volumes/kme2/certificates/production/admin
   rm -rf ./volumes/kme2/certificates/generation/root
   rm -rf ./volumes/kme2/vault/data/file
@@ -62,6 +63,7 @@ if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
   rm -f  ./volumes/kme2/vault/policies/rest.policy.hcl
   rm -rf ./volumes/kme2/qkd/epoch_files/*
   rm -rf ./volumes/kme2/qkd/digest_files/*
+  rm -f  ./volumes/kme2/traefik/logs/access.log
   # For remote client CA chain
   rm -rf ./volumes/kme1/certificates/production/rest
 

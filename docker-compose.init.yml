@@ -101,6 +101,8 @@ services:
     environment:
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
+      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
     command: ["vault_init.py", "--second"]
     volumes:
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
