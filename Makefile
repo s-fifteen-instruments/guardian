@@ -41,9 +41,13 @@ SCRIPTS := ./scripts
 ifeq ($(KME), kme1)
 export LOCAL_KME_ID := kme1
 export REMOTE_KME_ID := kme2
+export LOCAL_SAE_ID := sae1
+export REMOTE_SAE_ID := sae2
 else ifeq ($(KME), kme2)
 export LOCAL_KME_ID := kme2
 export REMOTE_KME_ID := kme1
+export LOCAL_SAE_ID := sae2
+export REMOTE_SAE_ID := sae1
 else
 $(error KME input not recognized: $(KME). Please use "kme1" or "kme2"; Exiting)
 endif
@@ -58,6 +62,8 @@ $(info Environment variables used throughout Guardian:)
 $(info KME: $(KME))
 $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
 $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
+$(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
+$(info REMOTE_SAE_ID: $(REMOTE_SAE_ID))
 $(info )
 
 # KME rest app

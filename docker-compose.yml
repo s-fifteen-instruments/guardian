@@ -137,6 +137,8 @@ services:
     environment:
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
+      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
     ports:
       # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
       - 80:80

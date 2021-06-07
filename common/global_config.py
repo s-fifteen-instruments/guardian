@@ -28,8 +28,8 @@ class GlobalSettings(BaseSettings):
     """
     LOCAL_KME_ID: str = os.environ.get("LOCAL_KME_ID", "kme1")
     REMOTE_KME_ID: str = os.environ.get("REMOTE_KME_ID", "kme2")
-    LOCAL_SAE_ID: str = "sae" + LOCAL_KME_ID.split("kme")[1]
-    REMOTE_SAE_ID: str = "sae" + REMOTE_KME_ID.split("kme")[1]
+    LOCAL_SAE_ID: str = os.environ.get("LOCAL_SAE_ID", "sae1")
+    REMOTE_SAE_ID: str = os.environ.get("REMOTE_SAE_ID", "sae2")
     SHOW_SECRETS: bool = True
     VAULT_NAME: str = "vault"
     VAULT_SERVER_URL: str = f"https://{VAULT_NAME}:8200"
