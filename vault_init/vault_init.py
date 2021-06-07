@@ -47,6 +47,8 @@ class VaultClient:
             self.phase_1_startup()
         if self.args.second:
             self.phase_2_startup()
+        if self.args.reset:
+            self.reset_vault_instance()
 
     def parse_args(self):
         """foo
@@ -54,6 +56,7 @@ class VaultClient:
         parser = argparse.ArgumentParser()
         parser.add_argument("--first", action="store_true", help="First stage of initialization")
         parser.add_argument("--second", action="store_true", help="Second stage of initialization")
+        parser.add_argument("--reset", action="store_true", help="Reset the Vault instance")
         self.args = parser.parse_args()
 
     def start_connection(self):
@@ -559,6 +562,22 @@ class VaultClient:
         logger.debug(f"Read secret engine mount_point: \"{mount_point}\" reponse:")
         self._dump_response(read_config_response, secret=False)
 
+    def vault_disable_kv_secrets_engine(self):
+        """foo
+        """
+        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
+        logger.debug("Currently enabled secrets engines:")
+        self._dump_response(secrets_backends, secret=False)
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        logger.debug("Attempt to enable kv version 2 secrets engine")
+        self.disable_kv_response = \
+            self.vclient.sys.disable_secrets_engine(path=mount_point)
+        logger.debug("Disable kv version 2 secrets engine response okay:")
+        self._dump_response(self.disable_kv_response.ok, secret=False)
+        secrets_backends = self.vclient.sys.list_mounted_secrets_engines()
+        logger.debug("Currently enabled secrets engines:")
+        self._dump_response(secrets_backends, secret=False)
+
     def vault_create_watcher_service_acl(self):
         """foo
         """
@@ -630,6 +649,12 @@ class VaultClient:
         os.chmod(p12_file, (stat.S_IRUSR | stat.S_IWUSR |
                             stat.S_IRGRP | stat.S_IROTH)
                  )
+
+    def reset_vault_instance(self):
+        """foo
+        """
+        self.vault_disable_kv_secrets_engine()
+        self.vault_enable_kv_secrets_engine()
 
 
 if __name__ == "__main__":

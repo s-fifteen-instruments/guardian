@@ -81,6 +81,10 @@ down:
 keys: rest
 	$(SCRIPTS)/keys.sh
 
+# Reset local Vault instance
+clear:
+	$(SCRIPTS)/clear.sh
+
 .PHONY: clean allclean
 # Clean local and remote KMEs
 allclean: export KME = both
