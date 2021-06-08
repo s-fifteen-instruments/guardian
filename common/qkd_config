@@ -27,7 +27,7 @@ export           error_rate=0.0       # Simulated QBER [0<=fraction<=1]
 export  relative_freq_drift=0.0
 
 # error correction config settings
-export ec_min_bits=5000               # minimal number of raw bits to process in error correction
+export ec_min_bits=1024               # minimal number of raw bits to process in error correction
 
 # path config settings (recommend to not change)
 export base_dir=${PWD}/../qcrypto/remotecrypto

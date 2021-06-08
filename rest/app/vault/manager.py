@@ -341,13 +341,12 @@ class VaultManager(VaultSemaphore):
             logger.error("Unathorized. SAE ID of the requestor is "
                          "not an SAE ID supplied to the \"Get key\" "
                          "method each time it was called.")
-            # TODO: Raise this for production
-            # raise \
-            #     HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-            #                   detail="Unathorized. SAE ID of the requestor is "
-            #                          "not an SAE ID supplied to the \"Get key\" "
-            #                          "method each time it was called."
-            #                   )
+            raise \
+                HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                              detail="Unathorized. SAE ID of the requestor is "
+                                     "not an SAE ID supplied to the \"Get key\" "
+                                     "method each time it was called."
+                              )
 
         # Only construct after validation
         key_id_ledger_con = schemas.KeyIDLedgerContainer(ledgers=key_id_ledger_list)
@@ -685,7 +684,7 @@ class VaultManager(VaultSemaphore):
             delete_metadata_and_all_versions(path=epoch_path,
                                              mount_point=mount_point)
         logger.debug(f"Vault epoch file \"{epoch}\" delete response:")
-        _dump_response(epoch_file_response, secret=True)
+        _dump_response(epoch_file_response.ok, secret=False)
 
     async def \
         build_ledger_key_pair(self, key_id_ledger:

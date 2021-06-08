@@ -27,17 +27,22 @@ DIRPATH=$(dirname "${FILEPATH}")
 
 mkdir -p ${test_dir}
 cd ${test_dir}
-rsync -avz ${LOCAL_KME_DIRPATH}/volumes/${LOCAL_KME_ID}/certificates/production/admin/${LOCAL_SAE_ID}/ ./ &
-rsync -avz ${REMOTE_KME_DIRPATH}/volumes/${REMOTE_KME_ID}/certificates/production/admin/${REMOTE_SAE_ID}/ ./ &
+rsync -avz ${LOCAL_KME_DIRPATH}/volumes/${LOCAL_KME_ID}/certificates/production/admin/${LOCAL_SAE_ID} ./ &
+rsync -avz ${REMOTE_KME_DIRPATH}/volumes/${REMOTE_KME_ID}/certificates/production/admin/${REMOTE_SAE_ID} ./ &
 wait
 
-# 1 key; 8 bits each; 4 iterations
+echo "1 key; 8 bits each; 4 iterations"
+${DIRPATH}/key_loop.sh 1 8 4
+echo "4 keys; 8 bits each; 4 iterations"
+${DIRPATH}/key_loop.sh 4 8 4
+echo "1 key; 256 bits each; 4 iterations"
+${DIRPATH}/key_loop.sh 1 256 4
+echo "4 keys; 256 bits each; 4 iterations"
+${DIRPATH}/key_loop.sh 4 256 4
+
+echo "4 simultaneous requests; 1 key; 8 bits each; 4 iterations"
 ${DIRPATH}/key_loop.sh 1 8 4 &
-# 4 keys; 8 bits each; 4 iterations
-${DIRPATH}/key_loop.sh 4 8 4 &
-# 1 key; 256 bits each; 4 iterations
-${DIRPATH}/key_loop.sh 1 256 4 &
-# 4 keys; 256 bits each; 4 iterations
-${DIRPATH}/key_loop.sh 4 256 4 &
+${DIRPATH}/key_loop.sh 1 8 4 &
+${DIRPATH}/key_loop.sh 1 8 4 &
+${DIRPATH}/key_loop.sh 1 8 4 &
 wait
-

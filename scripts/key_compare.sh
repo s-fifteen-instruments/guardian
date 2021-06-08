@@ -28,17 +28,17 @@ fi
 # < 0 gives no output; just a return code
 # == 0 gives one line output about key ID / key match
 # > 0 gives more verbose output
-VERBOSE=-1
+VERBOSE=0
 # Number of keys to request
 N=${1}
 # Size of keys in bits
 S=${2}
-LOCAL_KME_ID=kme1
-REMOTE_KME_ID=kme2
+#LOCAL_KME_ID=kme1
+#REMOTE_KME_ID=kme2
 LOCAL_KME_HOSTNAME=${LOCAL_KME_ID}
 REMOTE_KME_HOSTNAME=${REMOTE_KME_ID}
-LOCAL_SAE_ID=sae1
-REMOTE_SAE_ID=sae2
+#LOCAL_SAE_ID=sae1
+#REMOTE_SAE_ID=sae2
 BASE_DIR=`pwd`
 LOCAL_SAE_DIR=${base_dir}/${LOCAL_SAE_ID}
 REMOTE_SAE_DIR=${base_dir}/${REMOTE_SAE_ID}
@@ -53,10 +53,12 @@ response=`curl -s "https://${LOCAL_KME_HOSTNAME}/api/v1/keys/${REMOTE_SAE_ID}/en
 http_code=$(tail -n1 <<< "${response}")
 response=$(sed '$ d' <<< "${response}")
 
-if [ "${VERBOSE}" -gt 0 ]; then
+if [ "${VERBOSE}" -ge 0 ]; then
   if [ "${http_code}" -ne "200" ]; then
-    printf "Local Status Code: ${http_code}"
+    printf "Local Status Code: ${http_code} "
   fi
+fi
+if [ "${VERBOSE}" -gt 0 ]; then
   printf "\nLocal KME Response to Master SAE Request:"
   printf "\n${response}"
 fi
@@ -106,10 +108,12 @@ remote_response=`curl -s -X POST "https://${REMOTE_KME_HOSTNAME}/api/v1/keys/${L
 remote_http_code=$(tail -n1 <<< "${remote_response}")
 remote_response=$(sed '$ d' <<< "${remote_response}")
 
-if [ "${VERBOSE}" -gt 0 ]; then
+if [ "${VERBOSE}" -ge 0 ]; then
   if [ "${remote_http_code}" -ne "200" ]; then
-    printf "Remote Status Code: ${remote_http_code}"
+    printf "Remote Status Code: ${remote_http_code} "
   fi
+fi
+if [ "${VERBOSE}" -gt 0 ]; then
   printf "\nRemote KME Response to Slave SAE Request:"
   printf "\n${response}"
 fi
@@ -144,12 +148,12 @@ fi
   
 if [ "${key_array[*]}" != "${remote_key_array[*]}" ]; then
   if [ "${VERBOSE}" -ge 0 ]; then
-    printf "Keys DO NOT match!\n"
+    printf "Keys DO NOT match! "
   fi
   return_code=$(($return_code+10))
 else
   if [ "${VERBOSE}" -ge 0 ]; then
-    printf "Keys match!\n"
+    printf "Keys match! "
   fi
 fi
 
