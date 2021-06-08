@@ -17,16 +17,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#
-set -ex
+
+test_dir=/tmp/guardian_test
 
 # Absolute filepath to this script
 FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
-mkdir -p ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
-rsync -avz \
-  ${REMOTE_KME_DIRPATH:-SETME}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem \
-  ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem
+mkdir -p ${test_dir}
+cd ${test_dir}
+rsync -avz ${LOCAL_KME_DIRPATH}/volumes/${LOCAL_KME_ID}/certificates/production/admin/${LOCAL_SAE_ID}/ ./ &
+rsync -avz ${REMOTE_KME_DIRPATH}/volumes/${REMOTE_KME_ID}/certificates/production/admin/${REMOTE_SAE_ID}/ ./ &
+wait
+
+# 1 key; 8 bits each; 4 iterations
+${DIRPATH}/key_loop.sh 1 8 4 &
+# 4 keys; 8 bits each; 4 iterations
+${DIRPATH}/key_loop.sh 4 8 4 &
+# 1 key; 256 bits each; 4 iterations
+${DIRPATH}/key_loop.sh 1 256 4 &
+# 4 keys; 256 bits each; 4 iterations
+${DIRPATH}/key_loop.sh 4 256 4 &
+wait
 

@@ -22,12 +22,15 @@
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
 export KME ?= kme1
+# - Location of Local KME's guardian git repository
+export LOCAL_KME_DIRPATH ?= alice@kme1:/home/alice/code/guardian
 # - Location of Remote KME's guardian git repository
+export REMOTE_KME_DIRPATH ?= bob@kme2:/home/bob/code/guardian
+# NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
-export REMOTE_KME_DIRPATH ?= bob@kme2:/home/bob/code/guardian
 ##########################
 ##########################
 ##########################
@@ -86,6 +89,11 @@ down:
 # Needs local Vault instance up and unsealed
 keys: rest
 	$(SCRIPTS)/keys.sh
+
+# Requires both local and remote
+# REST APIs up and running.
+compare:
+	$(SCRIPTS)/compare.sh
 
 # Reset local Vault instance
 clear:

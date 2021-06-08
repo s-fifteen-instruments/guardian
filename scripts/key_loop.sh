@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Guardian is a quantum key distribution REST API and supporting software stack.
 # Copyright (C) 2021  W. Cyrus Proctor
@@ -17,16 +17,33 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#
-set -ex
+
+if [ "$#" -ne 3 ]; then
+    echo "Illegal number of command-line arugments"
+    echo "First Argument: Number of keys to request"
+    echo "Second Argument: Size of keys in bits"
+    echo "Third Arugments: Number of iterations to run" 
+    exit -1
+fi
+# Number of keys to request
+N=${1}
+# Size of keys in bits
+S=${2}
+# Number of loop iterations
+NLOOP=${3}
 
 # Absolute filepath to this script
 FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
-mkdir -p ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest
-rsync -avz \
-  ${REMOTE_KME_DIRPATH:-SETME}/volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem \
-  ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETME}/certificates/production/rest/rest.ca-chain.cert.pem
-
+for i in `seq 1 ${NLOOP}`; do 
+  printf "$i: "
+  ${DIRPATH}/key_compare.sh ${N} ${S}
+  return_code=$?
+  if [ "${return_code}" -ne 0 ];then
+    echo "FAIL"
+  else
+    echo "PASS"
+  fi
+done
