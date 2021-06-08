@@ -82,7 +82,7 @@ async def ensure_fresh_token(request: Request, call_next):
     app.state.vclient.vault_reauth()
     request.state.vclient = app.state.vclient
     sae_response = client.parse_sae_client_info(request)
-    request.state.sae_hostname = str(sae_response["sae_hostname"])
+    request.state.sae_hostname = str(sae_response["sae_common_name"])
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["x-process-time"] = str(process_time)
