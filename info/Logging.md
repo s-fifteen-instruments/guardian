@@ -1,0 +1,31 @@
+# Logging Configuration
+
+Coming soon.
+
+```bash
+# NOTE: No variable substitution or expansion
+# Vault log level options: Trace, Debug, Error, Warn, Info
+VAULT_LOG_LEVEL=Info
+# Traefik log level options: DEBUG, PANIC, FATAL, ERROR, WARN, INFO
+# Appears to be ignored. Set in static traefik.yml file instead.
+#TRAEFIK_LOG_LEVEL=
+# HTTPX log level options: (unset), debug, trace
+HTTPX_LOG_LEVEL=
+# QKD log level options: (unset), debug
+QKD_LOG_LEVEL=
+# Python log level options:
+# Level=Numeric_value
+# CRITICAL=50
+# ERROR=40
+# WARNING=30
+# INFO=20
+# DEBUG=10
+# NOTSET=0
+#####
+# Python-based services
+VAULT_INIT_LOG_LEVEL=20
+NOTIFY_LOG_LEVEL=20
+WATCHER_LOG_LEVEL=20
+UNSEALER_LOG_LEVEL=20
+REST_LOG_LEVEL=20
+```
