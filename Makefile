@@ -93,9 +93,9 @@ keys: rest
 # Requires both local and remote
 # REST APIs up and running.
 compare:
-ifneq ($(LOCAL_KME_ID), kme1)
-$(error Illegal KME configuration: $(KME) for compare target. Please run from "kme1"; Exiting)
-endif
+	ifneq ($(LOCAL_KME_ID), kme1)
+	$(error Illegal KME configuration: $(KME) for compare target. Please run from "kme1"; Exiting)
+	endif
 	$(SCRIPTS)/compare.sh
 
 # Reset local Vault instance
