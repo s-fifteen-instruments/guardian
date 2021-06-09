@@ -109,7 +109,7 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
                request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     stat_req = models.StatusRequest(
-        master_SAE_ID=client.parse_sae_client_info(request)["sae_hostname"],
+        master_SAE_ID=request.state.sae_hostname,
         slave_SAE_ID=slave_SAE_ID,
         stored_key_count=calculator.calculate_num_keys(request)
     )
