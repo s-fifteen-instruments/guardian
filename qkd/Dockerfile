@@ -67,6 +67,6 @@ RUN apk update --no-cache \
 WORKDIR ${HOME}/code/qsim
 
 # Set the targets for the qsim make entrypoint to run
-CMD ["distclean", "ctest"]
+CMD ["clean", "ctest"]
 
 ENTRYPOINT ["make"] 

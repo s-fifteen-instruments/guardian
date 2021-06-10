@@ -129,7 +129,7 @@ services:
       dockerfile: ./qkd/Dockerfile
     env_file:
       - common/log.env
-    command: ["distclean", "ctest"]
+    command: ["clean", "ctest"]
     networks:
       - internal-private
     volumes:

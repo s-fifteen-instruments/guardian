@@ -60,12 +60,15 @@ clean:
 	rm -f *_tlog
 	rm -f *.out
 	rm -f *.bin
-	rm -rf ./epoch_files/*
 	find -type d \( -name "*.hec" -o -name "*.lec" \) -exec rm -rf {} + 
 	+$(MAKE) -C ./src clean
 
 allclean: clean
 	rm -f esim
+	# Only delete copied epoch files here; otherwise, can lead to removal
+	# and desync between local and remote KMEs because epoch files were
+	# destroyed before consumed by the other side.
+	rm -rf ./epoch_files/*
 	+$(MAKE) -C ./src allclean
 
 distclean: allclean
