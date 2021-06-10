@@ -472,7 +472,7 @@ class VaultManager(VaultSemaphore):
             logger.exception(f"Key ID: {key_ID}; Unparsable Vault Ledger Entry Build Ledger: {e}")
 
         if not valid_ledger_entry:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail=f"Key ID: {key_ID}; Unparsable Vault Ledger Entry"
                                 )
 
@@ -599,7 +599,7 @@ class VaultManager(VaultSemaphore):
                 logger.error(f"InvalidRequest, Key ID: \"{key_id_ledger.key_ID}\" "
                              f"Ledger Check-And-Set Error; Version Mismatch: {e}")
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Key ID: \"{key_id_ledger.key_ID}\" "
                                          "Ledger Check-And-Set Error; "
                                          f"Expecting Version {ledger_version}; "
@@ -607,7 +607,7 @@ class VaultManager(VaultSemaphore):
                                   )
             else:
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Unexpected Error: {e}"
                                   )
 
@@ -640,7 +640,7 @@ class VaultManager(VaultSemaphore):
                              f"Current Version: {current_version}"
                              )
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Unexpected Epoch File Version: {epoch_file.epoch}; "
                                          f"Stored Version: {epoch_file.version}; "
                                          f"Current Version: {current_version}"
@@ -668,7 +668,7 @@ class VaultManager(VaultSemaphore):
             # Unexpected error has occurred; re-raise it
             else:
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Unexpected Error: {e}"
                                   )
 
@@ -890,7 +890,7 @@ class VaultManager(VaultSemaphore):
                              f"file: {epoch_file.epoch}")
 
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail="Key HMACs are inconsistent for epoch "
                                          f"file: {epoch_file.epoch}"
                                   )

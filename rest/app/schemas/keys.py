@@ -19,6 +19,7 @@
 #
 
 from fastapi import HTTPException
+from fastapi import status as stat  # Avoid naming collision
 from pydantic import conlist, constr, Field, root_validator
 from typing import Any, Dict, Optional
 
@@ -121,7 +122,7 @@ class ByteRange(ForbidBase):
             logger.error(f"End Byte Index \"{end}\" Cannot be "
                          f"Less Than Start Byte Index \"{start}\"")
             raise \
-                HTTPException(status_code=400,
+                HTTPException(status_code=stat.HTTP_400_BAD_REQUEST,
                               detail=f"End Byte Index \"{end}\" Cannot be "
                                      f"Less Than Start Byte Index \"{start}\""
                               )

@@ -22,7 +22,7 @@ import hvac
 from typing import Any, Dict
 import uuid
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.core.rest_config import logger, settings, _dump_response
 
@@ -86,7 +86,7 @@ class VaultSemaphore(VaultClient):
             # Unexpected error has occurred; re-raise it
             else:
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Uexpected Error: {e}"
                                   )
 
@@ -129,7 +129,7 @@ class VaultSemaphore(VaultClient):
                          f"request of {requested_num_bytes} bytes"
                          )
             raise \
-                HTTPException(status_code=400,
+                HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                               detail="Not enough keying material "
                                      f"({current_byte_count} bytes) to satisfy "
                                      f"request of {requested_num_bytes} bytes"
@@ -151,7 +151,7 @@ class VaultSemaphore(VaultClient):
                     logger.error(f"Unexpected modified epoch in data index: {epoch}; "
                                  f"Expected num_bytes: {num_bytes}; Got: {data_index[epoch]}")
                     raise \
-                        HTTPException(status_code=503,
+                        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                       detail=f"Unexpected modified epoch in data index: {epoch}; "
                                       f"Expected num_bytes: {num_bytes}; Got: {data_index[epoch]}"
                                       )
@@ -159,7 +159,7 @@ class VaultSemaphore(VaultClient):
                 # Should not be here if epoch_dict was generated off data_index
                 logger.error(f"Unexpected missing epoch in data index: {epoch}")
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Unexpected missing epoch in data index: {epoch}"
                                   )
 
@@ -182,7 +182,7 @@ class VaultSemaphore(VaultClient):
                     logger.error(f"Unexpected modified epoch in data index: {epoch}; "
                                  f"Expected worker_uid: {worker_uid}; Got: {data_index[epoch]}")
                     raise \
-                        HTTPException(status_code=503,
+                        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                       detail=f"Unexpected modfied epoch in data index: {epoch}; "
                                              f"Expected worker_uid: {worker_uid}; Got: {data_index[epoch]}"
                                       )
@@ -190,7 +190,7 @@ class VaultSemaphore(VaultClient):
                 # Should not be here if epoch_dict was generated off data_index
                 logger.error(f"Unexpected missing epoch in data index: {epoch}")
                 raise \
-                    HTTPException(status_code=503,
+                    HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                   detail=f"Unexpected missing epoch in data index: {epoch}"
                                   )
 
