@@ -741,7 +741,7 @@ class VaultManager(VaultSemaphore):
             # incorrect; use key length directly just in case
             computed_num_bytes = len(epoch_file.key)
             # Entire epoch file is being consumed
-            if remaining_bytes >= computed_num_bytes:
+            if remaining_bytes > computed_num_bytes:
                 key_id_input_str += f"{computed_num_bytes}"
                 key_buffer += epoch_file.key
                 epoch_file.key = bytes()
@@ -753,6 +753,7 @@ class VaultManager(VaultSemaphore):
                 byte_range = schemas.ByteRange(start=0, end=computed_num_bytes)
                 key_id_ledger_dict[epoch_file.epoch] = byte_range
             # Only part of an epoch file is being consumed
+            # Also potentially entire epoch file consumed if exact size match
             else:
                 key_id_input_str += f"{remaining_bytes}"
                 # Take bytes from the end of the raw key
