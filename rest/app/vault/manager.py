@@ -82,6 +82,7 @@ class VaultManager(VaultSemaphore):
                         partially_consumed_epoch_dict[epoch] = epoch_file
                     break
 
+        # Local Tasks to complete
         task_list = list()
         for epoch in fully_consumed_epoch_list:
             task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
@@ -89,24 +90,34 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
         for ledger in key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger))
-        task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
-                                                                  key_id_ledger_con))
-
-        # NOTE:
-        # This creates the potential for a race condition if the slave SAE
-        # gets Key IDs from the master SAE and then queries the remote KME
-        # before this local KME gets around to this task. Small chance,
-        # remote KME should then run a query back to this local KME for the
-        # ledger as it will be synchronously submitted before the master
-        # SAE even has keying material.
-        # background_tasks.add_task(self.send_remote_key_id_ledger_container,
-        #                           key_id_ledger_con)
-
         await asyncio.gather(*task_list)
 
-        # Critical End
+        # Remote tasks to complete
+        remote_task_list = list()
+        remote_task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
+                                                                         key_id_ledger_con))
+        remote_kme_status_code = await asyncio.gather(*remote_task_list)
+
+        # Release any epoch files held before processing remote KME status codes
         self.vault_release_epoch_files(worker_uid=worker_uid,
                                        epoch_dict=updated_epoch_status_dict)
+
+        if remote_kme_status_code == status.HTTP_503_SERVICE_UNAVAILABLE:
+            logger.error("Remote KME Response Status Code: 503 SERVICE UNAVAILABLE; "
+                         f"Epoch files just released in status: {updated_epoch_status_dict}; "
+                         f"Worker UID just released in status: {worker_uid}")
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail="Remote KME Response Status Code: 503 SERVICE UNAVAILABLE"
+                                )
+        elif remote_kme_status_code == status.HTTP_504_GATEWAY_TIMEOUT:
+            logger.error("Remote KME Response Status Code: 504 GATEWAY TIMEOUT; "
+                         f"Epoch files just released in status: {updated_epoch_status_dict}; "
+                         f"Worker UID just released in status: {worker_uid}")
+            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                                detail="Remote KME Response Status Code: 504 GATEWAY TIMEOUT"
+                                )
+        else:
+            logger.debug(f"Remote KME response status code: {remote_kme_status_code}")
 
         return key_con
 
@@ -532,32 +543,53 @@ class VaultManager(VaultSemaphore):
                                                   schemas.KeyIDLedgerContainer):
         """foo
         """
+        ledger_send_status_code = 0
         cert_tuple = (settings.VAULT_CLIENT_CERT_FILEPATH,
                       settings.VAULT_CLIENT_KEY_FILEPATH)
         logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URL}")
         logger.debug(f"As a dict: {key_id_ledger_con.dict()}")
-        async with httpx.AsyncClient(cert=cert_tuple,
-                                     verify=settings.REMOTE_KME_CERT_FILEPATH,
-                                     trust_env=False) as client:
-            remote_kme_response = \
-                await client.put(url=settings.REMOTE_KME_URL,
-                                 json=jsonable_encoder(key_id_ledger_con.dict()),
-                                 allow_redirects=False
-                                 )
-            logger.debug("Remote KME response:")
-            _dump_response(remote_kme_response.json(), secret=False)
+        try:
+            async with httpx.AsyncClient(cert=cert_tuple,
+                                         verify=settings.REMOTE_KME_CERT_FILEPATH,
+                                         trust_env=False,
+                                         timeout=settings.REMOTE_KME_RESPONSE_TIMEOUT,
+                                         ) as client:
+                remote_kme_response = \
+                    await client.put(url=settings.REMOTE_KME_URL,
+                                     json=jsonable_encoder(key_id_ledger_con.dict()),
+                                     allow_redirects=False
+                                     )
+        except httpx.ReadTimeout as e:
+            logger.error(f"Remote KME Response Timeout after "
+                         f"{settings.REMOTE_KME_RESPONSE_TIMEOUT} seconds; "
+                         "Setting Local Status Code to 504 GATEWAY TIMEOUT")
+            ledger_send_status_code = status.HTTP_504_GATEWAY_TIMEOUT
+            return ledger_send_status_code
 
-            # Verify KeyIDs that came back the same
-            key_id_request = schemas.KeyIDs(
-                key_IDs=[schemas.KeyID(key_ID=ledger.key_ID) for ledger in key_id_ledger_con.ledgers]
-            )
-            if key_id_request != parse_obj_as(schemas.KeyIDs, remote_kme_response.json()):
-                logger.error("Key ID mismatch between local request and remote response; "
-                             f"Local Request: {key_id_request}; "
-                             f"Remote Response: {remote_kme_response}"
-                             )
-            else:
-                logger.debug("Key IDs match between local request and remote ledger response")
+        logger.debug("Remote KME response:")
+        _dump_response(remote_kme_response.json(), secret=False)
+        logger.debug(f"Remote KME response status code: {remote_kme_response.status_code}")
+
+        # TODO: Implement backoff loop if client is busy or down?
+        ledger_send_status_code = remote_kme_response.status_code
+        # Return early if remote side is busy
+        if ledger_send_status_code == status.HTTP_503_SERVICE_UNAVAILABLE:
+            logger.error("Remote KME Response Status Code: 503 SERVICE UNAVAILABLE")
+            return ledger_send_status_code
+
+        # Verify KeyIDs that came back the same
+        key_id_request = schemas.KeyIDs(
+            key_IDs=[schemas.KeyID(key_ID=ledger.key_ID) for ledger in key_id_ledger_con.ledgers]
+        )
+        if key_id_request != parse_obj_as(schemas.KeyIDs, remote_kme_response.json()):
+            logger.error("Key ID mismatch between local request and remote response; "
+                         f"Local Request: {key_id_request}; "
+                         f"Remote Response: {remote_kme_response}"
+                         )
+        else:
+            logger.debug("Key IDs match between local request and remote ledger response")
+
+        return ledger_send_status_code
 
     async def vault_commit_local_key_id_ledger(self, key_id_ledger:
                                                schemas.KeyIDLedger,

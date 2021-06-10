@@ -110,6 +110,7 @@ class RestSettings(BaseSettings):
     REMOTE_KME_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.REMOTE_KME_ID}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
     REMOTE_KME_URL: str = f"https://{GLOBAL.REMOTE_KME_ID}{API_V1_STR}/ledger/{GLOBAL.LOCAL_KME_ID}/key_ids"
+    REMOTE_KME_RESPONSE_TIMEOUT: float = 10.0  # seconds
 
     # Make environment settings take precedence over __init__ and file
     class Config:
