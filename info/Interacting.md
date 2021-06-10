@@ -156,6 +156,8 @@ DigiCert SHA2 Secure Server CA                               ,,
 ```bash
 cproctor@spren:guardian_test>pk12util -d ~/.mozilla/firefox/a6y6g3o7.default/ -i /tmp/guardian_test/sae1/sae1.p12 -W ""
 pk12util: PKCS12 IMPORT SUCCESSFUL
+# Modify the trust attributes of the Root CA
+cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -M -t "CT,c," -n "Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC"
 cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
 
 Certificate Nickname                                         Trust Attributes
@@ -165,7 +167,7 @@ DigiCert SHA2 Secure Server CA                               ,,
 ...
 kme1_sae1                                                    u,u,u
 kme1_CA                                                      ,,
-Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC ,,
+Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC CT,c,
 ```
 
 ### Chromium Setup
