@@ -101,7 +101,7 @@ class RestSettings(BaseSettings):
     VALID_SAE_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VALID_KME_REGEX: str = f"{VALID_HOSTNAME_REGEX}|{VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
     VALID_STATUS_REGEX: str = r"^consumed$|^available$"
-    MAX_NUM_RESERVE_ATTEMPTS: int = 10
+    MAX_NUM_RESERVE_ATTEMPTS: int = 50
     RESERVE_SLEEP_TIME: float = 0.05  # seconds
     CLIENT_NAME: str = "rest"
     VAULT_CLIENT_CERT_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.LOCAL_KME_ID}/{CLIENT_NAME}/{CLIENT_NAME}{GLOBAL.CA_CHAIN_SUFFIX}"

@@ -213,12 +213,14 @@ class VaultManager(VaultSemaphore):
                 logger.debug(f"Awaiting Epoch Files to Become Available: "
                              f"Req Epochs: {epoch_list}; "
                              f"Reserved Epochs: {reserved_files_list}")
+
+                # Service is becoming significantly loaded; serve a 503 status code
                 if attempt_count > settings.MAX_NUM_RESERVE_ATTEMPTS:
                     logger.error("Reached Maximum number of Reservation Attempts: "
                                  f"{settings.MAX_NUM_RESERVE_ATTEMPTS} while attempting "
                                  f"to reserve epoch files: {epoch_list}")
                     raise \
-                        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                                       detail="Reached Maximum number of Reservation Attempts: "
                                              f"{settings.MAX_NUM_RESERVE_ATTEMPTS} while attempting "
                                              f"to reserve epoch files: {epoch_list}"
