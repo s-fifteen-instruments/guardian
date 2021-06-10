@@ -121,7 +121,7 @@ class VaultClient:
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
             self.connection_loop(self.vault_tls_client_auth)
-        self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
+            self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:
             logger.error(f"Attempt at Client Reauthentication with Vault"
                          f"Instance {settings.GLOBAL.VAULT_SERVER_URL} has failed")
