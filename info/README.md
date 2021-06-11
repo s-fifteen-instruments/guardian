@@ -4,7 +4,7 @@
 | --- | --- |
 | [Installation Prerequisites](Prerequisites.md) | Installation of dependencies and initial configuration options |
 | [Initialization Procedures](Initialization.md) | Initial generation of certificates, Vault initialization, and keying material ingestion |
-| [Running the REST API](Running.md) | Startup, logging, shutdown, key ingestion, clearing and cleaning |
+| [Running the REST API](Running.md) | Startup, logging, shutdown, keying material ingestion, clearing and cleaning |
 | [Interacting with the REST API](Interacting.md) | Using a client-side certificate in a web browser, with cURL, or OpenSSL's s_client |
 | [Global Configuration](Global.md) | Global configuration details available to most services |
 | [Logging Configuration](Logging.md) | Logging configuration details for each service |

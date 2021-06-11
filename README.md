@@ -1,6 +1,6 @@
 # Welcome
 
-* Please refer to the info directory [README](info/README.md) page for installation, initalization, running, and interacting with the KMEs for documentation and use.
+Please refer to the info directory [README](info/README.md) page for installation, initalization, running, and interacting with the KMEs for documentation and use.
 
 # License
 

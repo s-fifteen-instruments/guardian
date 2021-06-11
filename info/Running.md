@@ -5,7 +5,8 @@
 * [Clearing the Vault](#clearing-the-vault)
 * [Cleaning Up](#cleaning-up)
 * [Creating Additional Keying Material](#creating-additional-keying-material)
-* [Inspecting Addtional Logs](/#inspecting-addtional-logs)
+* [Inspecting Addtional Logs](#inspecting-addtional-logs)
+* [Using docker-compose Directly](#using-docker-compose-directly)
 
 ## Starting the REST API
 
@@ -47,6 +48,7 @@ make down
 
 On KME host `kme2`:
 ```bash
+# kme2
 make down
 ```
 
@@ -82,6 +84,7 @@ make clean
 
 On KME host `kme2`:
 ```bash
+# kme2
 make clean
 ```
 
@@ -113,6 +116,8 @@ NOTE: This is an asynchronous task that may be completed while the REST API is u
 
 By default, `make log` will follow the `rest` container service's log until cancelled. It is possible to view other logs by adding the `SERVICES` environment variable:
 ```bash
+# Either KME host
+#
 # To follow Traefik's log
 make log SERVICES=traefik
 # To follow both Vault and Traefik simultaneously
@@ -121,9 +126,23 @@ make log SERVICES="vault traefik"
 make log SERVICES=
 ```
 
-If you need `docker-compose` commands directly, then set `LOCAL_KME_ID` and `REMOTE_KME_ID` environment variables appropriately; e.g.:
-```bash
-LOCAL_KME_ID=kme2 REMOTE_KME_ID=kme1 docker-compose -f docker-compose.init.yml logs rest
-```
-It is recommended to allow the Makefile to handle environment variables. But sometimes, having the underlying command is useful for debugging.
+## Using docker-compose Directly
 
+If you need `docker-compose` commands directly, then refer to the environment variables set inside the top-level Makefile. As of this writing, the list includes:
+```bash
+KME
+LOCAL_KME_ID
+REMOTE_KME_ID
+LOCAL_SAE_ID
+REMOTE_SAE_ID
+LOCAL_KME_DIRPATH
+REMOTE_KME_DIRPATH
+```
+
+Conducting a `grep -RI "SETMEINMAKEFILE" ${TOP_DIR}/*` should also reveal any environment variables that need to be set before initialization or running.
+
+The [docker-compose.init.yml](../docker-compose.init.yml) initialization steps are conducted in a specific order according to [init.sh](../scripts/init.sh), so simultaneous `docker-compose up/down` of all services is not viable.
+
+The [docker-compose.yml](../docker-compose.yml) services are viable with `docker-compose up/down` directly as shown in [run.sh](../scripts/run.sh). So, if one wished to use an `.env`, that could work.
+
+It is recommended to allow the Makefile to handle environment variables. But sometimes, having the underlying commands are useful for debugging.

@@ -25,7 +25,25 @@ volumes/kme2/certificates/production/sae2
 └── sae2.key.pem
 ```
 
-The CA-chain file contains the certificate as well as the certificates of the issuing CAs all the way back to the Root CA in descending order. In other words, the client/server certificate will be at the top of the file, then usually an intermediate CA's certificate, followed by a Root CA's certificate at the bottom.
+The CA-chain file contains the certificate as well as the certificates of the issuing CAs all the way back to the Root CA in descending order. In other words, the client/server certificate will be at the top of the file, then usually an intermediate CA's certificate, followed by a Root CA's certificate at the bottom:
+```
+# ca-chain.cert.pem file layout
+-----BEGIN CERTIFICATE-----
+MIIFxzCCA6+gAwIBAgIUT7Vd1a/CyUbdfjwdsJKqSP1jcjMwDQYJKoZIhvcNAQEL
+...Client/Server Certificate
+cTY59YJLBU1HHOElXCTZWd8xwQvgFY4NURA6MeQFSIRWKYMzjH9SvLN/Gw==
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIGMTCCBBmgAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwgbYxCzAJBgNVBAYTAlVT
+...Intermediate CA Certificate
+entO9Cw=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIGXzCCBEegAwIBAgIUKQ0uB8y/FZ2CgPr8ub0Xousu1CgwDQYJKoZIhvcNAQEL
+...Root CA Certificate
+Bf2e
+-----END CERTIFICATE-----
+```
 
 A local KME server is configured to allow interaction with its remote KME counterpart. This is possible because the respective rest service CA-chain files have been `rsync`ed to the remote KME during startup. Additionally, each KME is configured to allow interaction with its respective local SAE. In the above example, `sae2` may interact with `kme2`. Similarly `sae1` may interact with `kme1`.
 
@@ -46,6 +64,7 @@ NOTE: For developers, the primary certificate pairs to utilize are `sae1` and `s
 
 From the KME1 host or from a host that has passwordless SSH to both KME1 and KME2 hosts, it is possible to issue a `make compare` to utilize the `sae1` and `sae2` certificates; e.g.:
 ```bash
+# A successful run
 alice@qtpi-1:~/code/guardian$ make compare
 
 Using Local KME configuration: 'kme1'
@@ -87,15 +106,41 @@ total size is 14,949  speedup is 95.22
 Key IDs match! Keys match! PASS
 ```
 
-SAE host certificates are `rsync`ed to the local host's `/tmp/guardian_test` directory and several tests are conducted from the ${TOP_DIR}/scripts/compare.sh script.
+```bash
+# A run where there is failure to connect to KME hosts
+cproctor@spren:guardian>make compare
+...
+./scripts/compare.sh
+[Receiver] io timeout after 4 seconds -- exiting
+rsync error: timeout in data send/receive (code 30) at io.c(197) [Receiver=3.2.3]
+[Receiver] io timeout after 4 seconds -- exiting
+rsync error: timeout in data send/receive (code 30) at io.c(197) [Receiver=3.2.3]
 
-The compare script in turn calls the key_loop.sh script which takes the number of requested keys, the size of the requested keys in bits, and the number of sequential iterations to perform.
+
+WARNING: Certificates could not be properly rsynced from KME hosts. Continuing...
+
+
+1 key; 8 bits each; 4 iterations
+1: Local Status Code: 000 FAIL
+2: Local Status Code: 000 FAIL
+```
+
+```bash
+# A run where one or both of the KME hosts become too busy
+TODO: fill me in
+```
+
+SAE host certificates are `rsync`ed to the local host's `/tmp/guardian_test` directory and several tests are conducted from the [${TOP_DIR}/scripts/compare.sh](../scripts/compare.sh) script.
+
+The compare script in turn calls the [key_loop.sh](../scripts/key_loop.sh) script which takes the number of requested keys, the size of the requested keys in bits, and the number of sequential iterations to perform, and calls [key_compare.sh](../scripts/key_compare.sh) appropriately.
 
 Various synchronous and asynchronous tests are conducted on small to modest size key requests.
 
 NOTE: This test consumes keying material. If the KME runs out of keying material, this test will begin to fail in a seemingly sporadic fashion until all tests eventually fail. This is related to how keying material is reserved and consumed on the Vault back end and is to be expected.
 
-NOTE: It is possible for Vault instances to become out of sync. This can lead to comparison failures. The most straightforward way to re-sync is to first `make clear` on both KME hosts to clear out the Vault instances. From there, issue more keys via `make keys` on the KME1 host and then subsequently on the KME2 host. Afterwards, `make compare` tests should be passing.
+NOTE: While unlikely, it is possible for Vault instances to become out of sync. This can lead to comparison failures. The most straightforward way to re-sync is to first `make clear` on both KME hosts to clear out the Vault instances. From there, issue more keys via `make keys` on the KME1 host and then subsequently on the KME2 host. Afterwards, `make compare` tests should be passing.
+
+NOTE: Depending on many factors (number of outstanding requests, key sizes, epoch file size, computational power of the REST server, etc.) it is possible to overload the KME REST servers. In this event, status return codes will either be 503 or 504 as the local/remote KME hosts timeout attempting to return keying material. The servers should be able to recover without data loss/desynchronization once the load drops.
 
 ## From a Web Browser
 
@@ -125,50 +170,57 @@ NOTE: You will need to remotely copy (at minimum) the corresponding PKCS #12 (.p
 
 An equivalent method to the above UI Method involves using `certutil` and `pk12util`. On Fedora, the command `dnf whatprovides */certutil` shows it comes from the `nss-tools` RPM. On Ubuntu, `apt search certutil` shows it comes from `libnss3-tools`.
 
-1. Find the Firefox Profile directory associated with your user account. Most often on a Linux system, it lives at `~/.mozilla/firefox/<random-string>.default/`. Usually, it is a `cert9.db` file under this directory that is housing the certificates. cert8.db files are older but possible. In essence, the file is an SQLite database. 
+1. Find the Firefox Profile directory associated with your user account. Most often on a Linux system, it lives at `~/.mozilla/firefox/<random-string>.default/`. Usually, it is a `cert9.db` file under this directory that is housing the certificates. cert8.db files are older but possible. In essence, the file is an SQLite database.
 1. Query the directory with the `certutil` to see what certificates are present:
-```bash
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
+    ```bash
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
 
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+    Certificate Nickname                                         Trust Attributes
+                                                                 SSL,S/MIME,JAR/XPI
 
-DigiCert SHA2 Secure Server CA                               ,,   
-...
-kme1_sae1                                                    u,u,u
-kme1_CA                                                      ,,   
-Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC ,,   
-```
+    DigiCert SHA2 Secure Server CA                               ,,
+    ...
+    kme1_sae1                                                    u,u,u
+    kme1_CA                                                      ,,
+    Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC ,,
+    ```
 1. To clear any residual certificates, use `-D` along with `-n`; see man pages for more:
-```bash
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n kme1_sae1
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n kme1_CA
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n "Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC"
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
+    ```bash
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n kme1_sae1
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n kme1_CA
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -D -n "Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC"
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
 
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+    Certificate Nickname                                         Trust Attributes
+                                                                 SSL,S/MIME,JAR/XPI
 
-DigiCert SHA2 Secure Server CA                               ,,
-...
-```
+    DigiCert SHA2 Secure Server CA                               ,,
+    ...
+    ```
 1. To add a new .p12 file, use the `pk12util` command along with the `-d`, `-i`, `-W` options:
-```bash
-cproctor@spren:guardian_test>pk12util -d ~/.mozilla/firefox/a6y6g3o7.default/ -i /tmp/guardian_test/sae1/sae1.p12 -W ""
-pk12util: PKCS12 IMPORT SUCCESSFUL
-# Modify the trust attributes of the Root CA
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -M -t "CT,c," -n "Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC"
-cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
+    ```bash
+    cproctor@spren:guardian_test>pk12util -d ~/.mozilla/firefox/a6y6g3o7.default/ -i /tmp/guardian_test/sae1/sae1.p12 -W ""
+    pk12util: PKCS12 IMPORT SUCCESSFUL
+    # Modify the trust attributes of the Root CA
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -M -t "CT,c," -n "Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC"
+    cproctor@spren:guardian_test>certutil -d ~/.mozilla/firefox/a6y6g3o7.default/ -L
 
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+    Certificate Nickname                                         Trust Attributes
+                                                                 SSL,S/MIME,JAR/XPI
 
-DigiCert SHA2 Secure Server CA                               ,,
-...
-kme1_sae1                                                    u,u,u
-kme1_CA                                                      ,,
-Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC CT,c,
-```
+    DigiCert SHA2 Secure Server CA                               ,,
+    ...
+    kme1_sae1                                                    u,u,u
+    kme1_CA                                                      ,,
+    Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC CT,c,
+    ```
+1. Note the modified ("-M") certutil trust agruments ("-t"); here are the relevant meanings:
+    ```
+      + c - Valid CA
+      + T - Trusted CA to issue client certificates (implies c)
+      + C - Trusted CA to issue server certificates (SSL only) (implies c)
+      + u - Certificate can be used for authentication or signing
+    ```
 
 ### Chromium Setup
 
@@ -196,7 +248,7 @@ Certificate Nickname                                         Trust Attributes
 
 kme1_sae1                                                    u,u,u
 kme1_CA                                                      ,,
-Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC CT,c,c
+Quantum Internet Technologies LLC Root CA kme1 - Quantum Internet Technologies LLC CT,c,
 ```
 
 where the `-d` directory option has been updated.
@@ -205,9 +257,9 @@ where the `-d` directory option has been updated.
 
 Most public websites do not require a client-side certificate to be presented to the web server. In this particular case, because mutual TLS is being performed, we do need to choose the appropriate client-side certificate to use.
 
-To do this, once you have properly installed via the Web UI or command-line method, you simply navigate to the desired website. The web server will prompt the client web browser for a certificate while also providing its own server-side certificate. In this manual process, you may inspect the server-side certificate. 
+To do this, once you have properly installed via the Web UI or command-line method, you simply navigate to the desired website. The web server will prompt the client web browser for a certificate while also providing its own server-side certificate.
 
-A window should pop up prompting you to choose the certificate you wish to provide.
+A window should pop up prompting you to choose the client-side certificate you wish to provide.
 
 Firefox ![Which Certificate?](figures/firefox_accept_cert.png)
 
