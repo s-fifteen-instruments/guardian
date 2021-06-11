@@ -27,9 +27,17 @@ DIRPATH=$(dirname "${FILEPATH}")
 
 mkdir -p ${test_dir}
 cd ${test_dir}
-rsync -avz ${LOCAL_KME_DIRPATH}/volumes/${LOCAL_KME_ID}/certificates/production/admin/${LOCAL_SAE_ID} ./ &
-rsync -avz ${REMOTE_KME_DIRPATH}/volumes/${REMOTE_KME_ID}/certificates/production/admin/${REMOTE_SAE_ID} ./ &
-wait
+RSYNC_FAIL=0
+rsync -avz --timeout=3 ${LOCAL_KME_DIRPATH}/volumes/${LOCAL_KME_ID}/certificates/production/admin/${LOCAL_SAE_ID} ./ &
+rsync -avz --timeout=3 ${REMOTE_KME_DIRPATH}/volumes/${REMOTE_KME_ID}/certificates/production/admin/${REMOTE_SAE_ID} ./ &
+for job in `jobs -p`; do
+  wait $job || let "RSYNC_FAIL+=1"
+done
+
+if [ "${RSYNC_FAIL}" != "0" ]; then
+    printf "\n\nWARNING: Certificates could not be properly rsynced from KME hosts. Continuing...\n\n\n"
+    sleep 3
+fi
 
 echo "1 key; 8 bits each; 4 iterations"
 ${DIRPATH}/key_loop.sh 1 8 4

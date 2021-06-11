@@ -34,7 +34,7 @@ if [ "${KME}" = "kme2" ]; then
   # Ignore missing arguments suppresses the link_stat
   # error message that arises if there are no epoch
   # files to transfer.
-  rsync --remove-source-files --ignore-missing-args -avz \
+  rsync --remove-source-files --ignore-missing-args -avz --timeout=5 \
     ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/kme1/qkd/epoch_files/kme2/* \
     ${DIRPATH}/../volumes/kme1/qkd/epoch_files/kme2/
 fi

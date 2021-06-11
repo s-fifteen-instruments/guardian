@@ -29,6 +29,8 @@ fi
 # == 0 gives one line output about key ID / key match
 # > 0 gives more verbose output
 VERBOSE=0
+# Time in seconds to wait before giving up
+CONNECT_TIMEOUT=30
 # Number of keys to request
 N=${1}
 # Size of keys in bits
@@ -44,6 +46,7 @@ LOCAL_SAE_DIR=${base_dir}/${LOCAL_SAE_ID}
 REMOTE_SAE_DIR=${base_dir}/${REMOTE_SAE_ID}
 
 response=`curl -s "https://${LOCAL_KME_HOSTNAME}/api/v1/keys/${REMOTE_SAE_ID}/enc_keys?number=${N}&size=${S}" \
+  --connect-timeout ${CONNECT_TIMEOUT} \
   --write-out "\n%{http_code}" \
   -H 'accept: application/json' \
   --key ${LOCAL_SAE_ID}/${LOCAL_SAE_ID}.key.pem \
@@ -98,6 +101,7 @@ if [ "${VERBOSE}" -gt 0 ]; then
 fi
 
 remote_response=`curl -s -X POST "https://${REMOTE_KME_HOSTNAME}/api/v1/keys/${LOCAL_SAE_ID}/dec_keys" \
+  --connect-timeout ${CONNECT_TIMEOUT} \
   --write-out "\n%{http_code}" \
   -H 'accept: application/json' \
   -d "${post_payload}" \
