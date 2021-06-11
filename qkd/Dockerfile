@@ -19,15 +19,15 @@ FROM alpine:latest
 LABEL author="Cyrus Proctor"
 
 ARG CC=gcc
-ENV HOME=/root
+ENV HOME=/root/code
 ENV TOP_DIR=./qkd
 ENV COMMON_DIR=./common
 
 # Set a volume to the location of qsim epoch file output
-VOLUME ["${HOME}/code/qsim/epoch_files/"]
+VOLUME ["${HOME}/qsim/epoch_files/"]
 
-COPY ["${TOP_DIR}/rnd.c.patch", "${HOME}/code/rnd.c.patch"]
-COPY ["${TOP_DIR}/qsim/", "${HOME}/code/qsim/"]
+COPY ["${TOP_DIR}/rnd.c.patch", "${HOME}/rnd.c.patch"]
+COPY ["${TOP_DIR}/qsim/", "${HOME}/qsim/"]
 
 # Ensure basic packages are installed for building and running qsim
 # sed change to stop chopper once simulation file is consumed
@@ -49,20 +49,18 @@ RUN apk update --no-cache \
         coreutils \
         python3 \
     && mkdir -p -m 0700 ${HOME}/.ssh \
-    && mkdir -p ${HOME}/code \
-    && cd ${HOME}/code \
+    && cd ${HOME}/ \
     && git clone https://github.com/s-fifteen-instruments/qcrypto.git qcrypto \
-    && cd ${HOME}/code/qcrypto/remotecrypto \
+    && cd ${HOME}/qcrypto/remotecrypto \
     && sed -i "s#/\* i f (\!inbytesread) break;  end of file reached \*/#if (\!inbytesread) break; /* end of file reached */#g" chopper.c \
     && make CC=${CC} \
     && cd ../errorcorrection \
-    && mv ${HOME}/code/rnd.c.patch ./ \
+    && mv ${HOME}/rnd.c.patch ./ \
     && patch rnd.c < ./rnd.c.patch \
-    && make CC=${CC} \
-    && cd ${HOME}/code/qsim
+    && make CC=${CC}
 
 # Set a working directory into the image
-WORKDIR ${HOME}/code/qsim
+WORKDIR ${HOME}/qsim
 
 # Set the targets for the qsim make entrypoint to run
 CMD ["clean", "ctest"]

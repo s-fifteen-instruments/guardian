@@ -21,7 +21,7 @@ LABEL author="Cyrus Proctor"
 # NOTE: 0 does not imply a false value
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV HOME=/root
+ENV HOME=/root/code
 ENV TOP_DIR=./vault_init
 
 VOLUME ["/certificates", "/vault/policies" ]

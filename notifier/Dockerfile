@@ -21,28 +21,25 @@ LABEL author="Cyrus Proctor"
 # NOTE: 0 does not imply buffering
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV HOME=/root
+ENV HOME=/root/code
 ENV TOP_DIR=./notifier
 ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
 # Set a volume to the epoch file directory to process
-VOLUME /epoch_files
+VOLUME ["/epoch_files"]
 
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
         py-pip \
-#    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt \
-    && mkdir -p ${HOME}/code/notifier \
-    && cd ${HOME}/code/notifier
+    && pip install --no-cache-dir -r ${HOME}/requirements.txt
 
-COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/notifier_config.py", "${TOP_DIR}/notifier.py", "${HOME}/code/notifier/"]
+COPY ["${TOP_DIR}/notifier.py", "${HOME}/"]
 
 # Set a working directory into the image
-WORKDIR ${HOME}/code/notifier
+WORKDIR ${HOME}/
 
 # Set the script for the python entrypoint to run
 CMD ["notifier.py"]
