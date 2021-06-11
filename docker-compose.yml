@@ -27,11 +27,11 @@ services:
       - common/log.env
     environment:
       # Total number of worker threads; overrides other env vars
-      - WEB_CONCURRENCY=1
+      # - WEB_CONCURRENCY=4
       # Ceiling on number of allowed worker threads;
       # overridden by WEB_CONCURRENCY
       - MAX_WORKERS=8
-      # Number of cores * WORKERs_PER_CORE = total number of workers;
+      # Number of cores * WORKERS_PER_CORE = total number of workers;
       # overrride by MAX_WORKERS, WEB_CONCURRENCY
       - WORKERS_PER_CORE=2
       # Pass in local and remote KME IDs to rest app container

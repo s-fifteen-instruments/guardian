@@ -64,7 +64,7 @@ if [ "${VERBOSE}" -gt 0 ]; then
 fi
 
 if [ "${http_code}" -ne "200" ]; then
-  exit ${http_code}
+  exit $((100+${http_code}))
 fi
 
 key_id_array=( $(echo $response | jq '.keys[]?.key_ID') )
@@ -119,7 +119,7 @@ if [ "${VERBOSE}" -gt 0 ]; then
 fi
 
 if [ "${remote_http_code}" -ne "200" ]; then
-  exit ${remote_http_code}
+  exit $((100+${remote_http_code}))
 fi
 
 remote_key_id_array=( $(echo $remote_response | jq '.keys[]?.key_ID') )
