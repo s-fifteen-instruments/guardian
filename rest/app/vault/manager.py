@@ -559,7 +559,7 @@ class VaultManager(VaultSemaphore):
                                      json=jsonable_encoder(key_id_ledger_con.dict()),
                                      allow_redirects=False
                                      )
-        except httpx.ReadTimeout as e:
+        except httpx.ReadTimeout:
             logger.error(f"Remote KME Response Timeout after "
                          f"{settings.REMOTE_KME_RESPONSE_TIMEOUT} seconds; "
                          "Setting Local Status Code to 504 GATEWAY TIMEOUT")
@@ -602,10 +602,21 @@ class VaultManager(VaultSemaphore):
                                      master_SAE_ID=key_id_ledger.master_SAE_ID,
                                      slave_SAE_ID=key_id_ledger.slave_SAE_ID)
 
+        # NOTE: Status updates to a ledger should only be requested upon first
+        # creation. If this is true, this is outside of the intended design.
+        # If we continue, likely no harm comes but it could be a mechanism
+        # to further spam the server waiting for Vault commits. So, since this
+        # should be coming from a PUT, we ignore this ledger commit (b/c it is
+        # already in the Vault), log it, and still get to claim idempotency.
+        # This should also prevent an initial ledger commit, a consumption of
+        # the keying material in the ledger, a subsequent ledger commit resetting
+        # the ledger status from consumed to available, and an erroneous
+        # consumption of zeroed out keying material.
         if reset_status and ledger_version != 0:
-            logger.error("Unexpected Ledger Status Reset on Existing Ledger: "
-                         f"key_ID: {key_id_ledger.key_ID}; "
-                         f"Version: {ledger_version}")
+            logger.warning("Unexpected Ledger Status Reset on Existing Ledger: "
+                           f"key_ID: {key_id_ledger.key_ID}; "
+                           f"Version: {ledger_version}; Ignoring Update")
+            return
 
         try:
             mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
