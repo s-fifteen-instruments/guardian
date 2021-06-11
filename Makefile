@@ -69,6 +69,11 @@ $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
 $(info REMOTE_SAE_ID: $(REMOTE_SAE_ID))
 $(info )
 
+# Not strictly necessary but this
+# Makefile is not intended to be
+# run in parallel.
+.NOTPARALLEL:
+
 # KME rest app
 rest: init
 	$(SCRIPTS)/run.sh
