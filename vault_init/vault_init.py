@@ -47,8 +47,8 @@ class VaultClient:
             self.phase_1_startup()
         if self.args.second:
             self.phase_2_startup()
-        if self.args.reset:
-            self.reset_vault_instance()
+        if self.args.clear:
+            self.clear_vault_instance()
 
     def parse_args(self):
         """foo
@@ -56,7 +56,7 @@ class VaultClient:
         parser = argparse.ArgumentParser()
         parser.add_argument("--first", action="store_true", help="First stage of initialization")
         parser.add_argument("--second", action="store_true", help="Second stage of initialization")
-        parser.add_argument("--reset", action="store_true", help="Reset the Vault instance")
+        parser.add_argument("--clear", action="store_true", help="Clear the Vault instance QKD Secret Engine")
         self.args = parser.parse_args()
 
     def start_connection(self):
@@ -531,7 +531,7 @@ class VaultClient:
         options_dict = {
             "version": 2
         }
-        logger.debug("Attempt to enable kv version 2 secrets engine")
+        logger.info("Attempt to enable kv version 2 secrets engine")
         self.enable_kv_response = \
             self.vclient.sys.enable_secrets_engine(backend_type_str,
                                                    path=mount_point,
@@ -569,7 +569,7 @@ class VaultClient:
         logger.debug("Currently enabled secrets engines:")
         self._dump_response(secrets_backends, secret=False)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        logger.debug("Attempt to enable kv version 2 secrets engine")
+        logger.info("Attempt to disable kv version 2 secrets engine")
         self.disable_kv_response = \
             self.vclient.sys.disable_secrets_engine(path=mount_point)
         logger.debug("Disable kv version 2 secrets engine response okay:")
@@ -650,7 +650,7 @@ class VaultClient:
                             stat.S_IRGRP | stat.S_IROTH)
                  )
 
-    def reset_vault_instance(self):
+    def clear_vault_instance(self):
         """foo
         """
         self.vault_disable_kv_secrets_engine()

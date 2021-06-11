@@ -85,6 +85,11 @@ services:
     build:
       context: ./
       dockerfile: ./vault_init/Dockerfile
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
+      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
     env_file:
       - common/log.env
     command: ["vault_init.py", "--first"]
@@ -102,23 +107,11 @@ services:
 
   vault_init_phase_2:
     <<: *vault_init_label
-    environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
-      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
-      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
     command: ["vault_init.py", "--second"]
 
   vault_clear:
     <<: *vault_init_label
-    env_file:
-      - common/log.env
-    environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
-    command: ["vault_init.py", "--reset"]
-    volumes:
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+    command: ["vault_init.py", "--clear"]
 
   qkd:
     build:
