@@ -93,25 +93,22 @@ services:
     volumes:
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
       - ./volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/global_config.py
+      - type: bind
+        source: ./common/vault_init_config.py
+        target: /root/vault_init_config.py
 
   vault_init_phase_2:
     <<: *vault_init_label
-    env_file:
-      - common/log.env
     environment:
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
       - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
       - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
     command: ["vault_init.py", "--second"]
-    volumes:
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
-      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/policies:/vault/policies
 
-  vault_init_phase_3:
-    <<: *vault_init_label
-    command: ["vault_auth.py"]
-  
   vault_clear:
     <<: *vault_init_label
     env_file:

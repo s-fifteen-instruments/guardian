@@ -21,10 +21,10 @@ LABEL author="Cyrus Proctor"
 # NOTE: 0 does not imply a false value
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV HOME=/root
 ENV TOP_DIR=./vault_init
-ENV COMMON_DIR=./common
 
-COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/vault_init_config.py", "${TOP_DIR}/requirements.txt", "./"]
+COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.
@@ -33,13 +33,16 @@ COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/vault_init_config.py", "$
 RUN addgroup vault                                       && \
     adduser --system vaultinit --ingroup vault --uid 101 && \
     apk add --no-cache openssl                           && \
-    mkdir -p /certificates                               && \
-    pip install --no-cache-dir -r ./requirements.txt
+    pip install --no-cache-dir -r ${HOME}/requirements.txt
 
 VOLUME /certificates
 VOLUME /vault/policies
+VOLUME ${HOME}/global_config.py
+VOLUME ${HOME}/vault_init_config.py
 
-COPY ["${TOP_DIR}/vault_init.py", "./"]
+COPY ["${TOP_DIR}/vault_init.py", "${HOME}/"]
+
+WORKDIR ${HOME}/
 
 CMD ["vault_init.py"]
 
