@@ -22,10 +22,9 @@
 FROM python:3.8-alpine3.10
 
 LABEL maintainer="Cyrus Proctor"
-LABEL originalauthorr="Sebastian Ramirez <tiangolo@gmaiil.com>"
+LABEL originalauthor="Sebastian Ramirez <tiangolo@gmail.com>"
 
 ENV TOP_DIR=./rest
-ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/start.sh", "${TOP_DIR}/gunicorn_conf.py",\
       "${TOP_DIR}/start-reload.sh", "${TOP_DIR}/requirements.txt", "/"]
@@ -37,7 +36,6 @@ RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
     && chmod +x /start.sh
 
 COPY ["${TOP_DIR}/app", "/app"]
-COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/rest_config.py", "/app/core/"]
 
 ENV PYTHONPATH=/app
 

@@ -44,9 +44,12 @@ class VaultClient:
 
         self.is_vault_sealed = self.connection_loop(self.vault_check_seal)
         if self.is_vault_sealed:
-            logger.error(f"Vault instance at {settings.GLOBAL.VAULT_SERVER_URL} is sealed")
+            # Treat this as a warning as the unsealer service should be able
+            # to unseal the vault shortly.
+            logger.warning(f"Vault instance at {settings.GLOBAL.VAULT_SERVER_URL} is sealed")
             raise hvac.exceptions.VaultDown("Vault Instance is sealed")
 
+        logger.info(f"Vault instance at {settings.GLOBAL.VAULT_SERVER_URL} is now unsealed")
         self.connection_loop(self.vault_tls_client_auth)
         self.is_vault_client_authenticated = self.connection_loop(self.vault_check_auth)
         if not self.is_vault_client_authenticated:

@@ -37,9 +37,9 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 def startup():
     """foo
     """
-    max_attempts: int = 10
-    backoff_factor: float = 1.0
-    backoff_max: float = 8.0
+    max_attempts: int = settings.VAULT_MAX_CONN_ATTEMPTS
+    backoff_factor: float = settings.BACKOFF_FACTOR
+    backoff_max: float = settings.BACKOFF_MAX
 
     attempt_num: int = 0
     total_stall_time: float = 0.0
@@ -48,12 +48,12 @@ def startup():
             attempt_num += 1
             app.state.vclient = VaultManager()
             break
-        except hvac.exceptions.VaultDown as e:
-            logger.error(f"Vault Instance remains sealed at startup: {e}")
+        except hvac.exceptions.VaultDown:
+            logger.warn("Vault Instance remains sealed at startup")
             stall_time: float = backoff_factor * (2 ** (attempt_num - 1))
             stall_time = min(backoff_max, stall_time)
             total_stall_time = total_stall_time + stall_time
-            logger.debug(f"Sleeping for {stall_time} seconds")
+            logger.warn(f"Sleeping for {stall_time} seconds")
             time.sleep(stall_time)
         except Exception as e:
             logger.error(f"Unhandled exception at startup: {e}")
@@ -67,7 +67,8 @@ def shutdown():
     """foo
     """
     try:
-        app.state.vclient.vclient.logout()
+        logger.info("Logging out of Vault connection")
+        app.state.vclient.hvc.logout()
     except Exception as e:
         logger.error(f"Unhandled exception at shutdown: {e}")
 

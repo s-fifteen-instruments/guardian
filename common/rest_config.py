@@ -111,6 +111,9 @@ class RestSettings(BaseSettings):
     VAULT_TLS_AUTH_MOUNT_POINT: str = "cert"
     REMOTE_KME_URL: str = f"https://{GLOBAL.REMOTE_KME_ID}{API_V1_STR}/ledger/{GLOBAL.LOCAL_KME_ID}/key_ids"
     REMOTE_KME_RESPONSE_TIMEOUT: float = 10.0  # seconds
+    VAULT_MAX_CONN_ATTEMPTS: int = 10
+    BACKOFF_FACTOR: float = 1.0
+    BACKOFF_MAX: float = 8.0  # seconds
 
     # Make environment settings take precedence over __init__ and file
     class Config:

@@ -47,6 +47,12 @@ services:
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
       - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
+      - type: bind
+        source: ./common/global_config.py
+        target: /app/core/global_config.py
+      - type: bind
+        source: ./common/rest_config.py
+        target: /app/core/rest_config.py
     labels:
       # Enable Traefik handling for this specific service
       - traefik.enable=true
@@ -123,6 +129,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/unsealer_config.py
+        target: /root/code/unsealer_config.py
     networks:
       # Use only the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services

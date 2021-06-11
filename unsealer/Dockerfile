@@ -21,9 +21,8 @@ LABEL author="Cyrus Proctor"
 # NOTE: 0 does not imply a false value
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV HOME=/root
+ENV HOME=/root/code
 ENV TOP_DIR=./unsealer
-ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
@@ -34,15 +33,12 @@ RUN apk update --no-cache \
         docker \
         openrc \
     && rc-update add docker boot \
-#    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt \
-    && mkdir -p ${HOME}/code/unsealer \
-    && cd ${HOME}/code/unsealer
+    && pip install --no-cache-dir -r ${HOME}/requirements.txt
 
-COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/unsealer_config.py", "${TOP_DIR}/unsealer.py", "${HOME}/code/unsealer/"]
+COPY ["${TOP_DIR}/unsealer.py", "${HOME}/"]
 
 # Set a working directory into the image
-WORKDIR ${HOME}/code/unsealer
+WORKDIR ${HOME}/
 
 # Set the scripts for the python entrypoint to run
 CMD ["unsealer.py"]
