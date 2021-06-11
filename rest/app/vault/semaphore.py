@@ -24,7 +24,7 @@ import uuid
 
 from fastapi import HTTPException, status
 
-from app.core.rest_config import logger, settings, _dump_response
+from app.core.rest_config import logger, settings, _dump_response, bits2bytes
 
 from .client import VaultClient
 
@@ -213,6 +213,18 @@ class VaultSemaphore(VaultClient):
             total_byte_count(data_index=status_data)
 
         return total_byte_count
+
+    def vault_calculate_total_num_keys(self) -> int:
+        """foo
+        """
+        total_key_bytes = self.vault_calculate_total_bytes()
+        logger.debug(f"Vault Total Keying Material (bytes): {total_key_bytes}")
+        total_num_keys: int = 0
+        if settings.KEY_SIZE > 0:
+            total_num_keys: int = total_key_bytes // bits2bytes(settings.KEY_SIZE)
+        logger.debug(f"Calculated Number of Keys in Local Vault: {total_num_keys}")
+
+        return total_num_keys
 
     def vault_claim_epoch_files(self, requested_num_bytes: int):
         """foo

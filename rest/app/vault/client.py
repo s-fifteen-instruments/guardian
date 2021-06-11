@@ -80,7 +80,7 @@ class VaultClient:
                     _dump_response(health_response.json(), secret=False)
 
                 if callable(connection_callback):
-                    logger.info(f"Attempting function callback: {connection_callback.__name__}()")
+                    logger.debug(f"Attempting function callback: {connection_callback.__name__}()")
                     for arg in args:
                         logger.info(f"Arguments: \"{arg}\"")
                     for key, value in kwargs.items():

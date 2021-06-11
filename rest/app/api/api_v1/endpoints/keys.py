@@ -25,7 +25,6 @@ from fastapi.encoders import jsonable_encoder
 
 from pydantic import conint
 
-from app.utils import calculator, client
 from app import schemas
 from app import models
 from app.core.rest_config import logger, settings, _dump_response, bits2bytes
@@ -111,7 +110,7 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
     stat_req = models.StatusRequest(
         master_SAE_ID=request.state.sae_hostname,
         slave_SAE_ID=slave_SAE_ID,
-        stored_key_count=calculator.calculate_num_keys(request)
+        stored_key_count=request.state.app.vclient.vault_calculate_total_num_keys()
     )
     return stat_req
 
