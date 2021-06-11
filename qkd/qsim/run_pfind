@@ -23,7 +23,7 @@
 # get timing information in syncrhonization enough to begin
 # further key analysis.
 
-set -x
+# set -x
 
 export override=true
 source qkd_config

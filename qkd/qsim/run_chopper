@@ -22,7 +22,7 @@
 # generally for the LEC party (Bob) to send to the
 # HEC party (Alice).
 
-set -x
+# set -x
 
 source qkd_config
 

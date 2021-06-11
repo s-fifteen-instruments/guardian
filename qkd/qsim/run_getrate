@@ -22,7 +22,7 @@
 # and returns count rate information per epoch. It is further
 # broken down by detector event.
 
-set -x
+# set -x
 
 source qkd_config
 

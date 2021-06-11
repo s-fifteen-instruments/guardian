@@ -22,7 +22,7 @@
 # for the HEC party (Alice) to keep local for further
 # analysis; e.g. to send to pfind.
 
-set -x
+# set -x
 
 source qkd_config
 

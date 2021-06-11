@@ -39,17 +39,17 @@ esim:
 	+$(MAKE) -C ./src
 
 ctest: clean link
-	/usr/bin/time -v ./run_esim
-	/usr/bin/time -v ./run_chopper lec
-	/usr/bin/time -v ./run_chopper2 hec
-	/usr/bin/time -v ./run_getrate hec
-	/usr/bin/time -v ./run_getrate lec
-	/usr/bin/time -v ./run_pfind
-	/usr/bin/time -v ./run_costream
-	/usr/bin/time -v ./run_splicer
-	/usr/bin/time -v ./run_ec
-	/usr/bin/time -v ./run_copy hec
-	/usr/bin/time -v ./run_copy lec
+	./run_esim
+	./run_chopper lec
+	./run_chopper2 hec
+	./run_getrate hec
+	./run_getrate lec
+	./run_pfind
+	./run_costream
+	./run_splicer
+	./run_ec
+	./run_copy hec
+	./run_copy lec
 
 .PHONY: clean allclean distclean
 clean:

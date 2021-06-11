@@ -24,7 +24,7 @@
 # LEC parties to then be ingested by the
 # chopper(2) programs.
 
-set -x
+# set -x
 
 export override=true
 source qkd_config

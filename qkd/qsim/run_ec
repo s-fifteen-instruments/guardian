@@ -19,7 +19,7 @@
 #
 # Based of original EC script from Christian Kurtsiefer.
 
-set -x
+# set -x
 
 export override=true
 source qkd_config
