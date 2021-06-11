@@ -35,18 +35,18 @@ services:
       # overrride by MAX_WORKERS, WEB_CONCURRENCY
       - WORKERS_PER_CORE=2
       # Pass in local and remote KME IDs to rest app container
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETME}
-      - ./volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETME}
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETMEINMAKEFILE}
       # Mount a volume that stores the hex digest files of QKD keys
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - type: bind
         source: ./common/global_config.py
         target: /app/core/global_config.py
@@ -62,7 +62,7 @@ services:
       # "restapp-http" router redirects to websecure endpoint to force HTTPS
       - traefik.http.routers.restapp-http.entrypoints=web
       # Make Traefik use the LOCAL_KME_ID domain in for HTTP entrypoint
-      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ID:-SETME}`)
+      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)
       # Use the traefik-public network (declared below)
       - traefik.docker.network=traefik-public
       # Turn on TLS for our "restapp-https" router
@@ -70,7 +70,7 @@ services:
       # websecure entrypoint defined in the Traefik configuration file
       - traefik.http.routers.restapp-https.entrypoints=websecure
       # Make Traefik use the LOCAL_KME_ID domain in for HTTPS entrypoint
-      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ID:-SETME}`)
+      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)
       # Define middleware "client-cert-info" to pass more header info to app
       # Pass the SAE client's Common Name and SANs to rest app for parsing
       - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
@@ -99,13 +99,13 @@ services:
       - IPC_LOCK
     volumes:
       # Mount a volume that stores the Vault @file configurations
-      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/config:/vault/config
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/config:/vault/config
       # Mount a volume that stores any persistent data
-      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/data:/vault/data
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/data:/vault/data
       # Mount a volume to store persistent logs
-      - ./volumes/${LOCAL_KME_ID:-SETME}/vault/logs:/vault/logs
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/logs:/vault/logs
       # Mount a volume that stores the TLS certificates
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates
     labels:
       # Picked up by the unsealer service
       - unsealer=watch
@@ -128,7 +128,7 @@ services:
       # Listen to the Docker Daemon through this socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/production
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production
       - type: bind
         source: ./common/global_config.py
         target: /root/code/global_config.py
@@ -147,10 +147,10 @@ services:
     env_file:
       - common/log.env
     environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETME}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETME}
-      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETME}
-      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETME}
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
+      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETMEINMAKEFILE}
     ports:
       # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
       - 80:80
@@ -162,12 +162,12 @@ services:
       # Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
-      - ./volumes/${LOCAL_KME_ID:-SETME}/certificates/production:/certificates/${LOCAL_KME_ID:-SETME}
-      - ./volumes/${REMOTE_KME_ID:-SETME}/certificates/production:/certificates/${REMOTE_KME_ID:-SETME}
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID:-SETMEINMAKEFILE}
       # Mount the configuration directory
-      - ./volumes/${LOCAL_KME_ID:-SETME}/traefik/configuration:/etc/traefik
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/configuration:/etc/traefik
       # Mount the log directory
-      - ./volumes/${LOCAL_KME_ID:-SETME}/traefik/logs:/var/log/traefik
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/logs:/var/log/traefik
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
