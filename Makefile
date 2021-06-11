@@ -99,7 +99,8 @@ endif
 	$(SCRIPTS)/compare.sh
 
 # Reset local Vault instance
-clear:
+# Needs local Vault instance up and unsealed
+clear: rest
 	$(SCRIPTS)/clear.sh
 
 .PHONY: clean allclean

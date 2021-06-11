@@ -23,14 +23,15 @@ ENV HOME=/root
 ENV TOP_DIR=./qkd
 ENV COMMON_DIR=./common
 
-# Set a volume to the location of qsim output
-VOLUME ${HOME}/code/qsim/epoch_files
+# Set a volume to the location of qsim epoch file output
+VOLUME ["${HOME}/code/qsim/epoch_files/"]
 
-COPY ["${COMMON_DIR}/qkd_config", "${TOP_DIR}/qsim/", "${HOME}/code/qsim/"]
 COPY ["${TOP_DIR}/rnd.c.patch", "${HOME}/code/rnd.c.patch"]
+COPY ["${TOP_DIR}/qsim/", "${HOME}/code/qsim/"]
 
 # Ensure basic packages are installed for building and running qsim
-# Minor sed fixes for testing
+# sed change to stop chopper once simulation file is consumed
+# Patch rnd.c parity function to allow operation on ARM architectures
 # Build qcrypto and qsim
 RUN apk update --no-cache \
     && apk add --no-cache --virtual qsim-base \
@@ -59,9 +60,6 @@ RUN apk update --no-cache \
     && patch rnd.c < ./rnd.c.patch \
     && make CC=${CC} \
     && cd ${HOME}/code/qsim
-    # Leave building qsim for docker-compose
-    # && make CC=${CC} \
-    # && apk del --no-cache qsim-base
 
 # Set a working directory into the image
 WORKDIR ${HOME}/code/qsim

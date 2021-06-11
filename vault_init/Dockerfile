@@ -24,6 +24,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root
 ENV TOP_DIR=./vault_init
 
+VOLUME ["/certificates", "/vault/policies" ]
+
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
 # Create a vault user and group plus a vault client first so the IDs get
@@ -34,11 +36,6 @@ RUN addgroup vault                                       && \
     adduser --system vaultinit --ingroup vault --uid 101 && \
     apk add --no-cache openssl                           && \
     pip install --no-cache-dir -r ${HOME}/requirements.txt
-
-VOLUME /certificates
-VOLUME /vault/policies
-VOLUME ${HOME}/global_config.py
-VOLUME ${HOME}/vault_init_config.py
 
 COPY ["${TOP_DIR}/vault_init.py", "${HOME}/"]
 
