@@ -159,10 +159,15 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      # TODO: Does watcher need digest file mounts like this now?
       - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETME}:/epoch_files
       - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETME}:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETME}/certificates:/certificates
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/watcher_config.py
+        target: /root/code/watcher_config.py
 
 
 networks:

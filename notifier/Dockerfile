@@ -23,7 +23,6 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV HOME=/root/code
 ENV TOP_DIR=./notifier
-ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 

@@ -21,7 +21,6 @@ LABEL author="Cyrus Proctor"
 ARG CC=gcc
 ENV HOME=/root/code
 ENV TOP_DIR=./qkd
-ENV COMMON_DIR=./common
 
 # Set a volume to the location of qsim epoch file output
 VOLUME ["${HOME}/qsim/epoch_files/"]

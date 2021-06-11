@@ -21,14 +21,13 @@ LABEL author="Cyrus Proctor"
 # NOTE: 0 does not imply a false value
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV HOME=/root
+ENV HOME=/root/code
 ENV TOP_DIR=./watcher
-ENV COMMON_DIR=./common
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
 # Set a volume to the epoch file directory to process
-VOLUME /epoch_files
+VOLUME ["/epoch_files"]
 
 RUN apk update --no-cache \
     && apk add --no-cache \
@@ -36,15 +35,12 @@ RUN apk update --no-cache \
         python3-dev \
         py-pip \
         build-base \
-#    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt \
-    && mkdir -p ${HOME}/code/watcher \
-    && cd ${HOME}/code/watcher
+    && pip install --no-cache-dir -r ${HOME}/requirements.txt
 
-COPY ["${COMMON_DIR}/global_config.py", "${COMMON_DIR}/watcher_config.py", "${TOP_DIR}/watcher.py", "${HOME}/code/watcher/"]
+COPY ["${TOP_DIR}/watcher.py", "${HOME}/"]
 
 # Set a working directory into the image
-WORKDIR ${HOME}/code/watcher
+WORKDIR ${HOME}/
 
 # Set the scripts for the python entrypoint to run
 CMD ["watcher.py"]
