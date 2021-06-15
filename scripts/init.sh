@@ -50,7 +50,7 @@ export SHUTDOWN="${STALL} && ${DOWN}"
 # +--------------------+----------------------+-----------------+-----------------+
 # Expecting a set, non-null response if the network is already present
 NETWORK_PRESENT=`docker network ls -q --filter name=traefik-public`
-if [ "${NETWORK_PRESENT:=missing}" == "missing" ]; then
+if [ -z "${NETWORK_PRESENT}" ]; then
   echo "Creating the \"traefik-public\" network"
   docker network create traefik-public
 else
