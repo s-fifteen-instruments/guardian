@@ -84,22 +84,22 @@ root@s1-kme1:~/code# ls -al
 total 5624
 drwxr-xr-x 2 root root    4096 Jun 15 15:55 .
 drwx------ 6 root root    4096 Jun 15 15:55 ..
--rw-r--r-- 1 root root 5750390 Jun 15 13:09 guardian.tar.gz
+-rw-r--r-- 1 root root 5750390 Jun 15 13:09 guardian-0.5.tar.gz
 ```
 
-On both KME hosts, untar the `guardian.tar.gz` gzipped tarball:
+On both KME hosts, untar the `guardian-0.5.tar.gz` gzipped tarball:
 ```bash
 # Example for KME host 1
-root@s1-kme1:~/code# tar xfz guardian.tar.gz
+root@s1-kme1:~/code# tar xfz guardian-0.5.tar.gz
 root@s1-kme1:~/code# ls -al
 total 5628
 drwxr-xr-x  3 root root    4096 Jun 15 18:04 .
 drwx------  6 root root    4096 Jun 15 15:55 ..
-drwxr-xr-x 15 1000 1000    4096 Jun 15 13:08 guardian
--rw-r--r--  1 root root 5750390 Jun 15 13:09 guardian.tar.gz
-root@s1-kme1:~/code# cd guardian/
-root@s1-kme1:~/code/guardian# pwd
-/root/code/guardian
+drwxr-xr-x 15 1000 1000    4096 Jun 15 13:08 guardian-0.5
+-rw-r--r--  1 root root 5750390 Jun 15 13:09 guardian-0.5.tar.gz
+root@s1-kme1:~/code# cd guardian-0.5/
+root@s1-kme1:~/code/guardian-0.5# pwd
+/root/code/guardian-0.5
 ```
 
 ## Turning Up the Logging Level
