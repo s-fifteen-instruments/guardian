@@ -20,3 +20,4 @@
 ![REST API Communication Flow](figures/guardian_comms.png)
 
 * [Certificate Generation Overview](Certificates.md)
+* [Hands-on Demonstration Instructions](Demo.md)
