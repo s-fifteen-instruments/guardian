@@ -35,12 +35,15 @@ CONNECT_TIMEOUT=30
 N=${1}
 # Size of keys in bits
 S=${2}
+
+## Set in env by Makefile
 #LOCAL_KME_ID=kme1
 #REMOTE_KME_ID=kme2
-LOCAL_KME_HOSTNAME=${LOCAL_KME_ID}
-REMOTE_KME_HOSTNAME=${REMOTE_KME_ID}
 #LOCAL_SAE_ID=sae1
 #REMOTE_SAE_ID=sae2
+
+LOCAL_KME_HOSTNAME=${LOCAL_KME_ID}
+REMOTE_KME_HOSTNAME=${REMOTE_KME_ID}
 BASE_DIR=`pwd`
 LOCAL_SAE_DIR=${base_dir}/${LOCAL_SAE_ID}
 REMOTE_SAE_DIR=${base_dir}/${REMOTE_SAE_ID}
@@ -48,6 +51,7 @@ REMOTE_SAE_DIR=${base_dir}/${REMOTE_SAE_ID}
 response=`curl -s "https://${LOCAL_KME_HOSTNAME}/api/v1/keys/${REMOTE_SAE_ID}/enc_keys?number=${N}&size=${S}" \
   --connect-timeout ${CONNECT_TIMEOUT} \
   --write-out "\n%{http_code}" \
+  -H "Content-Type: application/json" \
   -H 'accept: application/json' \
   --key ${LOCAL_SAE_ID}/${LOCAL_SAE_ID}.key.pem \
   --cert ${LOCAL_SAE_ID}/${LOCAL_SAE_ID}.ca-chain.cert.pem \
@@ -103,6 +107,7 @@ fi
 remote_response=`curl -s -X POST "https://${REMOTE_KME_HOSTNAME}/api/v1/keys/${LOCAL_SAE_ID}/dec_keys" \
   --connect-timeout ${CONNECT_TIMEOUT} \
   --write-out "\n%{http_code}" \
+  -H "Content-Type: application/json" \
   -H 'accept: application/json' \
   -d "${post_payload}" \
   --key ${REMOTE_SAE_ID}/${REMOTE_SAE_ID}.key.pem \
