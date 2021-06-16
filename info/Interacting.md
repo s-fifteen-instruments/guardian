@@ -62,6 +62,33 @@ NOTE: For developers, the primary certificate pairs to utilize are `sae1` and `s
 
 ## Makefile Comparison Testing
 
+### Prerequisites
+
+Please ensure that the `jq` binary is available **on the host running 'make compare'** to conduct `make compare` tests. To install:
+```bash
+# Ubuntu
+sudo apt-get install jq
+# Fedora
+sudo dnf install jq
+# OpenSUSE
+sudo zypper install jq
+```
+### Under the Hood
+
+SAE host certificates are `rsync`ed to the local host's `/tmp/guardian_test` directory and several tests are conducted from the [${TOP_DIR}/scripts/compare.sh](../scripts/compare.sh) script.
+
+The compare script in turn calls the [key_loop.sh](../scripts/key_loop.sh) script which takes the number of requested keys, the size of the requested keys in bits, and the number of sequential iterations to perform, and calls [key_compare.sh](../scripts/key_compare.sh) appropriately.
+
+Various synchronous and asynchronous tests are conducted on small to modest size key requests.
+
+NOTE: This test consumes keying material. If the KME runs out of keying material, this test will begin to fail in a seemingly sporadic fashion until all tests eventually fail. This is related to how keying material is reserved and consumed on the Vault back end and is to be expected.
+
+NOTE: While unlikely, it is possible for Vault instances to become out of sync. This can lead to comparison failures. The most straightforward way to re-sync is to first `make clear` on both KME hosts to clear out the Vault instances. From there, issue more keys via `make keys` on the KME1 host and then subsequently on the KME2 host. Afterwards, `make compare` tests should be passing.
+
+NOTE: Depending on many factors (number of outstanding requests, key sizes, epoch file size, computational power of the REST server, etc.) it is possible to overload the KME REST servers. In this event, status return codes will either be 503 or 504 as the local/remote KME hosts timeout attempting to return keying material. The servers should be able to recover without data loss/desynchronization once the load drops.
+
+### Running
+
 From the KME1 host or from a host that has passwordless SSH to both KME1 and KME2 hosts, it is possible to issue a `make compare` to utilize the `sae1` and `sae2` certificates; e.g.:
 ```bash
 # A successful run
@@ -127,21 +154,58 @@ WARNING: Certificates could not be properly rsynced from KME hosts. Continuing..
 
 ```bash
 # A run where one or both of the KME hosts become too busy
-TODO: fill me in
+...
+Key IDs match! Keys match! PASS
+Remote Status Code: 503 FAIL
+Key IDs match! Keys match! PASS
+...
 ```
 
-SAE host certificates are `rsync`ed to the local host's `/tmp/guardian_test` directory and several tests are conducted from the [${TOP_DIR}/scripts/compare.sh](../scripts/compare.sh) script.
+One possible output from the REST server log associated from the 503 status:
+```bash
+...
+rest_1      | [2021-06-16 18:34:25 +0000] [12] [INFO] 172.19.0.2:43834 - "POST /api/v1/keys/sae1/dec_keys HTTP/1.1" 200
+rest_1      | [2021-06-16 18:34:26 +0000] [10] [ERROR] Reached Maximum number of Reservation Attempts: 50 while attempting to reserve epoch files: ['00011d73']
+rest_1      | [2021-06-16 18:34:26 +0000] [10] [INFO] 172.19.0.2:43830 - "POST /api/v1/keys/sae1/dec_keys HTTP/1.1" 503
+rest_1      | [2021-06-16 18:34:26 +0000] [10] [INFO] 172.19.0.2:43840 - "POST /api/v1/keys/sae1/dec_keys HTTP/1.1" 200
+...
+```
 
-The compare script in turn calls the [key_loop.sh](../scripts/key_loop.sh) script which takes the number of requested keys, the size of the requested keys in bits, and the number of sequential iterations to perform, and calls [key_compare.sh](../scripts/key_compare.sh) appropriately.
+The number of reservation attempts and the time length in between attempts can be set in the [REST Configuration Options File](../common/rest_config.py); See `MAX_NUM_RESERVE_ATTEMPTS` and `RESERVE_SLEEP_TIME`.
 
-Various synchronous and asynchronous tests are conducted on small to modest size key requests.
+### Changing Verbosity
 
-NOTE: This test consumes keying material. If the KME runs out of keying material, this test will begin to fail in a seemingly sporadic fashion until all tests eventually fail. This is related to how keying material is reserved and consumed on the Vault back end and is to be expected.
+One can change the verbosity of the `make compare` target by setting the environment variable `V`. This will be passed to the [${TOP_DIR}/scripts/key_compare.sh](../scripts/key_compare.sh) script.
+* An integer value less than 0 will produce no extra output other than exit codes; exit code 0 being successful
+* An integer value equal to 0 will produce nominal one line output incuding information about whether Keys and KeyIDs match
+* An integer value greater than 0 will produce extra output to help diagnose what might be failing.
 
-NOTE: While unlikely, it is possible for Vault instances to become out of sync. This can lead to comparison failures. The most straightforward way to re-sync is to first `make clear` on both KME hosts to clear out the Vault instances. From there, issue more keys via `make keys` on the KME1 host and then subsequently on the KME2 host. Afterwards, `make compare` tests should be passing.
+```bash
+make compare V=1
+...
+./scripts/compare.sh 1
+...
+1 key; 8 bits each; 4 iterations
+1: 
+Local KME Response to Master SAE Request:
+{"keys":[{"key":"Ng==","key_ID":"1e630efc-e343-546d-9a89-2818f189fbcd"}]}
+Key IDs:
+"1e630efc-e343-546d-9a89-2818f189fbcd", 
+Keys:
+"Ng==", 
+Slave SAE POST Request Payload:
+{"key_IDs": [ {"key_ID": "1e630efc-e343-546d-9a89-2818f189fbcd"} ] }
 
-NOTE: Depending on many factors (number of outstanding requests, key sizes, epoch file size, computational power of the REST server, etc.) it is possible to overload the KME REST servers. In this event, status return codes will either be 503 or 504 as the local/remote KME hosts timeout attempting to return keying material. The servers should be able to recover without data loss/desynchronization once the load drops.
+Remote KME Response to Slave SAE Request:
+{"keys":[{"key":"Ng==","key_ID":"1e630efc-e343-546d-9a89-2818f189fbcd"}]}
+Remote Key IDs:
+"1e630efc-e343-546d-9a89-2818f189fbcd", 
+Remote Keys:
+"Ng==", 
 
+Key IDs match! Keys match! PASS
+...
+```
 ## From a Web Browser
 
 Web browsers have certificate databases which hold trusted certificates. I will demonstrate purely using a browser's user interface and also by using command-line tools called `certutil` and `pk12util`. I find the command-line option to be faster and more reliable but I tend to iterate testing from scratch which may not be how most readers interact.

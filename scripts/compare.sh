@@ -32,7 +32,7 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "'make compare' requires the jq bina
 if [ $# -gt 0 ]; then
   int_check=`echo "${1}" | grep -E ^\-?[0-9]+$`
   if [ "${int_check}" == "" ]; then
-    echo "Illegal Variable 'V': \"${1}\"; only single digit positive/negative integers allowed; aborting"
+    echo "Illegal Variable 'V': \"${1}\"; only positive/negative integers allowed (i.e. -1, 0, 1); aborting"
     exit 12
   fi
   # Variable is valid; set to 'VERBOSE' environment variable
