@@ -41,6 +41,8 @@ export REMOTE_KME_DIRPATH ?= bob@kme2:/home/bob/code/guardian
 ##########################
 SERVICES := rest
 SCRIPTS := ./scripts
+# Verbosity for 'compare' target
+V := 0 
 ifeq ($(KME), kme1)
 export LOCAL_KME_ID := kme1
 export REMOTE_KME_ID := kme2
@@ -101,7 +103,7 @@ compare:
 ifneq ($(LOCAL_KME_ID), kme1)
 	$(error Illegal KME configuration: $(KME) for compare target. Please run from "kme1"; Exiting)
 endif
-	$(SCRIPTS)/compare.sh
+	$(SCRIPTS)/compare.sh $(V)
 
 # Reset local Vault instance
 # Needs local Vault instance up and unsealed

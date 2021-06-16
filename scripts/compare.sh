@@ -25,6 +25,20 @@ FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
+# Test for jq binary
+command -v jq >/dev/null 2>&1 || { echo >&2 "'make compare' requires the jq binary but it's not installed. Aborting."; exit 1; }
+
+# Look for command-line variable in 1st position
+if [ $# -gt 0 ]; then
+  int_check=`echo "${1}" | grep -E ^\-?[0-9]+$`
+  if [ "${int_check}" == "" ]; then
+    echo "Illegal Variable 'V': \"${1}\"; only single digit positive/negative integers allowed; aborting"
+    exit 12
+  fi
+  # Variable is valid; set to 'VERBOSE' environment variable
+  export VERBOSE=${1}
+fi
+
 mkdir -p ${test_dir}
 cd ${test_dir}
 RSYNC_FAIL=0

@@ -28,7 +28,9 @@ fi
 # < 0 gives no output; just a return code
 # == 0 gives one line output about key ID / key match
 # > 0 gives more verbose output
-VERBOSE=0
+if [ -z "${VERBOSE}" ]; then
+ export VERBOSE=0  # Expecting to be set by 'compare.sh'; leave alone if set
+fi
 # Time in seconds to wait before giving up
 CONNECT_TIMEOUT=30
 # Number of keys to request
