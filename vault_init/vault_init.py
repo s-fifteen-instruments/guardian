@@ -199,7 +199,6 @@ class VaultClient:
                                             secret_threshold=self.secret_threshold)
             if self.vclient.sys.is_initialized():
                 # TODO: needs response checking
-                # TODO: Secret Exposure
                 self.root_token = self.init_response["root_token"]
                 self.unseal_keys = self.init_response["keys"]
                 self.write_secrets()
@@ -218,7 +217,6 @@ class VaultClient:
             # TODO: handle when init has already happened
             assert self.init_response is not None
             assert len(self.unseal_keys) >= self.secret_threshold
-            # TODO: Secret Exposure
             self.unseal_response = \
                 self.vclient.sys.submit_unseal_keys(self.unseal_keys)
             if not self.vclient.sys.is_sealed():
@@ -234,7 +232,6 @@ class VaultClient:
         """foo
         """
         if not self.vclient.is_authenticated():
-            # TODO: Secret Exposure
             if not hasattr(self, "root_token"):
                 self.root_token = \
                     json.loads(open(settings.GLOBAL.VAULT_SECRETS_FILEPATH,
@@ -320,6 +317,7 @@ class VaultClient:
     def vault_write_int_ca_csr(self):
         """foo
         """
+        # TODO: pull this out to use CERTAUTH configuration settings
         mount_point = "pki_int"
         type_str = "exported"
         common_name = "Vault Intermediate CA pki_int mount point"
@@ -335,7 +333,6 @@ class VaultClient:
             "ttl": "87600h"
         }
         logger.debug("Attempting to generate intermediate CA certificate/private key")
-        # TODO: Secret Exposure
         self.gen_int_ca_response = \
             self.vclient.secrets.pki.\
             generate_intermediate(type_str,
@@ -374,6 +371,7 @@ class VaultClient:
         logger.debug("Set intermediate CA URLs response okay:")
         self._dump_response(url_response.ok, secret=False)
         role_name_str = "role_int_ca_cert_issuer"
+        # TODO: pull this out to use CERTAUTH configuration settings
         role_param_dict = {
             "allow_localhost": "true",
             "allow_subdomains": "true",
