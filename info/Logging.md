@@ -1,6 +1,10 @@
 # Logging Configuration
 
-Coming soon.
+Log levels for different Docker services can be controlled via the [${TOP_DIR}/common/log.env](../common/log.env) file. During normal operations, an `Info` or `Warning` may be appropriate. `Debug` and `Trace` (in some services) are available to help diagnose any issues that may arise.
+
+NOTE: The output of potentially sensitive information (e.g. keying material) in service logs can be controlled via `SHOW_SECRETS` boolean in the [${TOP_DIR}/common/global_config.py](../common/global_config.py) file.
+
+An example `Info` level log.env file is displayed below:
 
 ```bash
 # NOTE: No variable substitution or expansion
@@ -29,3 +33,5 @@ WATCHER_LOG_LEVEL=20
 UNSEALER_LOG_LEVEL=20
 REST_LOG_LEVEL=20
 ```
+
+NOTE: The log-level for Traefik can be controlled from its static configuration file: [KME Host 1](../volumes/kme1/traefik/configuration/traefik.yml) and [KME Host 2](../volumes/kme2/traefik/configuration/traefik.yml)
