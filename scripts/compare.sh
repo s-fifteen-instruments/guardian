@@ -31,7 +31,7 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "'make compare' requires the jq bina
 # Look for command-line variable in 1st position
 if [ $# -gt 0 ]; then
   int_check=`echo "${1}" | grep -E ^\-?[0-9]+$`
-  if [ "${int_check}" == "" ]; then
+  if [ "${int_check}" = "" ]; then
     echo "Illegal Variable 'V': \"${1}\"; only positive/negative integers allowed (i.e. -1, 0, 1); aborting"
     exit 12
   fi
