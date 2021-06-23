@@ -15,6 +15,7 @@
 | [Global Configuration](Global.md) | Global configuration details available to most services |
 | [Vault](Vault.md) | Vault instance service detailed configuration information |
 | [Vault Initialization Client](Vault_Init.md) | Vault intialization client service detailed configuration information |
+| [QKD](QKD.md) | QKD simulator service detailed confgiuration information; transition to a full QKD system implementation |
 | [Watcher](Watcher.md) | Watcher service detailed configuration information |
 | [Unsealer](Unsealer.md) | Unsealer service detailed configuration information |
 | [Traefik](Traefik.md) | Traefik service detailed configuration information |
