@@ -271,3 +271,19 @@ I would create two new services for the qcrypto stack:
 These are also put into the docker-compose.yml service stack and can be brought up and down using Docker commands/Makefile targets.
 
 I would recommend keeping all command and control of the qcrypto service decoupled from outward-facing interfaces (REST API, Vault, etc.). I would start with displaying status information (if at all) first and then decide from a 'security' perspective what access (if any) should be in the same area as an SAE. I look at this a lot like a management plane / data plane type separation that the encryptor folks do. Airgapping is the simplest and likely most secure way of keeping malicious actors from having extra attack surfaces. It maybe harder because you don't have as many 'shiny things' for those who would fund you. Good luck!
+
+On a different note, no need to keep such permissable files laying around.:
+```bash
+$ cat ${TOP_DIR}/qkd/qsim/run_copy
+...
+mkdir -p ./epoch_files/${out_dir}/
+cp -a ${data_dir}/finalkey.${count_type}/* ./epoch_files/${out_dir}/
+
+# NOTE (AKA Hack): These are only necessary when using rsync to remotely
+# transfer epoch files instead of using a true QKD system.  These write
+# permissions allow for convienent transfer and removal without need of a
+# priviledged transfer service.
+chmod 0777 ./epoch_files/${out_dir}/
+chmod 0666 ./epoch_files/${out_dir}/*
+```
+When your epoch files quantumly appear instead of clumsily appearing via rsync, you don't have to worry about such things.
