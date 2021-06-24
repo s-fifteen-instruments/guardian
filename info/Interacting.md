@@ -5,7 +5,8 @@
 * [From a Web Browser](#from-a-web-browser)
 * [REST API Documentation (OpenAPI)](#rest-api-documentation-openapi)
 * [Using cURL](#using-curl)
-* [Using OpenSSL's s_client](#using-openssl-and-sclient)
+* [Using OpenSSL's s_client](#using-openssl-and-s_client)
+* [Watching TLS Handshake with Wireshark](#watching-tls-handshake-with-wireshark)
 
 ## Certificates
 
@@ -594,3 +595,37 @@ echo "quit" | openssl s_client \
   -connect kme1:443 \
   -ciphersuites TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
 ```
+
+## Watching TLS Handshake with Wireshark
+
+Given KME Host 1 setup to receive incoming requests from a master SAE, you might have need to inspect what is happening when a TLS connection is being made. For instance, on the KME Host, inspecting the Traefik logs, we see:
+```bash
+traefik_1   | time="2021-06-23T14:43:16Z" level=debug msg="Serving default certificate for request: \"\""
+traefik_1   | time="2021-06-23T14:43:16Z" level=debug msg="http: TLS handshake error from <master SAE IP address>:41680: tls: no cipher suite supported by both client and server"
+```
+
+This merits further investigation. On the KME host, we can watch for a specific event using the `tcpdump` command:
+```bash
+### As the root user
+# tcpdump -i any -s 0 host <master SAE IP address>  -w ~/dump_file_for_wireshark
+tcpdump: listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 bytes
+^C30 packets captured
+30 packets received by filter
+0 packets dropped by kernel
+```
+
+Start the tcpdump listener, initiate whatever TLS connection you wish to observe and press control+c when done. Packets should be captured in the `~/dump_file_for_wireshark` file.
+
+From there, copy the file locally (if it isn't local already) and navigate to it with the `Wireshark` program:
+
+![Wireshark Raw Output](figures/wireshark_raw_dump.png)
+
+We can filter out such that we only see 'tls' protocol entries:
+
+![Wireshark Filtered Output](figures/wireshark_tls_filtered.png)
+
+Digging into the TLS client hello, we can see what ciphersuites and signatures were offered from the client to the server:
+
+![Wireshark TLS Client Hello](figures/wireshark_tls_client_hello.png)
+
+Now one can see what specific mismatch is happening between KME Host server and master SAE client.
