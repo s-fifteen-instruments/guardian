@@ -323,8 +323,8 @@ class VaultClient:
         common_name = "Vault Intermediate CA pki_int mount point"
         extra_param_dict = {
             "format": "pem",
-            "key_type": "rsa",
-            "key_bits": "4096",
+            "key_type": "ec",
+            "key_bits": "384",
             "ou": "Quantum Hacking",
             "organization": "Quantum Internet Technologies LLC",
             "country": "US",
@@ -381,8 +381,8 @@ class VaultClient:
             "allow_ip_sans": "true",
             "server_flag": "true",
             "client_flag": "true",
-            "key_type": "rsa",
-            "key_bits": "2048",
+            "key_type": "ec",
+            "key_bits": "384",
             "generate_lease": "true",
             "ou": "Quantum Hacking",
             "organization": "Quantum Internet Technologies LLC",
