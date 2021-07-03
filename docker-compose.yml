@@ -61,16 +61,16 @@ services:
       # web entrypoint defined in the Traefik configuration file
       # "restapp-http" router redirects to websecure endpoint to force HTTPS
       - traefik.http.routers.restapp-http.entrypoints=web
-      # Make Traefik use the LOCAL_KME_ID domain in for HTTP entrypoint
-      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTP entrypoint or a Path prefix if that does not match
+      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)||PathPrefix(`/api/v1`)
       # Use the traefik-public network (declared below)
       - traefik.docker.network=traefik-public
       # Turn on TLS for our "restapp-https" router
       - traefik.http.routers.restapp-https.tls=true
       # websecure entrypoint defined in the Traefik configuration file
       - traefik.http.routers.restapp-https.entrypoints=websecure
-      # Make Traefik use the LOCAL_KME_ID domain in for HTTPS entrypoint
-      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTPS entrypoint or a Path prefix if that does not match
+      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ID:-SETMEINMAKEFILE}`)||PathPrefix(`/api/v1`)
       # Define middleware "client-cert-info" to pass more header info to app
       # Pass the SAE client's Common Name and SANs to rest app for parsing
       - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
