@@ -40,6 +40,7 @@ class VaultInitSettings(BaseSettings):
                             f"{GLOBAL.LOCAL_KME_ID}," \
                             f"traefik.{GLOBAL.LOCAL_KME_ID}," \
                             "localhost"
+    CLIENT_IP_SANS: str = "165.22.101.77,165.22.109.117"
 
     # Make environment settings take precedence over __init__ and file
     class Config:

@@ -445,12 +445,14 @@ class VaultClient:
         mount_point = "pki_int"
         extra_param_dict = {
             "alt_names": settings.CLIENT_ALT_NAMES,
+            "ip_sans": settings.CLIENT_IP_SANS,
             "format_str": "pem",
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
         }
         logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
         logger.debug(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
+        logger.debug(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
         gen_cert_response = \
             self.vclient.secrets.pki.\
             generate_certificate(name=role_str,
