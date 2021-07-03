@@ -1,3 +1,6 @@
+# Elliptic Curve Name (openssl ecparam -list_curves)
+EC_NAME=secp384r1
+
 # Root Certificate Authority Information
 export CA_COUNTRY_CODE="US"
 export CA_STATE="Texas"

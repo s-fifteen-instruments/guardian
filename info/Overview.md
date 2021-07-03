@@ -8,20 +8,20 @@ See [docker-compose.init.yml](../docker-compose.init.yml) and [init.sh](../scrip
 
 * Startup certauth Docker service (`certs` and `install` Makefile targets)
 * Create Local Root Certificate Authority (CA)
-  * Private Key (RSA 4096)
+  * Private Key (EC secp384r1)
   * Public Key (X.509 Certificate)
 * Create Local Intermediate CA
-  * Private Key (RSA 4096)
+  * Private Key (EC secp384r1)
   * Certificate Signing Request (CSR)
   * Use Root CA to Sign CSR to Make Certificate
   * Create Certificate Chain
 * Create Vault Server Key/Certificate
-  * Private Key (RSA 2048)
+  * Private Key (EC secp384r1)
   * Generate CSR
   * Use Intermediate CA to Sign CSR to Make Certificate
   * Certificate Chain
 * Create Vault Initialization Client Key/Certificate
-  * Private Key (RSA 2048)
+  * Private Key (EC secp384r1)
   * Generate CSR
   * Use Intermediate CA to Sign CSR to Make Certificate
   * Certificate Chain

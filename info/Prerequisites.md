@@ -81,7 +81,7 @@ rtt min/avg/max/mdev = 0.203/0.203/0.203/0.000 ms
 
 To automatically share TLS certificates, and at the moment QKD key information, we need to setup the ability to establish SSH connections between the KME hosts without the need to intervene with a password each time. This is done by adding corresponding public keys to each KME host's SSH authorized keys file.
 
-On each KME host, first generate an RSA public/private key pair if one does not already exist:
+On each KME host, first generate an RSA (other types okay too) public/private key pair if one does not already exist:
 ```bash
 # KME1 host
 cd  # Go to home directory
@@ -304,6 +304,9 @@ cp CERTAUTH_CONFIG.example CERTAUTH_CONFIG
 ```
 It is recommended to customize if there are certificate issues. Otherwise, it is fine as it is:
 ```bash
+# Elliptic Curve Name (openssl ecparam -list_curves)
+EC_NAME=secp384r1
+
 # Root Certificate Authority Information
 export CA_COUNTRY_CODE="US"
 export CA_STATE="Texas"
@@ -340,4 +343,4 @@ EOA
 )
 ```
 
-Refer the CERTAUTH Root and Intermediate CA configuration templates for constraints. Also, it may be necessary to customize the IP subnet depending on the particular setup.
+Refer the CERTAUTH Root and Intermediate CA configuration templates for constraints. Also, it may be necessary to customize the IP subnet depending on the particular setup. Lastly, it is possible to customize the CA private key types using the `EC_NAME` variable. Choose the named curve from the output of `openssl ecparam -list_curves`.

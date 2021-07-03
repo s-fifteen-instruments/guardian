@@ -119,7 +119,14 @@ sed -i "s#<<<EMAIL>>>#${CA_EMAIL}#g" ${ca_dir}/openssl.cnf
 
 # Create the root CA private key "ca.key.pem"
 cd ${ca_dir}
-openssl genrsa -passout stdin -aes256 -out private/ca.key.pem 4096 <<ROOTCA
+openssl genpkey \
+    -algorithm EC \
+    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+    -pkeyopt ec_param_enc:named_curve \
+    -aes256 \
+    -pass stdin \
+    -out private/ca.key.pem \
+    <<ROOTCA
 ${ROOT_CA_PASSWORD}
 ${ROOT_CA_PASSWORD}
 ROOTCA
@@ -172,7 +179,14 @@ sed -i "s/<<<ALT_NAMES>>>/$(echo ${ALT_NAMES})/g;s/ qqq/\n/g" ${int_ca_dir}/open
 
 # Create the intermediate CA private key "intermediate.key.pem"
 cd ${ca_dir}
-openssl genrsa -passout stdin -aes256 -out intermediate/private/intermediate.key.pem 4096 <<INTCA
+openssl genpkey \
+    -algorithm EC \
+    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+    -pkeyopt ec_param_enc:named_curve \
+    -aes256 \
+    -pass stdin \
+    -out intermediate/private/intermediate.key.pem \
+    <<INTCA
 ${INT_CA_PASSWORD}
 ${INT_CA_PASSWORD}
 INTCA
@@ -221,13 +235,22 @@ chmod 0444 intermediate/certs/ca-chain.cert.pem
 # Create a VAULT server private key
 cd ${ca_dir}
 # Input to use if the server key has a password set
-#openssl genrsa -passout stdin -aes256 \
-#    -out intermediate/private/${VAULT_SERVER_FQDN}.key.pem 2048 <<VAULTSERVERKEY
+#openssl genpkey \
+#    -algorithm EC \
+#    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+#    -pkeyopt ec_param_enc:named_curve \
+#    -aes256 \
+#    -pass stdin \
+#    -out intermediate/private/${VAULT_SERVER_FQDN}.key.pem 
+#    <<VAULTSERVERKEY
 #${VAULT_SERVER_KEY_PASSWORD}
 #${VAULT_SERVER_KEY_PASSWORD}
 #VAULTSERVERKEY
-openssl genrsa \
-    -out intermediate/private/${VAULT_SERVER_FQDN}.key.pem 2048
+openssl genpkey \
+    -algorithm EC \
+    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+    -pkeyopt ec_param_enc:named_curve \
+    -out intermediate/private/${VAULT_SERVER_FQDN}.key.pem
 chmod 0400 intermediate/private/${VAULT_SERVER_FQDN}.key.pem
 
 # Create a VAULT server CSR for the intermediate CA to sign
@@ -276,13 +299,22 @@ chmod 0444 intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem
 # Create an VAULT_INIT client key
 cd ${ca_dir}
 # Input to use if the client key has a password set
-#openssl genrsa -passout stdin -aes256 \
-#    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem 2048 <<VAULT_INITCLIENTKEY
+#openssl genpkey \
+#    -algorithm EC \
+#    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+#    -pkeyopt ec_param_enc:named_curve \
+#    -aes256 \
+#    -pass stdin \
+#    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem \
+#    <<VAULT_INITCLIENTKEY
 #${VAULT_INIT_CLIENT_KEY_PASSWORD}
 #${VAULT_INIT_CLIENT_KEY_PASSWORD}
 #VAULT_INITCLIENTKEY
-openssl genrsa \
-    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem 2048
+openssl genpkey \
+    -algorithm EC \
+    -pkeyopt ec_paramgen_curve:${EC_NAME} \
+    -pkeyopt ec_param_enc:named_curve \
+    -out intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem
 chmod 0400 intermediate/private/${VAULT_INIT_CLIENT_NAME}.key.pem
 
 # Create a VAULT_INIT client CSR for the intermediate CA to sign

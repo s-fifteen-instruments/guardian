@@ -5,20 +5,20 @@ Each KME host goes through a similiar process outlined below for creating privat
 ## Certauth
 
 * Root Certificate Authority (CA)
-  * Private Key (RSA 4096)
+  * Private Key (EC secp384r1)
   * Public Key (X.509 Certificate)
 * Intermediate CA
-  * Private Key (RSA 4096)
+  * Private Key (EC secp384r1)
   * Certificate Signing Request (CSR)
   * Use Root CA to Sign CSR to Make Certificate
   * Create Certificate Chain
 * Vault Server
-  * Private Key (RSA 2048)
+  * Private Key (EC secp384r1)
   * CSR
   * Use Intermediate CA to Sign CSR to Make Certificate
   * Certificate Chain
 * Vault Initialization Client
-  * Private Key (RSA 2048)
+  * Private Key (EC secp384r1)
   * CSR
   * Use Intermediate CA to Sign CSR to Make Certificate
   * Certificate Chain
