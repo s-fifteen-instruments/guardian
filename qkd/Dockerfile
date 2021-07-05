@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM alpine:latest
+FROM alpine:3.14.0
 LABEL author="Cyrus Proctor"
 
 ARG CC=gcc
@@ -51,6 +51,7 @@ RUN apk update --no-cache \
     && cd ${HOME}/ \
     && git clone https://github.com/s-fifteen-instruments/qcrypto.git qcrypto \
     && cd ${HOME}/qcrypto/remotecrypto \
+    && git checkout 390102108417df43855ceff1811bd57dc81be531 \
     && sed -i "s#/\* i f (\!inbytesread) break;  end of file reached \*/#if (\!inbytesread) break; /* end of file reached */#g" chopper.c \
     && make CC=${CC} \
     && cd ../errorcorrection \

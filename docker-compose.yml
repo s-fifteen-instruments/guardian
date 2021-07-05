@@ -87,7 +87,8 @@ services:
 
   vault:
     # Use the latest Hashicorp Vault v1.7.x image available
-    image: vault:${VAULT_TAG:-latest}
+    #image: vault:${VAULT_TAG:-latest}
+    image: vault:1.7.3
     env_file:
       - common/log.env
     ports:
@@ -143,7 +144,8 @@ services:
 
   traefik:
     # Use the latest Traefik v2.4.x image available
-    image: traefik:${TRAEFIK_TAG:-latest}
+    #image: traefik:${TRAEFIK_TAG:-latest}
+    image: traefik:2.4.9
     env_file:
       - common/log.env
     environment:

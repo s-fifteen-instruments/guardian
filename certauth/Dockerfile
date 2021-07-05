@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM alpine:latest
+FROM alpine:3.14.0
 LABEL author="Cyrus Proctor"
 
 # Create a vault user and group plus a vault client first so the IDs get

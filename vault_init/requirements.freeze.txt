@@ -1,0 +1,10 @@
+certifi==2021.5.30
+chardet==4.0.0
+hvac==0.10.14
+idna==2.10
+pydantic==1.8.2
+pyhcl==0.4.4
+requests==2.25.1
+six==1.16.0
+typing-extensions==3.10.0.0
+urllib3==1.26.6
