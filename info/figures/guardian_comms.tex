@@ -1,0 +1,92 @@
+% W. Cyrus Proctor
+\documentclass[border=1mm,tikz]{standalone}
+
+\usetikzlibrary{positioning,calc, arrows.meta, fit}%to use righ=of
+
+\begin{document}
+    \def\nodeTextWidth{3.5cm}
+    \def\levelOne{2cm}
+    \begin{tikzpicture}[
+    node distance=7mm and 5mm,
+    every node/.append style={very thick},
+    entity/.style={draw, rectangle, minimum width=\nodeTextWidth},
+    hiddenentity/.style={,rectangle, minimum width=\nodeTextWidth},
+    operation/.style={draw=black,thick,fill=white,rounded corners=0mm,text width=\nodeTextWidth,font=\scriptsize, inner sep=2pt, text centered},
+    inscopearrow/.style={line width=2pt,black,dashed,-latex},
+    outscopearrow/.style={line width=2pt,black,-latex},
+    qdblarrow/.style={line width=2pt,red,-latex},
+    textAboveArrow/.style={inner sep=2pt,outer sep=4pt, fill=white,font=\footnotesize}
+    ]
+
+    % Top Labels
+    \node[entity]                 (psae)  {Primary SAE};
+    \node[entity, right=of psae]  (pkme)  {Primary KME};
+    \node[entity, right=of pkme]  (pqkde) {Primary QKDE};
+    \node[entity, right=of pqkde] (ssae)  {Secondary SAE};
+    \node[entity, right=of ssae]  (skme)  {Secondary KME};
+    \node[entity, right=of skme]  (sqkde) {Secondary QKDE};
+
+    % Vertical Lines
+    \draw [very thick, -{Circle[]}] (psae)--++(0,-8.1) coordinate (psaeb);
+    \draw [very thick, -{Circle[]}] (pkme)--++(0,-8.1);
+    \draw [very thick, -{Circle[]}] (pqkde)--++(0,-8.1);
+    \draw [very thick, -{Circle[]}] (ssae)--++(0,-8.1) coordinate (ssaeb);
+    \draw [very thick, -{Circle[]}] (skme)--++(0,-8.1);
+    \draw [very thick, -{Circle[]}] (sqkde)--++(0,-8.1);
+    
+    % Generate QKD Keys
+    \node[operation, below=of pqkde] (pgenkeys) {Generate QKD Keys};
+    \node[operation, below=of sqkde] (sgenkeys) {Generate QKD Keys};
+    \draw[qdblarrow] (pgenkeys)--(sgenkeys) coordinate (qchannel) node[textAboveArrow,below,midway] {Quantum Channel};
+    
+    % Notify
+    \coordinate[below=of pgenkeys] (pnotify);
+    \coordinate[below=of sgenkeys] (snotify);
+    \draw[outscopearrow] (pnotify)--(pnotify-|pkme) coordinate (pnotifyl) node[textAboveArrow,above,midway] {Notify};
+    \draw[outscopearrow] (snotify)--(snotify-|skme) coordinate (snotifyl) node[textAboveArrow,above,midway] {Notify};
+    
+    % Request Keys
+    \coordinate[below=of pnotifyl] (preq);
+    \draw[inscopearrow] (preq-|psae)--(preq) coordinate (preqkeys) node[textAboveArrow,below,midway] {Request Keys (get\_key)};
+    
+    % Send KeyIDLedgerContainer
+    \coordinate[below=of preqkeys] (lcon);
+    \draw[outscopearrow] (lcon)--(lcon-|skme) coordinate (klc) node[textAboveArrow,above,midway] {Send KeyIDLedgerContainer};
+    
+    % Acknowledge with KeyIDs
+    \coordinate[below=of lcon] (lconack);
+    \draw[outscopearrow] (lconack-|skme)--(lconack) coordinate (keyids) node[textAboveArrow,above,midway] {Acknowledge with KeyIDs};
+    
+    % Send KeyContainer
+    \coordinate[below=of lconack] (pkcon);
+    \draw[inscopearrow] (pkcon)--(pkcon-|psae) coordinate (pkeycon) node[textAboveArrow,above,midway] {Send KeyContainer};
+    
+    % Send KeyIDs
+    \coordinate[below=of pkeycon] (keyids1);
+    \draw[outscopearrow] (keyids1)--(keyids1-|ssae) coordinate(keyids2) node[textAboveArrow,above,midway] {Send KeyIDs};
+    
+    % Acknowlege KeyIDs
+    \coordinate[below=of keyids2] (keyids3);
+    \draw[outscopearrow] (keyids3)--(keyids3-|psae) coordinate(keyids4) node[textAboveArrow,above,midway] {Acknowledge KeyIDs};
+    
+    % Request Keys
+    \coordinate[below=of keyids4] (sreq);
+    \draw[inscopearrow] (sreq-|ssae)--(sreq-|skme) coordinate (sreqkeys) node[textAboveArrow,above,midway,text width=2.5cm,align=center] {Request Keys (get\_key\_with\_key\_ids)};
+    
+    % Send KeyContainer
+    \coordinate[below=of sreqkeys] (skcon);
+    \draw[inscopearrow] (skcon)--(skcon-|ssae) coordinate (skeycon) node[textAboveArrow,above,midway] {Send KeyContainer};
+    
+    % Site Boundaries
+    \node[fit=(psae) (psaeb) (pkme) (pqkde), draw, thick, label={[font=\itshape, fill=white, draw, anchor=center, label distance=.22cm]90:Site A}] {};
+    \node[fit=(ssae) (ssaeb) (skme) (sqkde), draw, thick, label={[font=\itshape, fill=white, draw, anchor=center, label distance=.22cm]90:Site B}] {};
+    
+    % Generate Keys Boundary
+    \node[fit=(pgenkeys) (sgenkeys) (qchannel) (pnotifyl) (snotifyl), draw, thick, dotted] {};
+    
+    % Request Keys Boundary
+    \node[fit=(pkeycon) (preqkeys) (skcon), draw, thick, dotted] {};
+
+    \end{tikzpicture}
+
+\end{document}
