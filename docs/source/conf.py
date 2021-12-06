@@ -23,11 +23,11 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 }
+
 intersphinx_disabled_domains = ['std']
 
-autosummary_generate = True
-templates_path = [ '_templates' ]
-exclude_patterns = ['_build', '_templates']
+templates_path = ['_templates']
+
 # -- Options for HTML output
 
 html_theme = 'sphinx_rtd_theme'
