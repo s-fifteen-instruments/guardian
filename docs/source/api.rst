@@ -3,5 +3,5 @@ API
 
 .. autosummary::
    :toctree: generated
-   
-   api
+
+   lumache
