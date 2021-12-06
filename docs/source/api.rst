@@ -4,4 +4,4 @@ API
 .. autosummary::
    :toctree: generated
 
-   guardian
+   rest/app/models/key_request
