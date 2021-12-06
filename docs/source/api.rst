@@ -4,4 +4,4 @@ API
 .. autosummary::
    :toctree: generated
 
-   rest/app/models/key_request
+   ./rest/app/models/key_request
