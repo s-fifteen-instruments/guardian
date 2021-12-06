@@ -1,37 +1,3 @@
-
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@syed82ab
-s-fifteen-instruments /
-qcrypto
-Public
-forked from kurtsiefer/qcrypto
-
-1
-0
-
-    10
-
-Code
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-
-    Settings
-
-qcrypto/.readthedocs.yaml
-@syed82ab
-syed82ab Update .readthedocs.yaml
-Latest commit a7743a2 4 days ago
-History
-1 contributor
-29 lines (25 sloc) 742 Bytes
 # .readthedocs.yaml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
