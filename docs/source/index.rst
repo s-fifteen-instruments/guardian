@@ -1,22 +1,38 @@
+=====================================
 Welcome to Guardians's documentation!
-===================================
+=====================================
 
-**Guardian** (/lu'make/) is a Python library for cooks and food lovers
-that creates recipes mixing random ingredients.
-It pulls data from the `Open Food Facts database <https://world.openfoodfacts.org/>`_
-and offers a *simple* and *intuitive* API.
-Lumache has its documentation hosted on Read the Docs.
-Check out the :doc:`usage` section for further information, including
-how to :ref:`installation` the project.
+**Guardian** is `S-Fifteen Instrument's <https://s-fifteen.com/>`_ RESTful based quantum key delivery API following `ETSI Document 014 <https://portal.etsi.org/webapp/workProgram/Report_WorkItem.asp?wki_id=53603>`_.
+The intent of this documentation is 3 fold
 
-.. note::
+# User documntation on the necessary certificates and usage of Guardian as a client (SAE)
+# Documentation for access controller to authorise new clients(SAEs) to be able to access Guardian
+# Administrator documentation for setting up and adding new nodes (KMEs) into the network.    
 
-   This project is under active development.
 
 Contents
 --------
 
 .. toctree::
+	:maxdepth: 2
+   :caption: User :
+	user/overview
+   user/certificates
+	user/API
+	user/usage
+	
+.. toctree::
+	:maxdepth: 2
+   :caption: Controller :
+	controller/overview
+   controller/certificates
+	controller/API
+	
 
-   usage
-   api
+.. toctree::
+	:maxdepth: 2
+   :caption: Administrator :
+	admin/overview
+   admin/certificates
+	admin/admin
+	
