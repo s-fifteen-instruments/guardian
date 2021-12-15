@@ -15,24 +15,24 @@ Contents
 
 .. toctree::
    :caption: User 
-	
-	user/U_overview
+
+   user/U_overview
    user/U_certificates
-	user/U_API
-	user/usage
-	
+   user/U_API
+   user/usage
+
 .. toctree::
    :caption: Controller 
-	
-	controller/C_overview
+
+   controller/C_overview
    controller/C_certificates
-	controller/C_api
-	
+   controller/C_api
+
 
 .. toctree::
    :caption: Administrator 
 
-	admin/Ad_overview
+   admin/Ad_overview
    admin/Ad_certificates
-	admin/admin
-	
+   admin/admin
+
