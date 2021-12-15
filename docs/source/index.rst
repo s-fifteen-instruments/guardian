@@ -16,23 +16,23 @@ Contents
 .. toctree::
 	:maxdepth: 2
    :caption: User :
-	user/overview
-   user/certificates
-	user/API
-	user/usage
+	user/overview.rst
+   user/certificates.rst
+	user/API.rst
+	user/usage.rst
 	
 .. toctree::
 	:maxdepth: 2
    :caption: Controller :
-	controller/overview
-   controller/certificates
-	controller/API
+	controller/overview.rst
+   controller/certificates.rst
+	controller/API.rst
 	
 
 .. toctree::
 	:maxdepth: 2
    :caption: Administrator :
-	admin/overview
-   admin/certificates
-	admin/admin
+	admin/overview.rst
+   admin/certificates.rst
+	admin/admin.rst
 	
