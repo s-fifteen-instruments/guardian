@@ -2,12 +2,8 @@
 # Specifically for TLS settings
 http:
   routers:
-    dashboard-http:
-      rule: Host(`traefik.{{ env "LOCAL_KME_ID" }}`)
-      entryPoints: web
-      service: api@internal
     dashboard-https:
-      rule: Host(`traefik.{{ env "LOCAL_KME_ID" }}`)
+      rule: Host(`traefik.{{ env "LOCAL_KME_ADDRESS" }}`)
       entryPoints: websecure
       tls: True
       service: api@internal

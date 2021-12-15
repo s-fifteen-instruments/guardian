@@ -36,11 +36,8 @@ class VaultInitSettings(BaseSettings):
     CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.KEY_SUFFIX}"
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
-    CLIENT_ALT_NAMES: str = f"{GLOBAL.LOCAL_SAE_ID}," \
-                            f"{GLOBAL.LOCAL_KME_ID}," \
-                            f"traefik.{GLOBAL.LOCAL_KME_ID}," \
-                            "localhost"
-    CLIENT_IP_SANS: str = "165.22.101.77,165.22.109.117"
+    CLIENT_ALT_NAMES: str = f"*.{GLOBAL.LOCAL_KME_ADDRESS},{GLOBAL.LOCAL_KME_ADDRESS}"
+    CLIENT_IP_SANS: str = "" # comma-delimited
 
     # Make environment settings take precedence over __init__ and file
     class Config:

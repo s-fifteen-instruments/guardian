@@ -21,11 +21,17 @@
 ## OR SET ME IN THE ENV ##
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
+#   kme1 => local, kme2 => remote
 export KME ?= kme1
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_DIRPATH ?= alice@kme1:/home/alice/code/guardian
+export LOCAL_KME_ADDRESS ?= s15qkd-f.internal
+export LOCAL_KME_DIRPATH ?= kme1@$(LOCAL_KME_ADDRESS):/home/kme1/code/guardian
 # - Location of Remote KME's guardian git repository
-export REMOTE_KME_DIRPATH ?= bob@kme2:/home/bob/code/guardian
+#   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
+#         transfer certs (to replace full-chain authentication with int+root ca-chain)
+export REMOTE_KME_ADDRESS ?= s15qkd-g.internal
+export REMOTE_KME_DIRPATH ?= kme2@$(REMOTE_KME_ADDRESS):/home/kme2/code/guardian
+
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
