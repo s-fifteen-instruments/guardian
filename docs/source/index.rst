@@ -15,6 +15,7 @@ Contents
 
 .. toctree::
    :caption: User 
+	
 	user/overview.rst
    user/certificates.rst
 	user/API.rst
@@ -22,6 +23,7 @@ Contents
 	
 .. toctree::
    :caption: Controller 
+	
 	controller/overview.rst
    controller/certificates.rst
 	controller/API.rst
@@ -29,6 +31,7 @@ Contents
 
 .. toctree::
    :caption: Administrator 
+
 	admin/overview.rst
    admin/certificates.rst
 	admin/admin.rst
