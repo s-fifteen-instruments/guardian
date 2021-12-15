@@ -16,23 +16,23 @@ Contents
 .. toctree::
    :caption: User 
 	
-	user/overview.rst
-   user/certificates.rst
-	user/API.rst
-	user/usage.rst
+	user/U_overview
+   user/U_certificates
+	user/U_API
+	user/usage
 	
 .. toctree::
    :caption: Controller 
 	
-	controller/overview.rst
-   controller/certificates.rst
-	controller/API.rst
+	controller/C_overview
+   controller/C_certificates
+	controller/C_api
 	
 
 .. toctree::
    :caption: Administrator 
 
-	admin/overview.rst
-   admin/certificates.rst
-	admin/admin.rst
+	admin/Ad_overview
+   admin/Ad_certificates
+	admin/admin
 	
