@@ -91,6 +91,7 @@ services:
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
       - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
       - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["vault_init.py", "--first"]
