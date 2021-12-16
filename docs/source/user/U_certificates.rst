@@ -31,23 +31,23 @@ Optional identifiers are
    
    #. Blah
    
-The CSR is then handed over to the |QKD DC|_ who will sign it and return a certificate together with the CA chain for the SAE to use.
+The CSR is then handed over to the |QKDdc| who will sign it and return a certificate together with the CA chain for the SAE to use.
 
 
-.. |QKD DC| replace:: QKD device controller
-.. _`QKD DC`: :ref:`QKD controller`
+.. |QKDdc| replace:: QKD device controller
+.. _`QKDdc`: :ref:`QKD controller`
 
 Private key/certificate generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a client (SAE) doesn't have a private key, and will need one anyway, the |QKD DC| can generate a key and certificate pair and hand it over to the client. The drawback of this method is that the |QKD DC| will know the private key too. 
+If a client (SAE) doesn't have a private key, and will need one anyway, the |QKDdc| can generate a key and certificate pair and hand it over to the client. The drawback of this method is that the |QKDdc| will know the private key too. 
 
 
 Certificate Authority Chain
 ---------------------------
 
 If the certificate that the client uses was signed by the intermediate CA residing in the KME that it wants to communicate with, then the client can already communicate with the KME.
-However sometimes, they may be lots of clients that already have their certificates signed by a different trusted Certificate Authority and it may be a hassle for all of them to issue another CSR to be signed by the |QKD DC|.
-In this case, the client may give his/her CA chain to the |QKD DC| to be included in the list of trusted root CA.
-If the |QKD DC| decides that the CA chain is trustworthy and includes it as a trustworthy root CA, the client will now have access to the KME. 
+However sometimes, they may be lots of clients that already have their certificates signed by a different trusted Certificate Authority and it may be a hassle for all of them to issue another CSR to be signed by the |QKDdc|.
+In this case, the client may give his/her CA chain to the |QKDdc| to be included in the list of trusted root CA.
+If the |QKDdc| decides that the CA chain is trustworthy and includes it as a trustworthy root CA, the client will now have access to the KME. 
 
