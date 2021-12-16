@@ -15,6 +15,6 @@ Before using Guardian, several prerequisites are needed.
    5. A connection between the local KME and the remote KME.
 
 Once setup, the SAE can make a connection to the local KME and make the API calls.
-These calls can be found in `API`_.
+These calls can be found in :ref:`API`.
 Communication between SAEs to do share their keyIDs are handled by the Users and not the scope of the API.
  

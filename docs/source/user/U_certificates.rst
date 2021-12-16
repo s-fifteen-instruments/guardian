@@ -35,7 +35,7 @@ The CSR is then handed over to the |QKD DC|_ who will sign it and return a certi
 
 
 .. |QKD DC| replace:: QKD device controller
-.. _`QKD DC`: `QKD controller`_
+.. _`QKD DC`: :ref:`QKD controller`
 
 Private key/certificate generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
