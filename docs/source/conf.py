@@ -17,7 +17,11 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-]
+    'autoapi.extension'
+    ]
+
+#autoapi_dirs = ['../rest/app/api/api_v1/endpoints']
+#autoapi_add_toctree_entry = False
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
