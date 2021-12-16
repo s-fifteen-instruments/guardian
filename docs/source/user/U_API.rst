@@ -1,6 +1,6 @@
-Applitation Programming Interface
+Application Programming Interface
 =================================
 
-.. _`api page`:
+.. _api:
 
 This is the API page
