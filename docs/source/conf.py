@@ -16,8 +16,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'autoapi.extension'
+    'sphinx.ext.intersphinx'
     ]
 
 #autoapi_dirs = ['../rest/app/api/api_v1/endpoints']
