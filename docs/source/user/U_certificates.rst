@@ -33,6 +33,8 @@ Optional identifiers are
    
 The CSR is then handed over to the |QKD DC|_ who will sign it and return a certificate together with the CA chain for the SAE to use.
 
+.. _`QKD DC` `QKD controller`_
+
 Private key/certificate generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -48,4 +50,3 @@ In this case, the client may give his/her CA chain to the |QKD DC| to be include
 If the |QKD DC| decides that the CA chain is trustworthy and includes it as a trustworthy root CA, the client will now have access to the KME. 
 
 .. |QKD DC| replace:: QKD device controller
-.. _`QKD DC` `QKD controller`_

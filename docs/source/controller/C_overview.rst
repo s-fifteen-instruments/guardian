@@ -1,6 +1,6 @@
 Overview
 ========
 
-.. _`QKD controller`
+.. _`QKD controller`:
 
 I am the QKD controller
