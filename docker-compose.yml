@@ -37,6 +37,8 @@ services:
       # Pass in local and remote KME IDs to rest app container
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
+      - REMOTE_KME_ADDRESS=${REMOTE_KME_ADDRESS:-SETMEINMAKEFILE}
     volumes:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
