@@ -557,7 +557,7 @@ class VaultManager(VaultSemaphore):
                 remote_kme_response = \
                     await client.put(url=settings.REMOTE_KME_URL,
                                      json=jsonable_encoder(key_id_ledger_con.dict()),
-                                     allow_redirects=False
+                                     follow_redirects=False
                                      )
         except httpx.ReadTimeout:
             logger.error(f"Remote KME Response Timeout after "
