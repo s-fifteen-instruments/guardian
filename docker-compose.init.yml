@@ -41,6 +41,15 @@ services:
       - type: bind
         source: ./common/CERTAUTH_CONFIG
         target: /CONFIG
+      - type: bind
+        source: ./common/kme-ca.cert.pem
+        target: /kme-ca.cert.pem
+      - type: bind
+        source: ./common/kme-ca.key.pem
+        target: /kme-ca.key.pem
+      - type: bind
+        source: ./common/full-chain.cert.pem
+        target: /full-chain.cert.pem
 
   certauth_csr:
     <<: *certauth_label
