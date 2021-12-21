@@ -6,6 +6,11 @@ Guardian follows ETSI GS QKD 014 specification which aims to make it simple and 
 The goal of this Guardian is to implement a simple request and response style API between an SAE (Secure Application Entity) and a KME (Key Management Entity). SAEs request keys from KMEs which then deliver them to the SAE.
 SAEs are intended to have secure access to the KME they are connecting to. This API doesn’t handle the secure key generation and distribution by the QKD technology. What it does instead is to accept and secure the generated key for delivery to any SAE that makes a key request.
 
+Prerequisites
+-------------
+
+.. _ `prerequisites`:
+
 Before using Guardian, several prerequisites are needed.
 
    1. A key-certificate pair that is trusted by and compatible with the local KME.

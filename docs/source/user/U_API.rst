@@ -72,13 +72,13 @@ The Response body is
      "target_KME_ID": "kme2",
      "master_SAE_ID": "string",
      "slave_SAE_ID": "string",
-     "key_size": 32,
-     "stored_key_count": 1048576,
-     "max_key_count": 1048576,
-     "max_key_per_request": 100,
-     "max_key_size": 65536,
-     "min_key_size": 8,
-     "max_SAE_ID_count": 0,
+     "key_size": "integer",
+     "stored_key_count": "integer",
+     "max_key_count": "integer",
+     "max_key_per_request": "integer",
+     "max_key_size": "integer",
+     "min_key_size": "integer",
+     "max_SAE_ID_count": "integer",
      "status_extension": {
        "status_extension": "string"
      }
@@ -165,8 +165,8 @@ The request body is
 .. code:: json
 
    {
-     "number": integer,
-     "size": integer,
+     "number": 1,
+     "size": 32,
      "additional_slave_SAE_IDs": [],
      "extension_mandatory": [
        {}
