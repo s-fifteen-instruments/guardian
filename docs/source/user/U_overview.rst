@@ -8,8 +8,8 @@ SAEs are intended to have secure access to the KME they are connecting to. This 
 
 Prerequisites
 -------------
-
-.. _ `prerequisites`:
+      
+.. _`prerequisites`:
 
 Before using Guardian, several prerequisites are needed.
 
