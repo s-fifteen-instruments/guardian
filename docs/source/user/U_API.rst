@@ -34,21 +34,21 @@ No parameters are sent.
 .. code:: json
    
    {
-      "is_initialized": bool,
-      "is_sealed": bool,
-      "is_authenticated": bool
+      "is_initialized": "bool",
+      "is_sealed": "bool",
+      "is_authenticated": "bool"
    }
    
 
-   Example Value
+Example Value
    
 
 .. code:: json
    
    {
-      "is_initialized": true,
-      "is_sealed": false,
-      "is_authenticated": true
+      "is_initialized": "true",
+      "is_sealed": "false",
+      "is_authenticated": "true"
    }
    
    
@@ -72,3 +72,5 @@ Get Key With Key Ids
 
 Post Key With Key Ids
 ---------------------
+
+
