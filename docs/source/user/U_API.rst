@@ -107,7 +107,9 @@ Example Value for success
 Get key
 ^^^^^^^
 
-Get key is called by the master SAE with the slave SAE_id and optional number of keys and size. The source KME will negotiate with the target KME where the slave SAE resides to generate symmetric keys encoded in **base64** for the master and slave SAEs 
+Get key is called by the master SAE with the slave SAE_id and optional number of keys and size. The source KME will negotiate with the target KME where the slave SAE resides to generate symmetric keys encoded in `**base64**`__ for the master and slave SAEs 
+
+.. __: https://www.rfc-editor.org/info/rfc4648
 
 Parameters are sent via a GET access method with ``KME_hostname`` and ``slave_SAE_ID`` encoded in the access URL. Optional parameters ``numbers`` and ``size`` will default to 1 and 32 (bits) if unspecified.
 
@@ -125,7 +127,7 @@ The response body is
          "key_extension": "string",
          "key": "string",
          "key_ID_extension": "string",
-         "key_ID": "stringstringstri"
+         "key_ID": "string"
        }
      ]
    }   
@@ -153,13 +155,110 @@ Example Value for success
 Post key
 ^^^^^^^^
 
+Similar to Get Key, but with a Post access method instead. With this method, the SAE may specify additional options of ``additional_slave_SAE_IDs``, ``extension_mandatory`` and ``extension_optional`` in the request. These however are not implement by Guardian.
 
+Example request URL
+   ``https://kme1/api/v1/keys/sae2/enc_keys
+   
+The request body is 
+
+.. code:: json
+
+   {
+     "number": integer,
+     "size": integer,
+     "additional_slave_SAE_IDs": [],
+     "extension_mandatory": [
+       {}
+     ],
+     "extension_optional": [
+       {}
+     ]
+   }
+
+The response body is the same as Get Key
+
+.. code:: json
+   
+   {
+     "key_container_extension": "string",
+     "keys": [
+       {
+         "key_extension": "string",
+         "key": "string",
+         "key_ID_extension": "string",
+         "key_ID": "string"
+       }
+     ]
+   }   
+   
+   
 Get Key With Key Ids
 ^^^^^^^^^^^^^^^^^^^^
 
+This method is called by the Slave SAE on his/her target KME. It retrives the matching key from the KME through the use of the Key Id(s) that the master SAE notified the Slave SAE.
+
+Example request URL
+   ``https://kme2/api/v1/keys/sae1/dec_keys?key_ID=ce9d2863-d4f8-522d-aa5a-95fcd1320648``
+
+The response body is the also the same as Get Key and Post Key
+
+.. code:: json
+   
+   {
+     "key_container_extension": "string",
+     "keys": [
+       {
+         "key_extension": "string",
+         "key": "string",
+         "key_ID_extension": "string",
+         "key_ID": "string"
+       }
+     ]
+   }   
+   
 
 Post Key With Key Ids
 ^^^^^^^^^^^^^^^^^^^^^
+
+If more than one Key needs to be retrived from multiple Key Ids, then the Post method is used.
+
+Example request URL
+   ``https://kme2/api/v1/keys/sae1/dec_keys``
+   
+The request body is the same as 
+
+.. code:: json
+
+   {
+     "key_IDs_extension": "string",
+     "key_IDs": [
+       {
+         "key_ID_extension": "string",
+         "key_ID": "string"
+       }
+     ]
+   }
+
+Example request body,
+
+.. code:: json
+
+   {
+     "key_IDs_extension": "string",
+     "key_IDs": [
+       {
+         "key_ID_extension": "",
+         "key_ID": "f1f13be6-fc07-58d8-bd44-aabad86a4dc1"
+       },
+       {
+         "key_ID_extension": "",
+         "key_ID": "0e21abe7-1679-5832-82a6-fd27cff4a653"
+       }
+     ]
+   }
+
+The Response body is again the same as that for Get Key, Post key and Get key with Key Id
 
 
 HTTP Error Codes
