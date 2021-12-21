@@ -34,5 +34,6 @@ connection status to the Vault running on the KME.
       "is_initialized": bool,
       "is_sealed": bool,
       "is_authenticated": bool
+      
    }
    
