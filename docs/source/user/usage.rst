@@ -13,14 +13,14 @@ Web Browser
 
 We type the URL, ``https://kme1/api/v1/keys/sae2/status`` to get the status of the connection between KME1 to the KME that handles SAE2 which is KME2 in this example. Before the connection continues, the correct certificate needs to be presented to the server for authentication.
 
-.. figure:: images\chrome_choose_cert.png
+.. figure:: images/chrome_choose_cert.png
    :alt: Choose certificate
    
    Chrome prompts which certificate to use to do mutual authentication.
    
    
    
-.. figure:: images\chrome_status.png
+.. figure:: images/chrome_status.png
    :alt: Status of connection to SAE2
    
    After authentication, we receive the response of the GET status method. The default key size is 32 bits and other limits are readable here.
