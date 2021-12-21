@@ -158,7 +158,7 @@ Post key
 Similar to Get Key, but with a Post access method instead. With this method, the SAE may specify additional options of ``additional_slave_SAE_IDs``, ``extension_mandatory`` and ``extension_optional`` in the request. These however are not implement by Guardian.
 
 Example request URL
-   ``https://kme1/api/v1/keys/sae2/enc_keys
+   ``https://kme1/api/v1/keys/sae2/enc_keys``
    
 The request body is 
 
