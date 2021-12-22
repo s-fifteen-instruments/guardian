@@ -1,7 +1,7 @@
 Usage
 =====
 
-Once the :ref:`requirements <prerequisites>` are in place, any modern web client, programming packages with TLS support, etc. can be used to access the APIs. We list examples using Chrome based Web browser, python Request library, cURL and openssl
+Once the :ref:`requirements <prerequisites>` are in place, any modern web client, programming packages with TLS support, etc. can be used to access the APIs. We list examples using Chrome based Web browser, and python Request library.
 
 We assume that the SAE key-certificate pair together with the root CA is already installed in the certificate manager used by the Web browser for the first example. 
 In the other examples, the key-certificate pair is in a PEM format in the same directory as that the commands are executed in.
@@ -69,5 +69,50 @@ With this, sae1 and sae2 a set of QKD keys that they can use to communicate with
 
 
 .. |default_size| replace:: 32
+
+
+
+Python
+------
+
+In python, the ``requests`` module can be used to emulate the web browser functionality. Also there are several ways to do SSL verification. In this Windows example, we load the root CA certificate to the Microsoft certificate store as a trusted CA and use ``python-certifi-win32``
+
+.. code-block:: dosbatch
+   
+   pip install requests python-certifi-win32
+
+If installed correctly, then the rest API can be accessed via
+
+.. code-block:: python
+   :caption: Script
+   :linenos:
+   
+   import requests
+   
+   cert_path='/path/to/cert'
+   key_path='/path/to/key'
+   status_url='https://kme1/api/v1/keys/sae2/status'
+   print('Checking connection to kme1...')
+   response = requests.get(status_url,cert=(cert_path,key_path))
+   print('Connection to kme1 OK.')
+   print(response.content)
+
+   get_key_url='https://kme1/api/v1/keys/sae2/enc_keys'
+   response = requests.get(get_key_url,cert=(cert_path,key_path))
+   print(response.content)
+
+
+Similarly, for a POST request,
+
+.. code-block:: python
+   
+   get_key_url='https://kme1/api/v1/keys/sae2/enc_keys'
+   query={'number': 1 , 'size': 32}
+   response = requests.post(get_key_url,cert=(cert_path,key_path),json=query)
+   print(response.json())
+
+
+
+
    
 
