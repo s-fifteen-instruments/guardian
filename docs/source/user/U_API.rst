@@ -3,230 +3,236 @@
 Application Programming Interface
 =================================
 
-The APIs that are available to the client (SAEs) 
+The API endpoints that are available to the client (SAEs) is summarized in the table below:
 
-   +------------------------+----------------------------+
-   | Method name            |   defined path             |
-   +------------------------+----------------------------+
-   | Check Vconn            | /api/v1/check_vconn/       |
-   +------------------------+----------------------------+
-   | Get status             | /api/v1/keys/sae_id/status |
-   +------------------------+----------------------------+
-   | Get key                |/api/v1/keys/sae_id/enc_keys|
-   +------------------------+----------------------------+
-   | Post key               |/api/v1/keys/sae_id/enc_keys|
-   +------------------------+----------------------------+
-   | Get Key With Key Ids   |/api/v1/keys/sae_id/dec_keys|
-   +------------------------+----------------------------+
-   | Post Key With Key Ids  |/api/v1/keys/sae_id/dec_keys|
-   +------------------------+----------------------------+
-   
+=======================================  ================
+Actions                                  Endpoint
+=======================================  ================
+`Check vault connection`_                /check_vconn
+`Get SAE status`_                        /keys/sae_id/status
+`Retrieve new keys`_                     /keys/sae_id/enc_keys
+`Retrieve new keys with extensions`_     /keys/sae_id/enc_keys
+`Retrieve key from key ID`_              /keys/sae_id/dec_keys
+`Retrieve multiple keys from key IDs`_   /keys/sae_id/dec_keys
+=======================================  ================
 
-Check Vconn
-^^^^^^^^^^^
+In the examples below, we denote the KME domain ``https://kme1/`` and current sae ``sae1``.
 
-Check Vconn is an endpoint that returns to the client the 
-connection status to the Vault running on the KME. 
+----
+
+Check vault connection
+----------------------
+
+Checks the connection status of the SAE to the Vault running on the KME.  
 No parameters are sent.
 
-The response body is
++--------------+------------------------------------------+
+| **Method:**  | GET                                      |
++--------------+------------------------------------------+
+| **Format:**  | ``/check_vconn``                         |
++--------------+------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/check_vconn``      |
++--------------+------------------------------------------+
 
-.. code:: json
+.. tabs::
+
+   .. group-tab:: Response schema
+
+      .. code:: json
+        
+        {
+            "is_initialized": "bool",
+            "is_sealed": "bool",
+            "is_authenticated": "bool"
+        }
+    
+   .. group-tab:: Example successful response
+
+      .. code:: json
+        
+        {
+            "is_initialized": true,
+            "is_sealed": false,
+            "is_authenticated": true
+        }
+
+----
+
+Get SAE status
+--------------
+
+Verifies if a connection to another SAE exists. If so, return the keying material size limits and counts.  
+The parameters are sent via a GET access method with ``slave_SAE_ID`` encoded in the access URL.
+
++--------------+------------------------------------------+
+| **Method:**  | GET                                      |
++--------------+------------------------------------------+
+| **Format:**  | ``/keys/{slave_SAE_ID}/status``          |
++--------------+------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/keys/sae3/status`` |
++--------------+------------------------------------------+
    
-   {
-      "is_initialized": "bool",
-      "is_sealed": "bool",
-      "is_authenticated": "bool"
-   }
-   
+.. tabs::
 
-Example Value
-   
+   .. group-tab:: Response schema
 
-.. code:: json
-   
-   {
-      "is_initialized": "true",
-      "is_sealed": "false",
-      "is_authenticated": "true"
-   }
-   
-   
-Get Status
-^^^^^^^^^^
+      .. code:: json
 
-Get status is the endpoint where the client can verify if the connection to another SAE exists and also keying materials size limits and counts.
+        {
+          "source_KME_ID": "kme1",
+          "target_KME_ID": "kme2",
+          "master_SAE_ID": "string",
+          "slave_SAE_ID": "string",
+          "key_size": "integer",
+          "stored_key_count": "integer",
+          "max_key_count": "integer",
+          "max_key_per_request": "integer",
+          "max_key_size": "integer",
+          "min_key_size": "integer",
+          "max_SAE_ID_count": "integer",
+          "status_extension": {
+            "status_extension": "string"
+          }
+        }
+    
+   .. group-tab:: Example successful response
 
-The parameters are sent via a GET access method with  ``KME_hostname`` and ``slave_SAE_ID`` encoded in the access URL.
+      .. code:: json
 
-Example request URL
-   ``https://kme1/api/v1/keys/sae3/status``
-   
+        {
+          "source_KME_ID": "kme1",
+          "target_KME_ID": "kme2",
+          "master_SAE_ID": "sae1",
+          "slave_SAE_ID": "sae3",
+          "key_size": 32,
+          "stored_key_count": 1150,
+          "max_key_count": 1048576,
+          "max_key_per_request": 100,
+          "max_key_size": 65536,
+          "min_key_size": 8,
+          "max_SAE_ID_count": 0
+        }
 
-The Response body is
+----
 
-.. code:: json
+Retrieve new keys
+-----------------
 
-   {
-     "source_KME_ID": "kme1",
-     "target_KME_ID": "kme2",
-     "master_SAE_ID": "string",
-     "slave_SAE_ID": "string",
-     "key_size": "integer",
-     "stored_key_count": "integer",
-     "max_key_count": "integer",
-     "max_key_per_request": "integer",
-     "max_key_size": "integer",
-     "min_key_size": "integer",
-     "max_SAE_ID_count": "integer",
-     "status_extension": {
-       "status_extension": "string"
-     }
-   }
-   
-Example Value for success
-
-.. code:: json
-
-   }
-     "source_KME_ID": "kme1",
-     "target_KME_ID": "kme2",
-     "master_SAE_ID": "sae1",
-     "slave_SAE_ID": "sae4",
-     "key_size": 32,
-     "stored_key_count": 1150,
-     "max_key_count": 1048576,
-     "max_key_per_request": 100,
-     "max_key_size": 65536,
-     "min_key_size": 8,
-     "max_SAE_ID_count": 0
-   }
-   
-.. For Failure   
-   
-Get key
-^^^^^^^
-
-Get key is called by the master SAE with the slave SAE_id and optional number of keys and size. The source KME will negotiate with the target KME where the slave SAE resides to generate symmetric keys encoded in `**base64**`__ for the master and slave SAEs 
-
-.. __: https://www.rfc-editor.org/info/rfc4648
+Called by the master SAE with the slave ``SAE_id`` and optional number of keys and size. The source KME will negotiate with the target KME where the slave SAE resides to generate symmetric keys encoded in `base64 <https://www.rfc-editor.org/info/rfc4648>`_ for the master and slave SAEs.
 
 Parameters are sent via a GET access method with ``KME_hostname`` and ``slave_SAE_ID`` encoded in the access URL. Optional parameters ``numbers`` and ``size`` will default to 1 and 32 (bits) if unspecified.
 
-Example request URL
-   ``https://kme1/api/v1/keys/sae2/enc_keys?number=2&size=24``
++--------------+-------------------------------------------------------------+
+| **Method:**  | GET                                                         |
++--------------+-------------------------------------------------------------+
+| **Format:**  | ``/keys/{slave_SAE_ID}/enc_keys``                           |
++--------------+-------------------------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/keys/sae2/enc_keys?number=2&size=24`` |
++--------------+-------------------------------------------------------------+
 
-The response body is
+.. tabs::
 
-.. code:: json
-   
-   {
-     "key_container_extension": "string",
-     "keys": [
-       {
-         "key_extension": "string",
-         "key": "string",
-         "key_ID_extension": "string",
-         "key_ID": "string"
-       }
-     ]
-   }   
-   
-with options ``key_container_extension``, ``key_extension`` and ``key_ID_extension`` defined for future use.
-   
-Example Value for success
+   .. group-tab:: Response schema
 
-.. code:: json
+      .. code:: json
+        
+        {
+          "key_container_extension": "string",
+          "keys": [
+            {
+              "key_extension": "string",
+              "key": "string",
+              "key_ID_extension": "string",
+              "key_ID": "string"
+            }
+          ]
+        }
+      
+      with options ``key_container_extension``, ``key_extension`` and ``key_ID_extension`` defined for future use.
+    
+   .. group-tab:: Example successful response
 
-   {
-     "keys": [
-       {
-         "key": "2Azd",
-         "key_ID": "a6c4048f-a9ff-5661-b281-9d4ab9893dff"
-       },
-       {
-         "key": "BUl7",
-         "key_ID": "296a7e8e-fcde-5539-aaee-92e629d169d0"
-       }
-     ]
-   }
+      .. code:: json
 
+        {
+          "keys": [
+            {
+              "key": "2Azd",
+              "key_ID": "a6c4048f-a9ff-5661-b281-9d4ab9893dff"
+            },
+            {
+              "key": "BUl7",
+              "key_ID": "296a7e8e-fcde-5539-aaee-92e629d169d0"
+            }
+          ]
+        }
 
-Post key
-^^^^^^^^
+----
 
-Similar to Get Key, but with a Post access method instead. With this method, the SAE may specify additional options of ``additional_slave_SAE_IDs``, ``extension_mandatory`` and ``extension_optional`` in the request. These however are not implement by Guardian.
+Retrieve new keys with extensions
+---------------------------------
 
-Example request URL
-   ``https://kme1/api/v1/keys/sae2/enc_keys``
-   
-The request body is 
+Similar to `Retrieve new keys`_, but with a POST access method instead. With this method, the SAE may specify additional options of ``additional_slave_SAE_IDs``, ``extension_mandatory`` and ``extension_optional`` in the request. These are currently not implemented by Guardian.
 
-.. code:: json
++--------------+-------------------------------------------------------------+
+| **Method:**  | POST                                                        |
++--------------+-------------------------------------------------------------+
+| **Format:**  | ``/keys/{slave_SAE_ID}/enc_keys``                           |
++--------------+-------------------------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/keys/sae2/enc_keys``                  |
++--------------+-------------------------------------------------------------+
 
-   {
-     "number": 1,
-     "size": 32,
-     "additional_slave_SAE_IDs": [],
-     "extension_mandatory": [
-       {}
-     ],
-     "extension_optional": [
-       {}
-     ]
-   }
-
-The response body is the same as Get Key
+Request body:
 
 .. code:: json
+
+  {
+    "number": 1,
+    "size": 32,
+    "additional_slave_SAE_IDs": [],
+    "extension_mandatory": [
+      {}
+    ],
+    "extension_optional": [
+      {}
+    ]
+  }
+
+The response body is the same as `Retrieve new keys`_.
+
+----
+
+Retrieve key from key ID
+------------------------
+
+Retrives the matching key from the KME through the use of the Key ID(s) that the master SAE notified the Slave SAE. This method is called by the Slave SAE on his/her target KME.
+
++--------------+----------------------------------------------------------------------------------------+
+| **Method:**  | GET                                                                                    |
++--------------+----------------------------------------------------------------------------------------+
+| **Format:**  | ``/keys/{master_SAE_ID}/dec_keys``                                                     |
++--------------+----------------------------------------------------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/keys/sae1/dec_keys?key_ID=ce9d2863-d4f8-522d-aa5a-95fcd1320648`` |
++--------------+----------------------------------------------------------------------------------------+
+
+The response body is the also the same as that of `Retrieve new keys`_ and `Retrieve new keys with extensions`_.
+
+----
+
+Retrieve multiple keys from key IDs
+-----------------------------------
+
+Retrieves one or more keys from the KME by specifying one or more key IDs.
+
++--------------+--------------------------------------------+
+| **Method:**  | POST                                       |
++--------------+--------------------------------------------+
+| **Format:**  | ``/keys/{master_SAE_ID}/dec_keys``         |
++--------------+--------------------------------------------+
+| **Example:** | ``https://kme1/api/v1/keys/sae1/dec_keys`` |
++--------------+--------------------------------------------+
    
-   {
-     "key_container_extension": "string",
-     "keys": [
-       {
-         "key_extension": "string",
-         "key": "string",
-         "key_ID_extension": "string",
-         "key_ID": "string"
-       }
-     ]
-   }   
-   
-   
-Get Key With Key Ids
-^^^^^^^^^^^^^^^^^^^^
-
-This method is called by the Slave SAE on his/her target KME. It retrives the matching key from the KME through the use of the Key Id(s) that the master SAE notified the Slave SAE.
-
-Example request URL
-   ``https://kme2/api/v1/keys/sae1/dec_keys?key_ID=ce9d2863-d4f8-522d-aa5a-95fcd1320648``
-
-The response body is the also the same as Get Key and Post Key
-
-.. code:: json
-   
-   {
-     "key_container_extension": "string",
-     "keys": [
-       {
-         "key_extension": "string",
-         "key": "string",
-         "key_ID_extension": "string",
-         "key_ID": "string"
-       }
-     ]
-   }   
-   
-
-Post Key With Key Ids
-^^^^^^^^^^^^^^^^^^^^^
-
-If more than one Key needs to be retrived from multiple Key Ids, then the Post method is used.
-
-Example request URL
-   ``https://kme2/api/v1/keys/sae1/dec_keys``
-   
-The request body is the same as 
+Request body:
 
 .. code:: json
 
@@ -240,7 +246,7 @@ The request body is the same as
      ]
    }
 
-Example request body,
+Request body example:
 
 .. code:: json
 
@@ -258,21 +264,21 @@ Example request body,
      ]
    }
 
-The Response body is again the same as that for Get Key, Post key and Get key with Key Id
+The response body is again the same as that for `Retrieve new keys`, `Retrieve new keys with extensions`_ and `Retrieve key from key ID`_.
 
+----
 
 HTTP Error Codes
 ----------------
 
-All APIs except for Check Vconn may return the following responses.
+All endpoints except for `Check vault connection`_ may return the following responses.
 
 ==================   ======================  ======================
 HTTP status code     Response data model     Description
 ==================   ======================  ======================
-200                  Success                 Successful Response.
-400                  Error                   Bad request format.
-401                  -                       Unauthorized.
-422                  Error                   Validation Error.
-503                  Error                   Error on Server side.
+200                  Success                 Successful Response
+400                  Error                   Bad request format
+401                  `-`                     Unauthorized
+422                  Error                   Validation Error
+503                  Error                   Error on Server side
 ==================   ======================  ======================
-
