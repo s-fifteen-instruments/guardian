@@ -264,7 +264,7 @@ Request body example:
      ]
    }
 
-The response body is again the same as that for `Retrieve new keys`, `Retrieve new keys with extensions`_ and `Retrieve key from key ID`_.
+The response body is again the same as that for `Retrieve new keys`_, `Retrieve new keys with extensions`_ and `Retrieve key from key ID`_.
 
 ----
 
