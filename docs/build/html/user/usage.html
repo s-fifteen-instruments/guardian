@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage &mdash; Guardian 0.7 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Overview" href="../controller/C_overview.html" />
+    <link rel="prev" title="Application Programming Interface" href="U_API.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Guardian
+          </a>
+              <div class="version">
+                0.7.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="U_overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="U_certificates.html">Certificates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="U_API.html">Application Programming Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#web-browser">Web Browser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python">Python</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Controller</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../controller/C_overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../controller/C_certificates.html">Certificates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../controller/C_api.html">API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Administrator</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin/Ad_overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin/Ad_certificates.html">Certificates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin/admin.html">Administrating</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Guardian</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Usage</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h1>
+<p>Once the <a class="reference internal" href="U_overview.html#id1"><span class="std std-ref">requirements</span></a> are in place, any modern web client, programming packages with TLS support, etc. can be used to access the APIs. We list examples using Chrome based Web browser, and python Request library.</p>
+<p>We assume that the SAE key-certificate pair together with the root CA is already installed in the certificate manager used by the Web browser for the first example.
+In the other examples, the key-certificate pair is in a PEM format in the same directory as that the commands are executed in.
+Also, the hostname kme1 and kme2 directs to the correct KMEs with sae1 and sae2 the clients that can authenticate respectively.</p>
+<section id="web-browser">
+<h2>Web Browser<a class="headerlink" href="#web-browser" title="Permalink to this headline"></a></h2>
+<p>We type the URL, <code class="docutils literal notranslate"><span class="pre">https://kme1/api/v1/keys/sae2/status</span></code> to get the status of the connection between KME1 to the KME that handles SAE2 which is KME2 in this example. Before the connection continues, the correct certificate needs to be presented to the server for authentication.</p>
+<figure class="align-default" id="id1">
+<img alt="Choose certificate" src="../_images/chrome_choose_cert.png" />
+<figcaption>
+<p><span class="caption-text">Chrome prompts which certificate to use to do mutual authentication.</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id2">
+<img alt="Status of connection to SAE2" src="../_images/chrome_status.png" />
+<figcaption>
+<p><span class="caption-text">After authentication, we receive the response of the GET status method. The default key size is 32 bits and other limits are readable here.</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>To request two keys of length 256 bits to use in communicating to sae2, we use the Get Key method by send the URL, <code class="docutils literal notranslate"><span class="pre">https://kme1/api/v1/keys/sae2/enc_keys?number=2&amp;size=256</span></code>.</p>
+<figure class="align-default" id="id3">
+<img alt="Response from kme1 to sae1 with 2 keys of length 256 bits each." src="../_images/chrome_enc_more_keys.png" />
+<figcaption>
+<p><span class="caption-text">Response from kme1 to sae1 with 2 keys of length 256 bits each.</span><a class="headerlink" href="#id3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The keys are returned in a key container formatted using JSON. The keys are encoded in base64 which pads the final character using <code class="docutils literal notranslate"><span class="pre">=</span></code> if the total number of bits is not a multiple of 6 (2^6 = 64). Together with the key is the corresponding key_ID that has to be notified to sae2 for him/her to retrive his/her key from kme2. If the options <code class="docutils literal notranslate"><span class="pre">number</span></code> and <code class="docutils literal notranslate"><span class="pre">size</span></code> are not defined, kme1 will return the default one key with 32 bits.</p>
+<figure class="align-default" id="id4">
+<img alt="Response from kme1 to sae1 with one keys of length |default_size| bits." src="../_images/chrome_enc_keys.png" />
+<figcaption>
+<p><span class="caption-text">Without any options, the kme1 returns one key the size of 32 bits.</span><a class="headerlink" href="#id4" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Now sae1 has 3 keys with their corresponding key_IDs. The key_IDs are communicated to sae2 which then calls the Get key with Key ID method.</p>
+<figure class="align-default" id="id5">
+<img alt="Choose certificate to communicate to kme2" src="../_images/chrome_choose_cert_kme2.png" />
+<figcaption>
+<p><span class="caption-text">Chrome prompts which certificate to use to do mutual authentication for sae2 and kme2.</span><a class="headerlink" href="#id5" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Now we identify as sae2 itself sae2 certificate to kme2. With the Get method we send the URL <code class="docutils literal notranslate"><span class="pre">https://kme2/api/v1/keys/sae1/dec_keys?key_ID=3f58ec7a-499b-5a05-b475-dd5f1e78092b</span></code>. With the Get method we can only request one key at a time.</p>
+<figure class="align-default" id="id6">
+<img alt="Get key with Key ID" src="../_images/chrome_dec_more_keys.png" />
+<figcaption>
+<p><span class="caption-text">sae2 retrives the key from KME2.</span><a class="headerlink" href="#id6" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id7">
+<img alt="Get another key with Key ID" src="../_images/chrome_dec_keys.png" />
+<figcaption>
+<p><span class="caption-text">sae2 retrives the another key from KME2. <code class="docutils literal notranslate"><span class="pre">https://kme2/api/v1/keys/sae1/dec_keys?key_ID=4d90c421-a5fa-55c8-8da6-3e6ebde75477</span></code></span><a class="headerlink" href="#id7" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Once the key is retrived, it is deleted from KME2 and a subsequent call is made, an error is reported that the key has been consumed.</p>
+<figure class="align-default" id="id8">
+<img alt="Second call of Get key with Key ID with the same key ID" src="../_images/chrome_dec_keys_twice.png" />
+<figcaption>
+<p><span class="caption-text">sae2 tries to retrives the same key again from KME2. <code class="docutils literal notranslate"><span class="pre">https://kme2/api/v1/keys/sae1/dec_keys?key_ID=4d90c421-a5fa-55c8-8da6-3e6ebde75477</span></code></span><a class="headerlink" href="#id8" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>With this, sae1 and sae2 a set of QKD keys that they can use to communicate with each other.</p>
+</section>
+<section id="python">
+<h2>Python<a class="headerlink" href="#python" title="Permalink to this headline"></a></h2>
+<p>In python, the <code class="docutils literal notranslate"><span class="pre">requests</span></code> module can be used to emulate the web browser functionality. Also there are several ways to do SSL verification. In this Windows example, we load the root CA certificate to the Microsoft certificate store as a trusted CA and use <code class="docutils literal notranslate"><span class="pre">python-certifi-win32</span></code></p>
+<div class="highlight-dosbatch notranslate"><div class="highlight"><pre><span></span>pip install requests python-certifi-win32
+</pre></div>
+</div>
+<p>If installed correctly, then the rest API can be accessed via</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">Script</span><a class="headerlink" href="#id9" title="Permalink to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span> <span class="nn">requests</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="n">cert_path</span><span class="o">=</span><span class="s1">&#39;/path/to/cert&#39;</span>
+<span class="linenos"> 4</span><span class="n">key_path</span><span class="o">=</span><span class="s1">&#39;/path/to/key&#39;</span>
+<span class="linenos"> 5</span><span class="n">status_url</span><span class="o">=</span><span class="s1">&#39;https://kme1/api/v1/keys/sae2/status&#39;</span>
+<span class="linenos"> 6</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Checking connection to kme1...&#39;</span><span class="p">)</span>
+<span class="linenos"> 7</span><span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status_url</span><span class="p">,</span><span class="n">cert</span><span class="o">=</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span><span class="n">key_path</span><span class="p">))</span>
+<span class="linenos"> 8</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Connection to kme1 OK.&#39;</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="n">get_key_url</span><span class="o">=</span><span class="s1">&#39;https://kme1/api/v1/keys/sae2/enc_keys&#39;</span>
+<span class="linenos">12</span><span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">get_key_url</span><span class="p">,</span><span class="n">cert</span><span class="o">=</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span><span class="n">key_path</span><span class="p">))</span>
+<span class="linenos">13</span><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Similarly, for a POST request,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">get_key_url</span><span class="o">=</span><span class="s1">&#39;https://kme1/api/v1/keys/sae2/enc_keys&#39;</span>
+<span class="n">query</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">get_key_url</span><span class="p">,</span><span class="n">cert</span><span class="o">=</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span><span class="n">key_path</span><span class="p">),</span><span class="n">json</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="U_API.html" class="btn btn-neutral float-left" title="Application Programming Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../controller/C_overview.html" class="btn btn-neutral float-right" title="Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, S-Fifteen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
