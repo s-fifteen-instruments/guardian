@@ -1,7 +1,7 @@
+.. _api:
+
 Application Programming Interface
 =================================
-
-.. _api:
 
 The APIs that are available to the client (SAEs) 
 
