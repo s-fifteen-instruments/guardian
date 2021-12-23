@@ -1,0 +1,10 @@
+To compile documentation locally, install sphinx and sphinx_rtd_theme via
+
+pip install sphinx sphinx_rtd_theme
+
+To build, navigate to guardian\docs\ and run
+
+make html
+
+The documentation is then visible on guardian/docs/build/html/index.html
+
