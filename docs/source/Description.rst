@@ -9,6 +9,7 @@ Here we describe the main idea behind Guardian and how implementation works.
 
    The possible layout of the Guardian REST API is shown. Guardian receives quantum keys from QCrypto stack which communicates directly with the QKD hardware. Locally, within their secure sites, Encryptors A and B, with their proper TLS authentication methods, request keys for setting up a Layer 2 Encryption channel between themselves. Clients 1 and 2 can communicate through this encryption channel. They can also request their own keys from Guardian if they have the their personal TLS certificates recognised by Guardian.
    
+----
    
 Vault
 -----
@@ -46,12 +47,14 @@ The secrets in vault are then only accessed via ``rest`` and ``watcher`` service
 
 .. _hvac: https://pypi.org/project/hvac/
 
+----
 
 Watcher
 -------
 
 Watcher is a Python script that looks at the notifier pipe established by the QCrypto stack. Everytime a final key pair is available, watcher will ingest the key into Vault.
 
+----
 
 FastAPI
 -------
@@ -61,9 +64,9 @@ Guardian is built upon FastAPI_. It handles the requests from the SAEs and also 
 The general steps that each request will go through are
 
 #. Determine the local sae_id from the presented certificate common name 
-#. (Check local client list to determine if authorised? [1]_ )
+#. (Check local client list to determine if authorised? [#note]_ )
 #. Determine the remote sae_id from request
-#. Establish the remote kme address paired to the remote sae_id [1]_
+#. Establish the remote kme address paired to the remote sae_id [#note]_
 #. Connect to vault to access correct secrets, ledger and generate appropriate queries.
 #. Establish requests to remote kme is necessary and get response.
 #. Respond to local sae.
@@ -71,7 +74,9 @@ The general steps that each request will go through are
 
 .. _FastAPI: https://fastapi.tiangolo.com/
 
-.. [1] Not implemented yet as of version 0.7
+.. [#note] Not implemented yet as of version 0.7
+
+----
 
 Traefik
 -------
@@ -80,4 +85,13 @@ Traefik_ is a proxy service that routes the incoming traffic to the correct proc
    
 Since traefik is the one handling TLS Authentication it is also possible to add custom CA chains into the configuration to allow other trusted parties to interact with Guardian without them issuing a Certificate Signing Request.
 
-.._Traefik: https://doc.traefik.io/traefik/
+.. _Traefik: https://doc.traefik.io/traefik/
+
+----
+
+Docker
+------
+
+Docker is a set of platform as a service product that use OS-level virtualization to deliver software in packages called containers [#]_.
+
+.. [#] `Wikipedia: Docker (software) <https://en.wikipedia.org/wiki/Docker_(software)>`_

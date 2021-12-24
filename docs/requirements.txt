@@ -1,2 +1,3 @@
 # Package requirements specified for ReadTheDocs
 sphinx-tabs
+sphinx_rtd_theme

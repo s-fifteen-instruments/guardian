@@ -1,6 +1,6 @@
 To compile documentation locally, install sphinx and sphinx_rtd_theme via
 
-pip install sphinx sphinx_rtd_theme
+pip install sphinx sphinx_rtd_theme sphinx_tabs
 
 To build, navigate to guardian\docs\ and run
 
