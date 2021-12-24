@@ -231,38 +231,40 @@ Retrieves one or more keys from the KME by specifying one or more key IDs.
 +--------------+--------------------------------------------+
 | **Example:** | ``https://kme1/api/v1/keys/sae1/dec_keys`` |
 +--------------+--------------------------------------------+
-   
-Request body:
 
-.. code:: json
+.. tabs::
 
-   {
-     "key_IDs_extension": "string",
-     "key_IDs": [
-       {
-         "key_ID_extension": "string",
-         "key_ID": "string"
-       }
-     ]
-   }
+   .. group-tab:: Request schema
 
-Request body example:
+      .. code:: json
 
-.. code:: json
+         {
+           "key_IDs_extension": "string",
+           "key_IDs": [
+             {
+               "key_ID_extension": "string",
+               "key_ID": "string"
+             }
+           ]
+         }
 
-   {
-     "key_IDs_extension": "string",
-     "key_IDs": [
-       {
-         "key_ID_extension": "",
-         "key_ID": "f1f13be6-fc07-58d8-bd44-aabad86a4dc1"
-       },
-       {
-         "key_ID_extension": "",
-         "key_ID": "0e21abe7-1679-5832-82a6-fd27cff4a653"
-       }
-     ]
-   }
+   .. group-tab:: Request body Example
+
+      .. code:: json
+
+         {
+           "key_IDs_extension": "string",
+           "key_IDs": [
+             {
+               "key_ID_extension": "",
+               "key_ID": "f1f13be6-fc07-58d8-bd44-aabad86a4dc1"
+             },
+             {
+               "key_ID_extension": "",
+               "key_ID": "0e21abe7-1679-5832-82a6-fd27cff4a653"
+             }
+           ]
+         }
 
 The response body is again the same as that for `Retrieve new keys`_, `Retrieve new keys with extensions`_ and `Retrieve key from key ID`_.
 
