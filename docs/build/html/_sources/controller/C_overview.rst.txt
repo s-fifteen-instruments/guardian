@@ -1,9 +1,0 @@
-Overview
-========
-
-.. _`QKD controller`:
-
-The |QKDdc| has a dual role is establishing QKD links between KMEs and also authorising SAEs onto which KME they can communicate to. In the initial implementation, only two nodes are present and thus the|QKDdc| in only responsible for stopping and starting the devices which is described in `QKDServer <https://github.com/s-fifteen-instruments/QKDServer/>`_.
-
-.. |QKDdc| replace:: QKD device controller
-
