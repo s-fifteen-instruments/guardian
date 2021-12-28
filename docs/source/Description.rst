@@ -37,7 +37,7 @@ Setting up Vault is intended to be a manual process as a secured system should b
    
    #. The default services (entities) that can access vault through the ACL are *watcher* and *rest*. For certificate signing, an additional entity with a suitable authentication method and appropriate policies can be added.
    
-After setting up, the root token should be necessarily be revoked. The Shamir secret keys should also be distributed such that no one entity can unseal the vault or generate a new root token without the threshold number of unseal keys. 
+After setting up, the root token should necessarily be revoked. The Shamir secret keys should also be distributed such that no one entity can unseal the vault or generate a new root token without the threshold number of unseal keys. 
 
 .. note:: By design Vault starts up in a sealed state and needs to be unsealed with a minimum threshold of Shamir secret keys before it can be accessed. This is to protect from an offline physical attack.
 
@@ -74,7 +74,7 @@ The general steps that each request will go through are
 
 .. _FastAPI: https://fastapi.tiangolo.com/
 
-.. [#note] Not implemented yet as of version 0.7
+.. [#note] Not implemented yet as of version |version|
 
 ----
 
@@ -92,6 +92,6 @@ Since traefik is the one handling TLS Authentication it is also possible to add 
 Docker
 ------
 
-Docker is a set of platform as a service product that use OS-level virtualization to deliver software in packages called containers [#]_.
+Docker is a set of platform as a service product that use OS-level virtualization to deliver software in packages called containers [#]_. Through Docker, all virtual processes interact with each other only through well defined mounted volumes and internal networks. The service themselves run on isolated systems which have their own individual software requirements installed. This containerization of services is one reason for the popularity of Docker.
 
 .. [#] `Wikipedia: Docker (software) <https://en.wikipedia.org/wiki/Docker_(software)>`_

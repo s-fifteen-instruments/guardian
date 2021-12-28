@@ -179,6 +179,6 @@ Initialized by ``notifier`` Docker service.
 
    The notifier Docker service will eventually be replaced by ``qcrypto`` which opens its own notification pipe to ``watcher``.
 
-.. [#] As of version 0.7
+.. [#] As of version |version|
 
 .. [#] For generating keys from a simulated QKD device.

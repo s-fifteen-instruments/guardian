@@ -22,3 +22,14 @@ The Certificate chain structure is as follows
 
 		#)
 		#)
+      
+
+
+
+
+
+HVAC
+^^^^
+
+https://hvac.readthedocs.io/en/stable/_modules/hvac/api/auth_methods/cert.html#Cert
+

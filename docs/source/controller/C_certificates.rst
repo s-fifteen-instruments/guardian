@@ -53,6 +53,9 @@ Also, the keys used to generate the CSR needs to be secure enough.
 Certificate Signing
 -------------------
 
+GUI
+^^^
+
 With the client CSR, the |QKDdc| can generate a certificate using the intermediate CA certificate issuer role enabled on the PKI secrets engine. This can be done via the vault web browser, or through a hvac client.
 
 .. figure:: ./images/vault_username_login.png
@@ -70,5 +73,22 @@ With the client CSR, the |QKDdc| can generate a certificate using the intermedia
 .. figure:: ./images/vault_cert_signed.png
    :alt: Certificate signed with CA chain
 
+
+Vault CLI
+^^^^^^^^^
+
+https://www.vaultproject.io/docs/secrets/pki#usage
+
+Vault API
+^^^^^^^^^
+
+https://www.vaultproject.io/api-docs/secret/pki
+
+HVAC
+^^^^
+
+https://hvac.readthedocs.io/en/stable/usage/secrets_engines/pki.html
+
+----
 
 .. |QKDdc| replace:: QKD device controller
