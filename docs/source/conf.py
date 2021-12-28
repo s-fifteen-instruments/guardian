@@ -17,7 +17,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    'sphinx_tabs.tabs', # https://sphinx-tabs.readthedocs.io/en/latest/
+    'sphinx_tabs.tabs' # https://sphinx-tabs.readthedocs.io/en/latest/
     ]
 
 #autoapi_dirs = ['../rest/app/api/api_v1/endpoints']
@@ -25,7 +25,7 @@ extensions = [
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+    'sphinx': ('https://www.sphinx-doc.org/en/master/', None)
 }
 
 intersphinx_disabled_domains = ['std']
