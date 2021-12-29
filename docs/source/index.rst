@@ -30,7 +30,6 @@ The intent of this documentation is 3 fold
 
    controller/C_overview
    controller/C_certificates
-   controller/C_api
 
 
 .. toctree::

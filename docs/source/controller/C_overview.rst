@@ -5,7 +5,7 @@ Overview
 
 The |QKDdc| has a dual role is establishing QKD links between KMEs and also authorising SAEs onto which KME they can communicate to. In the initial implementation, only two nodes are present and thus the |QKDdc| is only responsible for stopping and starting the devices which is described in `QKDServer <https://github.com/s-fifteen-instruments/QKDServer/>`_. 
 
-The |QKDdc| may also be responsible for unsealing the vault depending on how strict the implementation of the QKD devices is configured. In the current [#]_ Guardian implementation, there is an ``unsealer`` process that does this automatically.
+The |QKDdc| may also be responsible for unsealing the vault depending on how strict the implementation of the QKD device is configured. In the current [#]_ Guardian implementation, there is an ``unsealer`` process that does this automatically.
 
 
 .. |QKDdc| replace:: QKD device controller
