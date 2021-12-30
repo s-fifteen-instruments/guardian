@@ -83,6 +83,7 @@ Initialized by ``vault_init`` Docker service, running ``vault_init.py --first``.
    * Enable auditing for Vault instance; written out to audit log
    * Enable authentication method that uses TLS certificates
    * Enable intermediate CA functionality
+   
      * Enable a PKI secrets engine that will become an Intermediate CA to more conveniently issue TLS certificates
      * Write out local Vault instance CSR to be signed by Root CA
 

@@ -4,7 +4,7 @@ Certificates
 ============
 
 Before any communtication is done with the KMEs, a client needs to have the proper certificates for authentication by the KME through mutual TLS authentication.
-Every certificate comes with the corresponding key and the CA chain of the certificate. There are two ways to implement this: 
+Every certificate comes with the corresponding private key and the CA chain of the certificate. There are two ways to implement this: 
 
    1. The QKD controller issues a client certificate signed by the KME.
    2. The QKD controller can install certificates issued by a specific root CA (or certificate chains belonging to the specified SAE).

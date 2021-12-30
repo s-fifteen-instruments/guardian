@@ -74,7 +74,7 @@ In this Python 3 example, the key-certificate pair is in a PEM format in the sam
    
    pip install requests python-certifi-win32
 
-In python, the ``requests`` module can be used to dispatch GET/POST calls without a web browser GUI. There are also several ways to do client-side verification of server: here we load the KME's root CA certificate into the Microsoft certificate store as a trusted CA on Windows, and loads this store into Python using ``python-certifi-win32``.
+In python, the ``requests`` module can be used to dispatch GET/POST calls without a web browser GUI. There are also several ways to do client-side verification of server: here we load the KME's root CA certificate into the Microsoft certificate store as a trusted CA on Windows, and load this store into Python using ``python-certifi-win32``.
 
 An example script to interface with the API:
 
