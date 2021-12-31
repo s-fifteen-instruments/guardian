@@ -1,5 +1,5 @@
-Overview
-========
+User Overview
+=============
 
 Guardian follows ETSI GS QKD 014 specification which aims to make it simple and easy for developers to understand. Its REST-based APIs uses data encoded in the JSON format to deliver block keys with key IDs to applications. This simplicity allows ease of implementation in a scalable way.
 
@@ -30,7 +30,7 @@ Communication
 
 The communication between the SAEs and the KMEs is shown in the figure below. The sequence of events occurs from top to bottom.
 
-.. figure:: ./images/Timing_request_guardian.svg
+.. figure:: ./images/Timing_request_guardian.png
    :alt: Timing diagram of API calls
 
    In this diagram, SAE1 is the master SAE calling KME1 to request keys for communicating to Slave SAE2.

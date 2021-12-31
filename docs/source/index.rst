@@ -31,11 +31,11 @@ The intent of this documentation is 3 fold
    controller/C_overview
    controller/C_certificates
 
-
 .. toctree::
    :caption: Administrator 
 
    admin/Ad_overview
-   admin/Ad_certificates
+   admin/Ad_setting_up
    admin/admin
+   admin/config
 

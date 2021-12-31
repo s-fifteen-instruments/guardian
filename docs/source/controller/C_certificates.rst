@@ -1,3 +1,5 @@
+.. _cert_tree:
+
 Certificates
 ============
 

@@ -42,3 +42,7 @@ epub_show_urls = 'footnote'
 # sphinx-tabs configuration
 sphinx_tabs_disable_tab_closing = True
 # sphinx_tabs_disable_css_loading = True
+
+latex_elements = { 
+    'figure_align' : 'H',
+    'papersize' : 'a4paper' }

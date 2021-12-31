@@ -1,13 +1,15 @@
 .. _certificates:
 
-Certificates
-============
+TLS Certificates
+================
 
-Before any communtication is done with the KMEs, a client needs to have the proper certificates for authentication by the KME through mutual TLS authentication.
+Before any communtication is done with the KMEs, a client needs to have the proper certificates for authentication by the KME through mutual TLS authentication. 
 Every certificate comes with the corresponding key and the CA chain of the certificate. There are two ways to implement this: 
 
-   1. The QKD controller issues a client certificate signed by the KME.
-   2. The QKD controller can install certificates issued by a specific root CA (or certificate chains belonging to the specified SAE).
+   1. The |QKDdc| issues a client certificate signed by the KME.
+   2. The |admin| can install certificates issued by a specific root CA (or certificate chains belonging to the specified SAE).
+   
+For more information on the |QKDdc| role, refer to :ref:`Controller Overview <QKD_Controller>`
 
 Method 1: KME-issued client certificate
 ---------------------------------------
@@ -34,21 +36,11 @@ The |QKDdc| is expected to return the issued certificate and CA chain for use by
 Method 2: Install external certificates on KME
 ----------------------------------------------
 
-The KME can alternatively authenticate individual SAE or groups of SAEs that do not belong to the KME certificate chain. This is achieved by the |QKDdc| installing the certificate chain that is already available on the SAE into the KME. Other than providing the SAE's full certificate chain to the |QKDdc|, no further action by the SAE is necessary.
+The KME can alternatively authenticate individual SAE or groups of SAEs that do not belong to the KME certificate chain. This is achieved by the |admin| installing the certificate chain that is already available on the SAE into the KME. Other than providing the SAE's full certificate chain to the |admin|, no further action by the SAE is necessary.
 
 ----
 
-TODO: Park the bottom section under |QKDdc| sections instead.
-
-This authentication can be performed with different granularity levels:
-
-   - Installation of root CA certificate (not recommended)
-   - Installation of intermediate CA certificate chain - appropriate for bulk authentication of SAEs that belong to the same organization
-   - Installation of client certificate chain - only the single client certificate is authenticated
-
-.. warning::
-
-   This method unconditionally authenticates all SAEs that belong to the installed certificate chain, which can introduce a potential security risk. Additional measures such as X.509 extended attributes may be utilized to distinguish clients.
 
 .. |QKDdc| replace:: QKD device controller
-.. _`QKDdc`: :ref:`QKD controller`
+
+.. |admin| replace:: Administrator

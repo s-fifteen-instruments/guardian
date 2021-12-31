@@ -1,7 +1,7 @@
-Overview
-========
+Controller Overview
+===================
 
-.. _`QKD controller`:
+.. _`QKD_Controller`:
 
 The |QKDdc| has a dual role is establishing QKD links between KMEs and also authorising SAEs onto which KME they can communicate to. In the initial implementation, only two nodes are present and thus the |QKDdc| is only responsible for stopping and starting the devices which is described in `QKDServer <https://github.com/s-fifteen-instruments/QKDServer/>`_. 
 
@@ -12,6 +12,8 @@ The |QKDdc| may also be responsible for unsealing the vault depending on how str
 
 .. [#] Version |version|
 
+.. _`unsealing vault`:
+
 Unsealing Vault
 ---------------
 
@@ -21,27 +23,38 @@ Whenever the Vault is started, it is in a sealed state. It will also be the |QKD
 GUI
 ^^^
 
+The unseal method using the Vault web UI is shown as an example below.
+
 .. figure:: ./images/vault_sealed.png
    :alt: Vault in a sealed state
-
+   :scale: 60%
+   :figwidth: 60%
+   
    When Vault is in a sealed state, the Vault GUI interface will indicate with a red sealed under status. It will display the following prompt for the Unseal Key Portion to be entered.
 
 .. figure:: ./images/vault_unseal_1.png
    :alt: One unseal key entered
+   :scale: 60%
+   :figwidth: 60%
    
    If one unseal key is entered, it shows 1/3 keys provided.
    
 .. figure:: ./images/vault_unseal_2.png
    :alt: Two unseal keys entered
+   :scale: 60%
+   :figwidth: 60%
    
    Similarly for two unseal keys entered.
 
 .. figure:: ./images/vault_login.png
    :alt: Vault unsealed
+   :scale: 60%
+   :figwidth: 60%
    
    Once the vault is unsealed, the login screen is shown once again with the status now green indicating that Vault is unsealed.
 
 ----
+
 
 API
 ^^^
