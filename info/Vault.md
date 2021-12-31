@@ -15,4 +15,4 @@ Likley nothing should need to change in this file.
 
 ## Policies
 
-Policies and policy templates are stored in the [${TOP_DIR}/volumes/${LOCAL_KME_ID}/vault/policies](../volumes/kme1/valut/policies/) directory. These dictate what permission various roles (watcher or rest role) have when interacting with the local Vault instance. These policies and policy templates are setup by the Vault initialization client service.
+Policies and policy templates are stored in the [${TOP_DIR}/volumes/${LOCAL_KME_ID}/vault/policies](../volumes/kme1/vault/policies/) directory. These dictate what permission various roles (watcher or rest role) have when interacting with the local Vault instance. These policies and policy templates are setup by the Vault initialization client service.
