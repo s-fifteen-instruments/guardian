@@ -248,12 +248,11 @@ HVAC
 
 Finally using the ``hvac`` client, we can similarly `Sign a Certificate <https://hvac.readthedocs.io/en/stable/usage/secrets_engines/pki.html#sign-certificate>`_ with the following python command with the necessary credentials.
 
-
 .. code-block:: python
    :linenos:
    
-	import hvac
-	client = hvac.Client(
+   import hvac
+   client = hvac.Client(
             url="https://kme1:8200/",
             cert=("cert.pem","key.pem"),
             verify="cacert.pem")
