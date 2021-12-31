@@ -3,7 +3,7 @@ User Overview
 
 Guardian follows ETSI GS QKD 014 specification which aims to make it simple and easy for developers to understand. Its REST-based APIs uses data encoded in the JSON format to deliver block keys with key IDs to applications. This simplicity allows ease of implementation in a scalable way.
 
-The goal of this Guardian is to implement a simple request and response style API between an SAE (Secure Application Entity) and a KME (Key Management Entity). SAEs request keys from KMEs which then deliver them to the SAE.
+The goal of Guardian is to implement a simple request and response style API between an SAE (Secure Application Entity) and a KME (Key Management Entity). SAEs request keys from KMEs which then deliver them to the SAE.
 SAEs are intended to have secure access to the KME they are connecting to. This API does not handle the secure key generation and distribution by the QKD technology - instead it accepts generated keys and secures the delivery of such keys to any SAE that makes a key request.
 
 .. _prerequisites:

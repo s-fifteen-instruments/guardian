@@ -8,7 +8,7 @@ To start from a clean installation, the following steps are necessary.
 
 #. Establish domain name resolution of name to ip address, either via hosts file or a proper DNS server.
 
-#. Install the docker and docker-compose. Start the docker daemon/server.
+#. Install docker and docker-compose. Start the docker daemon/server.
 
 #. Install git to clone the Guardian repository from Github.
 
