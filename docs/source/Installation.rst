@@ -85,7 +85,8 @@ Initialized by ``vault_init`` Docker service, running ``vault_init.py --first``.
    * Enable intermediate CA functionality
      * Enable a PKI secrets engine that will become an Intermediate CA to more conveniently issue TLS certificates
      * Write out local Vault instance CSR to be signed by Root CA
-
+   
+   
 certauth csr
 ------------
 
@@ -157,7 +158,7 @@ Initialized by ``watcher`` Docker service.
 
    * Wait for creation of FIFO pipe and (non-blocking) open as the end reader of this pipe
    * Listen for data on the pipe in the form of notifications when final epoch files are ready for consumption
-   * When a file notification is ready, spawn a thread to read the epoch file and send to the local Vault instance Key Value version 2 secrets engine QKEYs endpoint
+   * When a file notification is ready on the pipe, spawn a thread to read the epoch file and send the secrets to local Vault instance KV v2 secrets engine QKEYs endpoint.
      
      * Open and read final epoch key file
      * Parse the raw keying material
