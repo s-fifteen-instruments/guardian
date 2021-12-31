@@ -7,35 +7,35 @@ found in the `unsealer_config.py <../common/unsealer_config.py>`__ file.
 +-----------------+-----------------+-----------------+-----------------+
 | Variable        | Type            | Set Value       | Description     |
 +=================+=================+=================+=================+
-| UNS             | str             | os.env          | Unsealer client |
-| EALER_LOG_LEVEL |                 | iron.get(“UNSEA | log-level       |
-|                 |                 | LER_LOG_LEVEL”, | pulled from the |
-|                 |                 | str             | environment;    |
+| UNS\            | str             | os.env\         | Unsealer client |
+| EALER_LOG_LEVEL |                 | iron.get(“UNSEA\| log-level       |
+|                 |                 | LER_LOG_LEVEL”,\| pulled from the |
+|                 |                 | str\            | environment;    |
 |                 |                 | (logging.info)) | set by the      |
 |                 |                 |                 | log.env file    |
 +-----------------+-----------------+-----------------+-----------------+
-| CLIEN           | str             | f“{GLOBA        | In-container    |
-| T_CERT_FILEPATH |                 | L.CERT_DIRPATH} | file path for   |
-|                 |                 | /{GLOBAL.VAULT_ | Unsealer client |
-|                 |                 | INIT_NAME}/{GLO | certificate     |
-|                 |                 | BAL.VAULT_INIT_ | chain file to   |
-|                 |                 | NAME}{GLOBAL.CA | communicate     |
-|                 |                 | _CHAIN_SUFFIX}” | with the local  |
-|                 |                 |                 | Vault instance; |
+| CLIEN\          | str             | f“{GLOBAL.CE\   | In-container    |
+| T_CERT_FILEPATH |                 | RT_DIRPATH}/{G\ | file path for   |
+|                 |                 | LOBAL.VAULT_IN\ | Unsealer client |
+|                 |                 | IT_NAME}/{GLO\  | certificate     |
+|                 |                 | BAL.VAULT_IN\   | chain file to   |
+|                 |                 | IT_NAME}{GLOB\  | communicate     |
+|                 |                 | AL.CA_CHAIN_SU\ | with the local  |
+|                 |                 | FFIX}”          | Vault instance; |
 |                 |                 |                 | must match      |
 |                 |                 |                 | docker-compose  |
 |                 |                 |                 | yaml file       |
 |                 |                 |                 | volume          |
 |                 |                 |                 | locations       |
 +-----------------+-----------------+-----------------+-----------------+
-| CLIE            | str             | f“{             | In-container    |
+| CLIE\           | str             | f“{             | In-container    |
 | NT_KEY_FILEPATH |                 | GLOBAL.CERT_DIR | file path for   |
 |                 |                 | PATH}/{GLOBAL.V | Unsealer client |
 |                 |                 | AULT_INIT_NAME} | private key     |
-|                 |                 | /{GLOBAL.VAULT_ | file to         |
-|                 |                 | INIT_NAME}{GLOB | communicate     |
-|                 |                 | AL.KEY_SUFFIX}” | with the local  |
-|                 |                 |                 | Vault instance; |
+|                 |                 | /{GLOBAL.VAUL\  | file to         |
+|                 |                 | T_INIT_NAME}{GL\| communicate     |
+|                 |                 | OBAL.KEY_SUF\   | with the local  |
+|                 |                 | FIX}”           | Vault instance; |
 |                 |                 |                 | must match      |
 |                 |                 |                 | docker-compose  |
 |                 |                 |                 | yaml file       |
