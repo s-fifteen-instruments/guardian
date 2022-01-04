@@ -23,6 +23,10 @@ Once initialized on both sides, the normal running containers are
    
 The functions of each service/container is documented here for information only and is subject to change in future release
    
+.. [#] As of version |version|
+
+.. [#] For generating keys from a simulated QKD device.
+
 
 certauth
 --------
@@ -118,10 +122,13 @@ vault client auth
 
 Initialized by ``vault_client_auth`` Docker service.
 
-   * This is a workaround that allows for injecting client certificates into the Vault instance cert authentication store. Ideally, this would be done with an hvac Python client in vault_init but at the time of this writing, this functionality did not exist. Therefore, a shell script is used instead.
+   * This is a workaround that allows for injecting client certificates into the Vault instance cert authentication store. Ideally, this would be done with an hvac Python client in vault_init but at the time of this writing, this functionality did not exist. Therefore, a shell script is used instead. [#]_
    * Authenticate to Vault instance using root token
    * Inject ``rest`` and ``watcher`` client TLS certificate into cert authentication endpoint
    * This enables both clients to authenticate to the local Vault instance using their client-side certificate identities
+
+.. [#] This functionality now exists in hvac, but not implemented yet. Refer to `documentation <https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Cert.create_ca_certificate_role>`_ and `source <https://hvac.readthedocs.io/en/stable/_modules/hvac/api/auth_methods/cert.html#Cert.create_ca_certificate_role>`_. 
+
 
 qkd
 ---
@@ -181,6 +188,3 @@ Initialized by ``notifier`` Docker service.
 
    The notifier Docker service will eventually be replaced by ``qcrypto`` which opens its own notification pipe to ``watcher``.
 
-.. [#] As of version |version|
-
-.. [#] For generating keys from a simulated QKD device.
