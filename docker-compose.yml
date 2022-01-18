@@ -178,6 +178,47 @@ services:
       # any other service that needs to be publicly available with HTTPS
       - traefik-public
 
+  watcher:
+    build:
+      context: ./
+      dockerfile: ./watcher/Dockerfile
+    env_file:
+      - common/log.env
+    command: ["watcher.py"]
+    networks:
+      - internal-private
+    volumes:
+      - "epochs:/epoch_files"
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/watcher_config.py
+        target: /root/code/watcher_config.py
+
+  qkd:
+    image: kme1/qkdserver
+    container_name: qkd
+    volumes:
+      - "/home/kme1/code/QKDServer/S15qkd:/root/code/QKDserver/S15qkd"
+      - "/home/kme1/code/remotecrypto:/root/code/qcrypto/remotecrypto"
+      - "/home/kme1/code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
+      - "epochs:/epoch_files"
+    entrypoint: "/root/entrypoint.sh"
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+      - "/dev/ttyACM1:/dev/ttyACM1"
+    ports:
+      - "8080:8000"
+      - "4853:4853"
+    networks:
+      - internal-private
+
+volumes:
+  epochs:
+
 networks:
 
   # Use the previously created public network "traefik-public", shared with other

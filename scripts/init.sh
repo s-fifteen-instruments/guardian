@@ -65,8 +65,6 @@ if [ "${KME}" = "kme1" ]; then
   S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
   S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-  S=qkd                WAIT=0 F=-f eval ${STARTUP}
-  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
 touch "${DIRPATH}/.${KME}.initialized"
@@ -78,11 +76,6 @@ elif [ "${KME}" = "kme2" ]; then
   S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
   S=vault_init_phase_2 WAIT=0 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-
-  # NOTE: Only necessary when using rsync to remotely transfer keying material
-  /bin/sh ${DIRPATH}/transfer_keys.sh
-
-  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
 
 touch "${DIRPATH}/.${KME}.initialized"
