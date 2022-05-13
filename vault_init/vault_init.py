@@ -325,11 +325,11 @@ class VaultClient:
             "format": "pem",
             "key_type": "ec",
             "key_bits": "384",
-            "ou": "Quantum Hacking",
-            "organization": "Quantum Internet Technologies LLC",
-            "country": "US",
-            "province": "Texas",
-            "locality": "Austin",
+            "ou": "Vault Intermediate CA",
+            "organization": "S-Fifteen Instruments Pte. Ltd.",
+            "country": "SG",
+            "province": "Singapore",
+            "locality": "Singapore",
             "ttl": "87600h"
         }
         logger.debug("Attempting to generate intermediate CA certificate/private key")
@@ -384,11 +384,11 @@ class VaultClient:
             "key_type": "ec",
             "key_bits": "384",
             "generate_lease": "true",
-            "ou": "Quantum Hacking",
-            "organization": "Quantum Internet Technologies LLC",
-            "country": "US",
-            "province": "Texas",
-            "locality": "Austin",
+            "ou": "Vault Intermediate CA",
+            "organization": "S-Fifteen Instruments Pte. Ltd.",
+            "country": "SG",
+            "province": "Singapore",
+            "locality": "Singapore",
             "ttl": "8760h",
             "max_ttl": "87600h",
         }

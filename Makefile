@@ -24,13 +24,13 @@
 #   kme1 => local, kme2 => remote
 export KME ?= kme1
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_ADDRESS ?= s15qkd-f.internal
-export LOCAL_KME_DIRPATH ?= kme1@$(LOCAL_KME_ADDRESS):/home/kme1/code/guardian
+export LOCAL_KME_ADDRESS ?= a.qkd.internal
+export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
-export REMOTE_KME_ADDRESS ?= s15qkd-g.internal
-export REMOTE_KME_DIRPATH ?= kme2@$(REMOTE_KME_ADDRESS):/home/kme2/code/guardian
+export REMOTE_KME_ADDRESS ?= b.qkd.internal
+export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
 
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
