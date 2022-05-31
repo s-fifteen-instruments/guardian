@@ -281,6 +281,6 @@ HTTP status code     Response data model     Description
 200                  Success                 Successful Response
 400                  Error                   Bad request format
 401                  `-`                     Unauthorized
-422                  Error                   Validation Error
+422                  Error                   Unprocessable Entity
 503                  Error                   Error on Server side
 ==================   ======================  ======================
