@@ -22,7 +22,7 @@
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
 #   kme1 => local, kme2 => remote
-export KME ?= kme1
+export KME ?= kme2
 # - Location of Local KME's guardian git repository
 export LOCAL_KME_ADDRESS ?= a.qkd.internal
 export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
@@ -120,6 +120,7 @@ clear: rest
 # Clean local and remote KMEs
 allclean: export KME = both
 allclean: clean
+	docker volume prune -f
 # Clean local KME
 clean: down
 	sudo $(SCRIPTS)/clean.sh $(KME)
