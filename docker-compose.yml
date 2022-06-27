@@ -210,13 +210,15 @@ services:
     entrypoint: "/root/entrypoint.sh"
     devices:
       - "/dev/ioboards/usbtmst0:/dev/ioboards/usbtmst0"
-      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-029-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-029-if00"
-      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-030-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-030-if00"
-      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-031-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-031-if00"
-      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-032-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-032-if00"
-      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-1-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-1-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-025-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-025-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-026-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-026-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-027-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-027-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-028-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-028-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_Quad_LCD_driver_LCDD-001-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_Quad_LCD_driver_LCDD-001-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-2-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-2-if00"
     ports:
       - "8000:8000"
+      # Listen only to ipv4 for transferd/authd communication
       - "0.0.0.0:55555:55555"
     networks:
       - internal-private
