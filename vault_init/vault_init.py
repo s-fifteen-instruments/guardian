@@ -51,7 +51,9 @@ class VaultClient:
             self.clear_vault_instance()
 
     def parse_args(self):
-        """foo
+        """Parses arguments to the Vault Client.
+        
+        Stores boolean values that identify the phase of initialization - First, Second, Clear.        
         """
         parser = argparse.ArgumentParser()
         parser.add_argument("--first", action="store_true", help="First stage of initialization")
@@ -60,7 +62,7 @@ class VaultClient:
         self.args = parser.parse_args()
 
     def start_connection(self):
-        """foo
+        """Creates hvac client. Initializes, unseals and authenticates into Vault.
         """
         self.vclient: hvac.Client = \
             hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
@@ -72,7 +74,10 @@ class VaultClient:
         self.connection_loop(self.vault_root_token_auth)
 
     def phase_1_startup(self):
-        """foo
+        """Phase 1 of vault startup.
+        
+        Sets up auth method and PKI secrets engine. Also issues CSR
+        for the int CA.
         """
         logger.debug("Begin first phase initialization")
         self.connection_loop(self.vault_enable_audit_file)
@@ -81,7 +86,10 @@ class VaultClient:
         self.connection_loop(self.vault_write_int_ca_csr)
 
     def phase_2_startup(self):
-        """foo
+        """Phase 2 of startup.
+        
+        Create Access Control List (ACL) Policies, KV secrets engine, 
+        watcher and rest service. Also generate client certs.
         """
         logger.info("Begin second phase initialization")
         self.connection_loop(self.vault_setup_int_ca_certs)
@@ -102,7 +110,12 @@ class VaultClient:
                              common_name=f"{settings.GLOBAL.LOCAL_SAE_ID}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
-        """foo
+        """Attempts the given callback multiple times till success or limit reached.
+        
+        Args:
+            connection_callback (func): Function that is to be called.
+            *args: Args to be passed to `connection_callback`.
+            **kwargs: Keword Args to be passed to `connection_callback`.
         """
         self.max_attempts: int = settings.GLOBAL.VAULT_MAX_CONN_ATTEMPTS
         self.backoff_factor: float = settings.GLOBAL.BACKOFF_FACTOR
@@ -188,7 +201,7 @@ class VaultClient:
             f.write(json_output_str)
 
     def vault_init(self):
-        """foo
+        """Initializes Vault.
         """
         if not self.vclient.sys.is_initialized():
             self.secret_shares: int = settings.SECRET_SHARES
@@ -211,7 +224,7 @@ class VaultClient:
             logger.info("Vault instance already initialized")
 
     def vault_unseal(self):
-        """foo
+        """Unseals Vault.
         """
         if self.vclient.sys.is_sealed():
             # TODO: handle when init has already happened
@@ -266,7 +279,7 @@ class VaultClient:
         self._dump_response(audit_devices, secret=False)
 
     def vault_enable_cert_auth_method(self):
-        """foo
+        """Enables the cert auth access method.
         """
         auth_methods = self.vclient.sys.list_auth_methods()
         logger.debug("Currently enabled auth methods:")
