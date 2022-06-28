@@ -93,6 +93,7 @@ class watcherClient:
         logger.debug("Vault auth response:")
         self._dump_response(auth_response, secret=True)
         self.vclient.token = auth_response["auth"]["client_token"]
+        self.vclient.lease_end = auth_response["auth"]["lease_duration"] + time.time()
         if self.vclient.is_authenticated():
             logger.info(f"\"{settings.CLIENT_NAME}\" is now authenticated")
         else:
@@ -486,7 +487,7 @@ class watcherClient:
                 # Attempt to open the notify pipe read-only, non-blocking
                 with open(os.open(settings.GLOBAL.NOTIFY_PIPE_FILEPATH,
                                   os.O_NONBLOCK | os.O_RDONLY)) as FIFO:
-                    logger.debug(f"{settings.GLOBAL.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
+                    logger.info(f"{settings.GLOBAL.NOTIFY_PIPE_FILEPATH} opened read-only, non-blocking")
                     # Notify pipe was successfully opened; iterate until otherwise
                     while not self.KILL_NOW:
                         # Break out of inner loop if notify pipe no longer exists
@@ -509,6 +510,18 @@ class watcherClient:
                             total_notify_sleep_time = 0.0
                             # Data should point us to a final key epoch filename
                             epoch_filepath = f"{settings.GLOBAL.EPOCH_FILES_DIRPATH}/{data}"
+                            # Check if token is about to be passed its leased time. If so, renew with renew-token. If fail, get new token with vault_client_auth()
+                            if time.time() > self.vclient.lease_end - 10:
+                                try:
+                                    auth_response = self.vclient.renew_self_token()
+                                    self.vclient.token = auth_response["auth"]["client_token"]
+                                    TTL = auth_response["auth"]["lease_duration"]
+                                    self.vclient.lease_end = TTL + time.time()
+                                    logger.debug(f"Renewed token {self.vclient.token}. New TTL is {TTL:.1f} seconds")
+                                except hvac.exceptions.Forbidden: #renew token didn't work. Re authenticate
+                                    self.vault_client_auth()
+                                    logger.debug(f"New token after reauthentication {self.vclient.token}")
+
                             # Name of thread worker callback function and argument filepath
                             args = (self.process_epoch_file,
                                     epoch_filepath)

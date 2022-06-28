@@ -41,6 +41,15 @@ services:
       - type: bind
         source: ./common/CERTAUTH_CONFIG
         target: /CONFIG
+      - type: bind
+        source: ./common/kme-ca.cert.pem
+        target: /kme-ca.cert.pem
+      - type: bind
+        source: ./common/kme-ca.key.pem
+        target: /kme-ca.key.pem
+      - type: bind
+        source: ./common/full-chain.cert.pem
+        target: /full-chain.cert.pem
 
   certauth_csr:
     <<: *certauth_label
@@ -114,63 +123,6 @@ services:
   vault_clear:
     <<: *vault_init_label
     command: ["vault_init.py", "--clear"]
-
-  qkd:
-    build:
-      context: ./
-      dockerfile: ./qkd/Dockerfile
-    env_file:
-      - common/log.env
-    command: ["clean", "ctest"]
-    networks:
-      - internal-private
-    volumes:
-      # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
-      - type: bind
-        source: ./common/qkd_config
-        target: /root/code/qsim/qkd_config
-
-  notifier:
-    build:
-      context: ./
-      dockerfile: ./notifier/Dockerfile
-    env_file:
-      - common/log.env
-    command: ["notifier.py"]
-    networks:
-      - internal-private
-    volumes:
-      # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
-      - type: bind
-        source: ./common/global_config.py
-        target: /root/code/global_config.py
-      - type: bind
-        source: ./common/notifier_config.py
-        target: /root/code/notifier_config.py
- 
-  watcher:
-    build:
-      context: ./
-      dockerfile: ./watcher/Dockerfile
-    env_file:
-      - common/log.env
-    command: ["watcher.py"]
-    networks:
-      - internal-private
-    volumes:
-      # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
-      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
-      - type: bind
-        source: ./common/global_config.py
-        target: /root/code/global_config.py
-      - type: bind
-        source: ./common/watcher_config.py
-        target: /root/code/watcher_config.py
-
 
 networks:
 

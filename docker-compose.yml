@@ -178,6 +178,54 @@ services:
       # any other service that needs to be publicly available with HTTPS
       - traefik-public
 
+  watcher:
+    build:
+      context: ./
+      dockerfile: ./watcher/Dockerfile
+    env_file:
+      - common/log.env
+    command: ["watcher.py"]
+    depends_on:
+      - qkd
+    networks:
+      - internal-private
+    volumes:
+      - "epochs:/epoch_files"
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/watcher_config.py
+        target: /root/code/watcher_config.py
+
+  qkd:
+    image: s-fifteen/qkdserver:qkd
+    container_name: qkd
+    volumes:
+      - "/home/s-fifteen/code/QKDServer/S15qkd:/root/code/QKDserver/S15qkd"
+      - "/home/s-fifteen/code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
+      - "epochs:/epoch_files"
+    entrypoint: "/root/entrypoint.sh"
+    devices:
+      - "/dev/ioboards/usbtmst0:/dev/ioboards/usbtmst0"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-025-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-025-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-026-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-026-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-027-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-027-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-028-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_IR_Single_Photon_Detector_ISPD1-028-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_Quad_LCD_driver_LCDD-001-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_Quad_LCD_driver_LCDD-001-if00"
+      - "/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-2-if00:/dev/serial/by-id/usb-S-Fifteen_Instruments_Reference_Clock_RCLK-2-if00"
+    ports:
+      - "8000:8000"
+      # Listen only to ipv4 for transferd/authd communication
+      - "0.0.0.0:55555:55555"
+    networks:
+      - internal-private
+
+volumes:
+  epochs:
+
 networks:
 
   # Use the previously created public network "traefik-public", shared with other

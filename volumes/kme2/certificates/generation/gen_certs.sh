@@ -74,6 +74,10 @@ export PRODUCTION_DIR=${base_dir}/../production
 export ca_dir=${base_dir}/root/ca
 # intermediate CA directory
 export int_ca_dir=${ca_dir}/intermediate
+# Certificates
+export guardian_root_key=/kme-ca.key.pem
+export guardian_root_cert=/kme-ca.cert.pem
+export guardian_root_chain=/full-chain.cert.pem
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -109,52 +113,18 @@ touch index.txt
 echo 1000 > serial
 cp -a ${base_dir}/openssl.root.cnf.template ${ca_dir}/openssl.cnf
 sed -i "s#<<<BASE_DIRECTORY>>>#${base_dir}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<COUNTRY_CODE>>>#${CA_COUNTRY_CODE}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<STATE>>>#${CA_STATE}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<LOCALITY>>>#${CA_LOCALITY}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<ORGANIZATION>>>#${CA_ORGANIZATION}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<UNTI>>>#${CA_UNIT}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<COMMON_NAME>>>#${CA_COMMON_NAME}#g" ${ca_dir}/openssl.cnf
-sed -i "s#<<<EMAIL>>>#${CA_EMAIL}#g" ${ca_dir}/openssl.cnf
 
-# Create the root CA private key "ca.key.pem"
+# Copy the guardian root CA private key and full-chain
+# TODO: Consider populating serial/index for more robust CRL
 cd ${ca_dir}
-openssl genpkey \
-    -algorithm EC \
-    -pkeyopt ec_paramgen_curve:${EC_NAME} \
-    -pkeyopt ec_param_enc:named_curve \
-    -aes256 \
-    -pass stdin \
-    -out private/ca.key.pem \
-    <<ROOTCA
-${ROOT_CA_PASSWORD}
-${ROOT_CA_PASSWORD}
-ROOTCA
+cp ${guardian_root_key} private/ca.key.pem
 chmod 0400 private/ca.key.pem
-
-# Create the root CA certificate "ca.cert.pem"
-# Leave vertical spaces; they are important input
-openssl req -config openssl.cnf \
-     -key private/ca.key.pem \
-     -new -x509 -days 7300 -sha256 -extensions v3_ca \
-     -out certs/ca.cert.pem \
-     -passin stdin <<ROOTCA
-${ROOT_CA_PASSWORD}
-
-
-
-
-
-
-
-
-ROOTCA
+cp ${guardian_root_cert} certs/ca.cert.pem
 chmod 0444 certs/ca.cert.pem
+cp ${guardian_root_chain} certs/ca-chain.cert.pem
+chmod 0444 certs/ca-chain.cert.pem
 
-# Verify the root CA certificate
-openssl x509 -noout -text -in certs/ca.cert.pem
-
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
 
 # Create intermediate Certificate Authority directory and configuration
 mkdir -p ${int_ca_dir}
@@ -223,11 +193,11 @@ chmod 0444 intermediate/certs/intermediate.cert.pem
 # Inspect and verify the intermediate CA certificate
 openssl x509 -noout -text \
     -in intermediate/certs/intermediate.cert.pem
-openssl verify -CAfile certs/ca.cert.pem \
+openssl verify -CAfile certs/ca-chain.cert.pem \
     intermediate/certs/intermediate.cert.pem
 # Create the CA certificate chain file
 cat intermediate/certs/intermediate.cert.pem \
-    certs/ca.cert.pem > intermediate/certs/ca-chain.cert.pem
+    certs/ca-chain.cert.pem > intermediate/certs/ca-chain.cert.pem
 chmod 0444 intermediate/certs/ca-chain.cert.pem
 
 #------------------------------------------------------------------------------
@@ -291,7 +261,7 @@ openssl verify -CAfile intermediate/certs/ca-chain.cert.pem \
 # Create the full certificate chain file
 cat intermediate/certs/${VAULT_SERVER_FQDN}.cert.pem \
     intermediate/certs/intermediate.cert.pem \
-    certs/ca.cert.pem > intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem
+    certs/ca-chain.cert.pem > intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem
 chmod 0444 intermediate/certs/${VAULT_SERVER_FQDN}.ca-chain.cert.pem
 
 #------------------------------------------------------------------------------
@@ -355,7 +325,7 @@ openssl verify -CAfile intermediate/certs/ca-chain.cert.pem \
 # Create the full certificate chain file
 cat intermediate/certs/${VAULT_INIT_CLIENT_NAME}.cert.pem \
     intermediate/certs/intermediate.cert.pem \
-    certs/ca.cert.pem > intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem
+    certs/ca-chain.cert.pem > intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem
 chmod 0444 intermediate/certs/${VAULT_INIT_CLIENT_NAME}.ca-chain.cert.pem
 
 # Bundle the VAULT_INIT client certificate and key into PKCS#12 format for browsers
@@ -399,11 +369,11 @@ chmod 0444 intermediate/certs/${VAULT_PKI_INT}.cert.pem
 # Inspect and verify the intermediate CA certificate
 openssl x509 -noout -text \
     -in intermediate/certs/${VAULT_PKI_INT}.cert.pem
-openssl verify -CAfile certs/ca.cert.pem \
+openssl verify -CAfile certs/ca-chain.cert.pem \
     intermediate/certs/${VAULT_PKI_INT}.cert.pem
 # Create the CA certificate chain file
 cat intermediate/certs/${VAULT_PKI_INT}.cert.pem \
-    certs/ca.cert.pem > intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
+    certs/ca-chain.cert.pem > intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
 chmod 0444 intermediate/certs/${VAULT_PKI_INT}.ca-chain.cert.pem
 
 cp --archive \
