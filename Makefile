@@ -45,7 +45,7 @@ export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/cod
 ##########################
 ##### GET DEVICE PATHS####
 ##########################
-tmst_dev := $(shell ls /dev/usbtmst0 )
+tmst_dev := $(shell ls /dev/ioboards/usbtmst0 )
 serial_devs := $(shell echo -e [ ;\
             for dev in /dev/serial/by-id/* ;\
             do echo -e "\'$$dev:$$dev\' " ; \
