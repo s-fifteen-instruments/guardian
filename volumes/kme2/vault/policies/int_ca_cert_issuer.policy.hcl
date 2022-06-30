@@ -1,9 +1,5 @@
 # Policy for intermediate CA certificate issuer
 
-path "pki_int/*" {
-    capabilities = ["list", "read"]
-}
-
 path "pki_int/ca" {
     capabilities = ["create", "update"]
 }
