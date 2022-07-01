@@ -38,11 +38,12 @@ RUN apk update --no-cache \
     && pip install --no-cache-dir -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/watcher.py", "${HOME}/"]
+COPY ["${TOP_DIR}/wait-for-pipe.sh", "${HOME}/"]
 
 # Set a working directory into the image
 WORKDIR ${HOME}/
 
 # Set the scripts for the python entrypoint to run
-CMD ["watcher.py"]
+CMD ["python3", "-u", "watcher.py"]
 
-ENTRYPOINT ["python3", "-u"] 
+#ENTRYPOINT ["python3", "-u"]

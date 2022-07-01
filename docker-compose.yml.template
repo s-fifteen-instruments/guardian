@@ -184,9 +184,7 @@ services:
       dockerfile: ./watcher/Dockerfile
     env_file:
       - common/log.env
-    command: ["watcher.py"]
-    depends_on:
-      - qkd
+    command: ["./wait-for-pipe.sh", "/epoch_files/notify.pipe", "python3", "-u", "watcher.py"]
     networks:
       - internal-private
     volumes:
