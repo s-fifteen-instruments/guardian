@@ -102,6 +102,12 @@ $(info )
 # run in parallel.
 .NOTPARALLEL:
 
+# Force usage of frozen pip requirements
+frozen_requirements:
+	find . -type f -name "Dockerfile" -print0 | xargs -0 sed -i "s/requirements.txt/requirements.freeze.txt/g"
+	# Ignore libraries in rest with no version constraint
+	sed -i '/uvicorn\[standard\]/d' rest/Dockerfile
+
 # KME rest app
 rest: init dev_inject
 	$(SCRIPTS)/run.sh
