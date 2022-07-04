@@ -1,0 +1,195 @@
+# Guardian is a quantum key distribution REST API and supporting software stack.
+# Copyright (C) 2021  W. Cyrus Proctor
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+version: "3.7"
+
+services:
+
+  rest:
+    build:
+      context: ./
+      dockerfile: ./rest/Dockerfile
+    env_file:
+      - common/log.env
+    environment:
+      # Total number of worker threads; overrides other env vars
+      # - WEB_CONCURRENCY=4
+      # Ceiling on number of allowed worker threads;
+      # overridden by WEB_CONCURRENCY
+      - MAX_WORKERS=8
+      # Number of cores * WORKERS_PER_CORE = total number of workers;
+      # overrride by MAX_WORKERS, WEB_CONCURRENCY
+      - WORKERS_PER_CORE=2
+      # Pass in local and remote KME IDs to rest app container
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
+      - REMOTE_KME_ADDRESS=${REMOTE_KME_ADDRESS:-SETMEINMAKEFILE}
+    volumes:
+      # Mount a volume that stores the TLS certificates
+      # TODO: Pair down mounts for remote client auth only
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      # Mount a volume that stores the hex digest files of QKD keys
+      # NOTE: Only kme1 generates epoch files in this configuration
+      # TODO: May be removed if full QKD system provides
+      # keying material on both sides
+      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - type: bind
+        source: ./common/global_config.py
+        target: /app/core/global_config.py
+      - type: bind
+        source: ./common/rest_config.py
+        target: /app/core/rest_config.py
+    labels:
+      # Enable Traefik handling for this specific service
+      - traefik.enable=true
+      # Define the port inside of the Docker service to use
+      - traefik.http.services.restapp.loadbalancer.server.port=80
+      # web entrypoint defined in the Traefik configuration file
+      # "restapp-http" router redirects to websecure endpoint to force HTTPS
+      - traefik.http.routers.restapp-http.entrypoints=web
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTP entrypoint or a Path prefix if that does not match
+      - traefik.http.routers.restapp-http.rule=Host(`${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}`)||PathPrefix(`/api/v1`)
+      # Use the traefik-public network (declared below)
+      - traefik.docker.network=traefik-public
+      # Turn on TLS for our "restapp-https" router
+      - traefik.http.routers.restapp-https.tls=true
+      # websecure entrypoint defined in the Traefik configuration file
+      - traefik.http.routers.restapp-https.entrypoints=websecure
+      # Make Traefik use the LOCAL_KME_ID domain in for HTTPS entrypoint or a Path prefix if that does not match
+      - traefik.http.routers.restapp-https.rule=Host(`${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}`)||PathPrefix(`/api/v1`)
+      # Define middleware "client-cert-info" to pass more header info to app
+      # Pass the SAE client's Common Name and SANs to rest app for parsing
+      - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.subject.commonname=true
+      - traefik.http.middlewares.client-cert-info.passtlsclientcert.info.sans=true
+      - traefik.http.routers.restapp-https.middlewares=client-cert-info
+    networks:
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+      # Use the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+
+
+  vault:
+    # Use the latest Hashicorp Vault v1.7.x image available
+    #image: vault:${VAULT_TAG:-latest}
+    image: vault:1.7.3
+    env_file:
+      - common/log.env
+    ports:
+      # Listen on port 8200
+      - 8200:8200
+    cap_add:
+      # With this priviledged Linux capability, the container will attempt to
+      # lock memory to prevent sensitive values from being swapped to disk.
+      - IPC_LOCK
+    volumes:
+      # Mount a volume that stores the Vault @file configurations
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/config:/vault/config
+      # Mount a volume that stores any persistent data
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/data:/vault/data
+      # Mount a volume to store persistent logs
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/vault/logs:/vault/logs
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates
+    labels:
+      # Picked up by the unsealer service
+      - unsealer=watch
+    # Server Configuration: /vault/config/vault-config.hcl
+    command: ["server"]
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+
+
+  unsealer:
+    build:
+      context: ./
+      dockerfile: ./unsealer/Dockerfile
+    env_file:
+      - common/log.env
+    command: ["unsealer.py"]
+    volumes:
+      # Listen to the Docker Daemon through this socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/unsealer_config.py
+        target: /root/code/unsealer_config.py
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
+  
+
+  traefik:
+    # Use the latest Traefik v2.4.x image available
+    #image: traefik:${TRAEFIK_TAG:-latest}
+    image: traefik:2.4.9
+    env_file:
+      - common/log.env
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
+      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
+    ports:
+      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
+      - 80:80
+      # Listen on port 443, default for HTTPS
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      # Add the Docker socket as a mounted volume, so that
+      # Traefik can read the labels of other services
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      # Mount the configuration directory
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/configuration:/etc/traefik
+      # Mount the log directory
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/logs:/var/log/traefik
+    networks:
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+
+networks:
+
+  # Use the previously created public network "traefik-public", shared with other
+  # services that need to be publicly available via this Traefik instance
+  traefik-public:
+    external: true
+  # Use the private internal network created by Docker to be shared
+  # by any backend service that needs to communicate amongst internal services
+  internal-private:
+    external: false
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.192.0/24

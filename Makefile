@@ -22,14 +22,14 @@
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
 #   kme1 => local, kme2 => remote
-export KME ?= kme1
+export KME ?= kme2
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_ADDRESS ?= b.qkd.internal
+export LOCAL_KME_ADDRESS ?= a.qkd.internal
 export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
-export REMOTE_KME_ADDRESS ?= a.qkd.internal
+export REMOTE_KME_ADDRESS ?= b.qkd.internal
 export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
 
 # NOTE:
