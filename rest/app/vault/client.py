@@ -26,10 +26,10 @@ from app.core.rest_config import logger, settings, _dump_response
 
 
 class VaultClient:
-    """foo
+    """VaultClient class for handling rest connection to vault
     """
     def __init__(self) -> None:
-        """foo
+        """ Check for initialization, sealed status and authorize with vault_client_key (rest)
         """
         self.hvc: hvac.Client = \
             hvac.Client(url=settings.GLOBAL.VAULT_SERVER_URL,
@@ -61,7 +61,9 @@ class VaultClient:
                      f"Instance at {settings.GLOBAL.VAULT_SERVER_URL}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
-        """foo
+        """
+        Makes connection to vault the function connection_callback in a loop.
+        Returns the callback_result 
         """
         self.max_attempts: int = settings.GLOBAL.VAULT_MAX_CONN_ATTEMPTS
         self.backoff_factor: float = settings.GLOBAL.BACKOFF_FACTOR
@@ -108,12 +110,16 @@ class VaultClient:
         return callback_result
 
     def vault_tls_client_auth(self) -> None:
-        """foo
+        """
+        Authentication to vault via auth_tls (To be deprecated in 0.13)
+        Replace with hvac.api.auth_methods.cert moving forward
         """
         mount_point: str = settings.VAULT_TLS_AUTH_MOUNT_POINT
         logger.debug("Attempt Vault TLS client Authentication")
-        auth_response = self.hvc.auth_tls(mount_point=mount_point,
-                                          use_token=False)
+        #auth_response = self.hvc.auth_tls(mount_point=mount_point,
+        #                                  use_token=False)
+        self.hvc.adapter = mount_point
+        auth_response = self.hvc.auth.cert.login()
         logger.debug("Vault auth response:")
         _dump_response(auth_response, secret=True)
         self.hvc.token = auth_response["auth"]["client_token"]

@@ -53,11 +53,21 @@ class VaultManager(VaultSemaphore):
         """Critical Region
         """
         # Critical Start
+        KME_direction_path = self.get_sae_connection(SAE = 'slave')
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/status"
         worker_uid, epoch_status_dict = \
-            self.vault_claim_epoch_files(requested_num_bytes=(num_keys * key_size_bytes))
-
+            self.vault_claim_epoch_files(requested_num_bytes=(num_keys * key_size_bytes),
+                                         mount_point = mount_point, status_path = status_path )
+        
+        qchannel_path =  f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/"
+        
         sorted_epoch_file_list = await \
-            self.fetch_keying_material(epoch_dict=epoch_status_dict)
+            self.fetch_keying_material(epoch_dict=epoch_status_dict,
+                                       mount_point = mount_point, 
+                                       qchannel_path = qchannel_path )
 
         key_con, key_id_ledger_con, updated_epoch_file_list = await self.\
             build_key_container(num_keys=num_keys,
@@ -85,11 +95,17 @@ class VaultManager(VaultSemaphore):
         # Local Tasks to complete
         task_list = list()
         for epoch in fully_consumed_epoch_list:
-            task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
+            task_list.append(self.vault_destroy_epoch_file(epoch=epoch,
+                                                           mount_point = mount_point, 
+                                                           qchannel_path = qchannel_path))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
-            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file,
+                                                          mount_point = mount_point, 
+                                                          qchannel_path = qchannel_path))
         for ledger in key_id_ledger_con.ledgers:
-            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger,
+                                                                   mount_point = mount_point, 
+                                                                   qchannel_path = qchannel_path))
         await asyncio.gather(*task_list)
 
         # Remote tasks to complete
@@ -100,7 +116,9 @@ class VaultManager(VaultSemaphore):
 
         # Release any epoch files held before processing remote KME status codes
         self.vault_release_epoch_files(worker_uid=worker_uid,
-                                       epoch_dict=updated_epoch_status_dict)
+                                       epoch_dict=updated_epoch_status_dict,
+                                       mount_point=mount_point,
+                                       status_path=status_path)
 
         if remote_kme_status_code == status.HTTP_503_SERVICE_UNAVAILABLE:
             logger.error("Remote KME Response Status Code: 503 SERVICE UNAVAILABLE; "
@@ -135,6 +153,7 @@ class VaultManager(VaultSemaphore):
                 err_msg += f"Key ID: \"{ledger.key_ID}\"; Key Status: \"{ledger.status}\"; "
             else:
                 ledger_status_dict[ledger.key_ID] = True
+                SAE = ledger.master_SAE_ID
 
         # Ensure all keys are available before continuing
         if not all(ledger_status_dict.values()):
@@ -143,13 +162,24 @@ class VaultManager(VaultSemaphore):
                                 detail=err_msg
                                 )
 
+        #TODO: Use actual SAE ID 
+        KME_direction_path = self.get_sae_connection(SAE = 'master')
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/status"
         # Use Vault status file to reserve epoch files for manipulation
         worker_uid, epoch_status_dict = await self.\
-            vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con)
-
+            vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con,
+                                           mount_point=mount_point,
+                                           status_path=status_path)
+        
+        qchannel_path =  f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/"
         # Query Vault for each epoch file's keying material
         sorted_epoch_file_list = await \
-            self.fetch_keying_material(epoch_dict=epoch_status_dict)
+            self.fetch_keying_material(epoch_dict=epoch_status_dict,
+                                       mount_point = mount_point, 
+                                       qchannel_path = qchannel_path )
 
         # Constructing key container based on ledger container instructions
         key_con, updated_epoch_file_list, updated_key_id_ledger_con = await self.\
@@ -171,22 +201,34 @@ class VaultManager(VaultSemaphore):
 
         task_list = list()
         for epoch in fully_consumed_epoch_list:
-           task_list.append(self.vault_destroy_epoch_file(epoch=epoch))
+           task_list.append(self.vault_destroy_epoch_file(epoch=epoch,
+                                                          mount_point = mount_point, 
+                                                          qchannel_path = qchannel_path))
         for epoch, epoch_file in partially_consumed_epoch_dict.items():
-            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file))
+            task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file,
+                                                          mount_point = mount_point, 
+                                                          qchannel_path = qchannel_path))
         for ledger in updated_key_id_ledger_con.ledgers:
-            task_list.append(self.vault_commit_local_key_id_ledger(ledger))
+            task_list.append(self.vault_commit_local_key_id_ledger(ledger,
+                                                                   mount_point = mount_point, 
+                                                                   qchannel_path = qchannel_path))
 
         await asyncio.gather(*task_list)
 
         # Critical End
         self.vault_release_epoch_files(worker_uid=worker_uid,
-                                       epoch_dict=epoch_status_dict)
+                                       epoch_dict=epoch_status_dict,
+                                       mount_point=mount_point,
+                                       status_path=status_path)
 
         return key_con
 
     async def vault_ledger_claim_epoch_files(self, key_id_ledger_con:
-                                             schemas.KeyIDLedgerContainer):
+                                             schemas.KeyIDLedgerContainer,
+                                             mount_point: str = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                             status_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                             f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+                                             "status"):
         """foo
         """
         epoch_list = await self.\
@@ -197,10 +239,7 @@ class VaultManager(VaultSemaphore):
         while cas_error:
             attempt_count += 1
             # First, attempt to read status endpoint
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-                "status"
+           
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
                                                mount_point=mount_point
@@ -299,6 +338,10 @@ class VaultManager(VaultSemaphore):
         """foo
         """
         # Find Key ID request duplicates
+        KME_direction_path = self.get_sae_connection(SAE = 'master')
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        qchannel_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/"
         key_id_list = list()
         duplicate_key_id_list = list()
         err_msg = "Duplicate key IDs in Request; Key IDs must be unique: "
@@ -323,7 +366,9 @@ class VaultManager(VaultSemaphore):
             task_list.\
                 append(self.vault_fetch_ledger_entry(key_ID=key_ID,
                                                      master_SAE_ID=master_SAE_ID,
-                                                     slave_SAE_ID=slave_SAE_ID
+                                                     slave_SAE_ID=slave_SAE_ID,
+                                                     mount_point=mount_point,
+                                                     qchannel_path=qchannel_path
                                                      )
                        )
         local_query_results = await asyncio.gather(*task_list)
@@ -369,7 +414,11 @@ class VaultManager(VaultSemaphore):
 
     async def vault_fetch_ledger_entry(self, key_ID: schemas.KeyID,
                                        master_SAE_ID: str,
-                                       slave_SAE_ID: str) -> Tuple[bool,
+                                       slave_SAE_ID: str,
+                                       mount_point:str = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                       qchannel_path:str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                       f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" 
+                                       ) -> Tuple[bool,
                                                                    schemas.KeyIDLedger,
                                                                    int]:
         """foo
@@ -377,9 +426,7 @@ class VaultManager(VaultSemaphore):
         key_id_valid = False
         ledger_entry = None
         try:
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            ledger_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+            ledger_path = qchannel_path + \
                 f"{settings.GLOBAL.VAULT_LEDGER_ID}/" \
                 f"{key_ID.key_ID}"
             key_id_ledger_response = self.hvc.secrets.kv.v2.\
@@ -492,16 +539,23 @@ class VaultManager(VaultSemaphore):
     async def \
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
                                                    schemas.KeyIDLedgerContainer,
+                                                   calling_kme_id: str,
                                                    reset_status: bool = False) -> schemas.KeyIDs:
         """foo
         """
         logger.debug("Received Key ID Ledger Container:")
         _dump_response(key_id_ledger_con.dict(), secret=False)
+        KME_direction_path = self.get_kme_connection(KME=calling_kme_id)
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        qchannel_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+                        KME_direction_path + f"/"
         task_list = list()
         key_id_list = list()
         for ledger in key_id_ledger_con.ledgers:
             logger.debug(f"Adding Local Ledger Commit Task Key ID: {ledger.key_ID}")
             task_list.append(self.vault_commit_local_key_id_ledger(ledger,
+                                                                   mount_point = mount_point, 
+                                                                   qchannel_path = qchannel_path,
                                                                    reset_status=
                                                                    reset_status
                                                                    )
@@ -593,14 +647,20 @@ class VaultManager(VaultSemaphore):
 
     async def vault_commit_local_key_id_ledger(self, key_id_ledger:
                                                schemas.KeyIDLedger,
-                                               reset_status: bool = False) -> None:
+                                               mount_point: str = f"{settings.GLOBAL.VAULT_KV_ENDPOINT}",
+                                               qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                                                    f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" ,
+                                               reset_status: bool = False,
+                                               ) -> None:
         """foo
         """
 
         key_id, key_id_valid, ledger_entry, ledger_version = await self.\
             vault_fetch_ledger_entry(key_ID=key_id_ledger,  # Works b/c KeyIDLedger inherits from KeyID
                                      master_SAE_ID=key_id_ledger.master_SAE_ID,
-                                     slave_SAE_ID=key_id_ledger.slave_SAE_ID)
+                                     slave_SAE_ID=key_id_ledger.slave_SAE_ID,
+                                     mount_point = mount_point,
+                                     qchannel_path = qchannel_path)
 
         # NOTE: Status updates to a ledger should only be requested upon first
         # creation. If this is true, this is outside of the intended design.
@@ -619,9 +679,7 @@ class VaultManager(VaultSemaphore):
             return
 
         try:
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+            epoch_path = qchannel_path + \
                 f"{settings.GLOBAL.VAULT_LEDGER_ID}/" \
                 f"{key_id_ledger.key_ID}"
             key_id_ledger_response = self.hvc.secrets.kv.v2.\
@@ -654,22 +712,26 @@ class VaultManager(VaultSemaphore):
                                   detail=f"Unexpected Error: {e}"
                                   )
 
-    async def vault_update_epoch_file(self, epoch_file: schemas.EpochFile):
+    async def vault_update_epoch_file(self, epoch_file: schemas.EpochFile,
+                                            mount_point: str,
+                                            qchannel_path: str):
         """foo
         """
         cas_error = True
         while cas_error:
-            cas_error = await self.vault_update_secret(epoch_file=epoch_file)
+            cas_error = await self.vault_update_secret(epoch_file=epoch_file,
+                                                       mount_point = mount_point,
+                                                       qchannel_path = qchannel_path)
 
-    async def vault_update_secret(self, epoch_file: schemas.EpochFile) -> bool:
+    async def vault_update_secret(self, epoch_file: schemas.EpochFile,
+                                        mount_point:str = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                        qchannel_path:str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                        f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" ) -> bool:
         """foo
         """
         cas_error = True
         try:
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-                f"{epoch_file.epoch}"
+            epoch_path = qchannel_path + f"{epoch_file.epoch}"
 
             epoch_file_metadata_response = \
                 self.hvc.secrets.kv.v2.read_secret_metadata(path=epoch_path,
@@ -717,13 +779,13 @@ class VaultManager(VaultSemaphore):
 
         return cas_error
 
-    async def vault_destroy_epoch_file(self, epoch: str):
+    async def vault_destroy_epoch_file(self, epoch: str,
+                                    mount_point:str = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                    qchannel_path:str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                    f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" ):
         """foo
         """
-        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-            f"{epoch}"
+        epoch_path = qchannel_path + f"{epoch}"
         epoch_file_response = \
             self.hvc.secrets.kv.v2.\
             delete_metadata_and_all_versions(path=epoch_path,
@@ -884,25 +946,30 @@ class VaultManager(VaultSemaphore):
         return key_con, key_id_ledger_con, sorted_epoch_file_list
 
     async def fetch_keying_material(self, epoch_dict:
-                                    Dict[str, int]) -> List[schemas.EpochFile]:
+                                    Dict[str, int],
+                                    mount_point: str,
+                                    qchannel_path: str) -> List[schemas.EpochFile]:
         """foo
         """
         task_list = list()
         for epoch, num_bytes in sorted(epoch_dict.items()):
-            task_list.append(self.vault_fetch_epoch_file(epoch=epoch))
+            task_list.append(self.vault_fetch_epoch_file(epoch=epoch,
+                                                         mount_point = mount_point,
+                                                         qchannel_path = qchannel_path))
 
         epoch_file_list = sorted(list(await asyncio.gather(*task_list)),
                                  key=lambda x: x.epoch)
 
         return epoch_file_list
 
-    async def vault_fetch_epoch_file(self, epoch) -> schemas.EpochFile:
+    async def vault_fetch_epoch_file(self, epoch,
+                                    mount_point:str = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                    qchannel_path:str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                    f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" 
+                                    ) -> schemas.EpochFile:
         """foo
         """
-        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        epoch_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-            f"{epoch}"
+        epoch_path = qchannel_path + f"{epoch}"
         epoch_file_response = \
             self.hvc.secrets.kv.v2.read_secret(path=epoch_path,
                                                mount_point=mount_point)
@@ -1018,3 +1085,26 @@ class VaultManager(VaultSemaphore):
         logger.debug(f"Writing hexdigest to filepath: {filepath}")
         async with aiofiles.open(filepath, "w") as f:
             await f.write(hexdigest)
+
+
+    def get_sae_connection(self, SAE: str) -> str:
+        """
+        To implement a proper lookup here.
+        Right now, this function is only called by fetch_keys from enc_keys 
+        which is the master kme looking for the kme the slave sae is connected to
+        and from query_ledger from post/get_key_with_key_ids which is the
+        slave kme looking for the kme which the master sae is connected to.
+        """
+        if SAE == 'slave':
+            KME = 'masterslave'
+        elif SAE == 'master':
+            KME = 'slavemaster'
+        return KME
+
+    def get_kme_connection(self, KME: str) -> str:
+        """
+        May need to implement proper translation from calling_kme_id
+        to paths mounted in vault. For 2 nodes, slavemaster is fine.
+        """
+        KME = 'slavemaster'
+        return KME

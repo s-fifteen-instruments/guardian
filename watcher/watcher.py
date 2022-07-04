@@ -88,8 +88,10 @@ class watcherClient:
                         verify=settings.GLOBAL.SERVER_CERT_FILEPATH)
         mount_point = "cert"
         logger.debug("Attempt TLS client login")
-        auth_response = self.vclient.auth_tls(mount_point=mount_point,
-                                              use_token=False)
+        #auth_response = self.vclient.auth_tls(mount_point=mount_point,
+        #                                      use_token=False)
+        self.vclient.adapter = mount_point
+        auth_response = self.vclient.auth.cert.login()
         logger.debug("Vault auth response:")
         self._dump_response(auth_response, secret=True)
         self.vclient.token = auth_response["auth"]["client_token"]
@@ -263,14 +265,17 @@ class watcherClient:
         hexdigest = open(filepath, "r").read()
         return hexdigest
 
-    def vault_write_key(self, epoch: str, raw_key: bytes):
+    def vault_write_key(self, epoch: str, raw_key: bytes,
+                        mount_point: str =  settings.GLOBAL.VAULT_KV_ENDPOINT,
+                        qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                        f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/"  ):
         """foo
         """
         cas_error = False
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        qkey_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-            f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-            f"{epoch}"
+        qkey_path =  qchannel_path + \
+                    f"{epoch}"
+
         full_path = f"{mount_point}/data/{qkey_path}"
 
         # Query Vault to ensure we can create new keys at this path
@@ -407,7 +412,10 @@ class watcherClient:
 
         return cas_error
 
-    def vault_update_status(self, epoch: str, num_bytes: int):
+    def vault_update_status(self, epoch: str, num_bytes: int,
+                        mount_point: str =  settings.GLOBAL.VAULT_KV_ENDPOINT,
+                        qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                        f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" ):
         """foo
         """
         # Attempt to read status endpoint
@@ -418,10 +426,8 @@ class watcherClient:
         cas_error = True
         while cas_error:
             # First attempt to read status endpoint
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-                "status"
+            status_path = qchannel_path + \
+                          "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
                                                mount_point=mount_point
@@ -444,8 +450,25 @@ class watcherClient:
         logger.debug(f"Worker started on Filename: {filepath}")
         raw_bytes = watcherClient.read_epoch_file(filepath)
         epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
-        self.vault_write_key(epoch, raw_key)
-        self.vault_update_status(epoch, len(raw_key))
+        mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
+        if f"{settings.GLOBAL.LOCAL_KME_ID}" == 'kme1':
+            KME_id = 0 # set parity for
+        elif f"{settings.GLOBAL.LOCAL_KME_ID}" == 'kme2':
+            KME_id = 1
+        logger.debug(f"I am  {KME_id} even goes to masterslave; odd to slavemaster")
+        if (int(epoch,16)+KME_id)%2:
+            qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                        f"masterslave/"
+        else:
+            qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                        f"slavemaster/"
+        self.vault_write_key(epoch, raw_key,
+                             mount_point=mount_point,
+                             qchannel_path=qchannel_path
+                             )
+        self.vault_update_status(epoch, len(raw_key),
+                                 mount_point=mount_point,
+                                 qchannel_path=qchannel_path)
         watcherClient.delete_epoch_file(filepath)
 
         return {f"{filepath}": True}

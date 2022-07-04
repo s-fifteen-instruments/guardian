@@ -165,6 +165,9 @@ services:
     build:
       context: ./
       dockerfile: ./watcher/Dockerfile
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["watcher.py"]
