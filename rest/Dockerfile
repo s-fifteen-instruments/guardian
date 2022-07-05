@@ -19,7 +19,7 @@
 # For updates, check:
 # https://github.com/tiangolo/uvicorn-gunicorn-docker/tree/master/docker-images
 
-FROM python:3.8.3-alpine3.10
+FROM python:3.9.6-alpine3.14
 
 LABEL maintainer="Cyrus Proctor"
 LABEL originalauthor="Sebastian Ramirez <tiangolo@gmail.com>"
