@@ -605,6 +605,8 @@ class VaultClient:
                                         settings.GLOBAL.VAULT_QKDE_ID)
         policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
                                         settings.GLOBAL.VAULT_QCHANNEL_ID)
+        policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                        settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
         filepath = f"{settings.GLOBAL.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
         logger.debug(f"Writing out policy to: {filepath}")
@@ -626,6 +628,8 @@ class VaultClient:
                                         settings.GLOBAL.VAULT_QKDE_ID)
         policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
                                         settings.GLOBAL.VAULT_QCHANNEL_ID)
+        policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                        settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
         policy_str = policy_str.replace("<<<LEDGER_ID>>>",
                                         settings.GLOBAL.VAULT_LEDGER_ID)
         filepath = f"{settings.GLOBAL.POLICIES_DIRPATH}/" \

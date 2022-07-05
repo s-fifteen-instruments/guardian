@@ -184,6 +184,9 @@ services:
       dockerfile: ./watcher/Dockerfile
     env_file:
       - common/log.env
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
     command: ["./wait-for-pipe.sh", "/epoch_files/notify.pipe", "python3", "-u", "watcher.py"]
     networks:
       - internal-private

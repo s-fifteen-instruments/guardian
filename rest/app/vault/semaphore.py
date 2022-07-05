@@ -30,7 +30,12 @@ from .client import VaultClient
 
 
 class VaultSemaphore(VaultClient):
-    """foo
+    """
+    Class of vault calls to do useful stuff in the QKEYS kv secret engine
+    Most defaults to settings.GLOBAL.VAULT_KV_ENDPOINT,
+                     settings.GLOBAL.VAULT_QKDE_ID,
+                     settings.GLOBAL.VAULT_QCHANNEL_ID
+                  
     """
     def __init__(self) -> None:
         """foo
@@ -38,7 +43,9 @@ class VaultSemaphore(VaultClient):
         super().__init__()
 
     def vault_read_secret_version(self, filepath: str, mount_point: str):
-        """foo
+        """
+        Reads /secrets/mount_point/filepath from vault.
+        Returns secret_version, secret_data
         """
         secret_data = dict()
         secret_version = -1
@@ -66,7 +73,9 @@ class VaultSemaphore(VaultClient):
 
     def vault_commit_secret(self, path: str, secret: Dict[str, Any],
                             version: int, mount_point: str):
-        """foo
+        """
+        Commit a secret on /secret/mount_point/path
+        Used to claim and release epochs.
         """
         cas_error = True
         try:
@@ -226,16 +235,17 @@ class VaultSemaphore(VaultClient):
 
         return total_num_keys
 
-    def vault_claim_epoch_files(self, requested_num_bytes: int):
+    def vault_claim_epoch_files(self, requested_num_bytes: int,
+                                mount_point: str  = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                status_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+                                "status"
+                                ):
         """foo
         """
         cas_error = True
         while cas_error:
             # First, attempt to read status endpoint
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-                "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
                                                mount_point=mount_point
@@ -257,16 +267,16 @@ class VaultSemaphore(VaultClient):
         return worker_uid, epoch_dict
 
     def vault_release_epoch_files(self, worker_uid: str,
-                                  epoch_dict: Dict[str, int]):
+                                  epoch_dict: Dict[str, int],
+                                  mount_point: str  = settings.GLOBAL.VAULT_KV_ENDPOINT,
+                                  status_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+                                  f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
+                                  "status"):
         """foo
         """
         cas_error = True
         while cas_error:
             # First, attempt to read status endpoint
-            mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-            status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
-                "status"
             status_version, status_data = \
                 self.vault_read_secret_version(filepath=status_path,
                                                mount_point=mount_point
