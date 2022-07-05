@@ -90,11 +90,10 @@ class watcherClient:
         logger.debug("Attempt TLS client login")
         #auth_response = self.vclient.auth_tls(mount_point=mount_point,
         #                                      use_token=False)
-        self.vclient.adapter = mount_point
         auth_response = self.vclient.auth.cert.login()
         logger.debug("Vault auth response:")
         self._dump_response(auth_response, secret=True)
-        self.vclient.token = auth_response["auth"]["client_token"]
+        #self.vclient.token = auth_response["auth"]["client_token"]
         self.vclient.lease_end = auth_response["auth"]["lease_duration"] + time.time()
         if self.vclient.is_authenticated():
             logger.info(f"\"{settings.CLIENT_NAME}\" is now authenticated")
