@@ -147,6 +147,7 @@ clear: rest dev_inject
 allclean: export KME = both
 allclean: clean dev_inject
 	docker volume prune -f
+	rm -f docker-compose.yml
 # Clean local KME
 clean: down dev_inject
 	sudo $(SCRIPTS)/clean.sh $(KME)
