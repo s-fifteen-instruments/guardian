@@ -88,8 +88,10 @@ class watcherClient:
                         verify=settings.GLOBAL.SERVER_CERT_FILEPATH)
         mount_point = "cert"
         logger.debug("Attempt TLS client login")
-        auth_response = self.vclient.auth_tls(mount_point=mount_point,
-                                              use_token=False)
+        #auth_response = self.vclient.auth_tls(mount_point=mount_point,
+        #                                      use_token=False)
+        self.vclient.adapter = mount_point
+        auth_response = self.vclient.auth.cert.login()
         logger.debug("Vault auth response:")
         self._dump_response(auth_response, secret=True)
         self.vclient.token = auth_response["auth"]["client_token"]
