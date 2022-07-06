@@ -118,11 +118,10 @@ class VaultClient:
         logger.debug("Attempt Vault TLS client Authentication")
         #auth_response = self.hvc.auth_tls(mount_point=mount_point,
         #                                  use_token=False)
-        self.hvc.adapter = mount_point
         auth_response = self.hvc.auth.cert.login()
         logger.debug("Vault auth response:")
         _dump_response(auth_response, secret=True)
-        self.hvc.token = auth_response["auth"]["client_token"]
+        #self.hvc.token = auth_response["auth"]["client_token"]
 
     def vault_reauth(self) -> None:
         """foo
