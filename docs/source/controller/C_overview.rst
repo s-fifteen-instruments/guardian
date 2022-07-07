@@ -240,4 +240,3 @@ With this token, the user password can be changed using the ``auth/userpass/user
                --cacert cacert.pem \
                http://kme_id:8200/v1/auth/userpass/users/qkd_controller/password
           
-----
