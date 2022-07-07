@@ -28,7 +28,7 @@ path "auth/token/renew-self" {
     capabilities = ["update"]
 }
 
-path "auth/userpass/users/qkd_controller" {
+path "auth/userpass/users/qkd_controller/password" {
   capabilities = [ "update" ]
   allowed_parameters = {
     "password" = []
