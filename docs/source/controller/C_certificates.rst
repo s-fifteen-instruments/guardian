@@ -101,6 +101,8 @@ Navigate to the Vault UI page which is ``https://kme1:8200/ui/vault/auth`` in th
 
    https://www.vaultproject.io/docs/secrets/pki#usage
 
+.. _`vault_api`:
+
 Vault API
 ^^^^^^^^^
 
