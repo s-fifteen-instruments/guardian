@@ -99,15 +99,15 @@ class VaultClient:
         self.connection_loop(self.vault_create_watcher_service_acl)
         self.connection_loop(self.vault_create_rest_service_acl)
         self.connection_loop(self.vault_generate_client_cert,
-                             common_name="watcher")
+                             common_name="watcher",uri_sans="")
         self.connection_loop(self.vault_generate_client_cert,
-                             common_name="rest")
+                common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
         # NOTE: The SAE client will not interact directly with the
         # Vault instance. Therefore, no need to create an ACL policy.
         # NOTE: An SAE CSR may need to be signed instead of using this
         # cert and key combination. This is for convenience.
         self.connection_loop(self.vault_generate_client_cert,
-                             common_name=f"{settings.GLOBAL.LOCAL_SAE_ID}")
+                common_name=f"{settings.GLOBAL.LOCAL_SAE_ID}",uri_sans=f"sae-id:{settings.CLIENT_URI_SANS}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """Attempts the given callback multiple times till success or limit reached.
@@ -386,6 +386,7 @@ class VaultClient:
         role_name_str = "role_int_ca_cert_issuer"
         # TODO: pull this out to use CERTAUTH configuration settings
         role_param_dict = {
+            "allowed_uri_sans": [f"kme-id:{settings.KME_URI_SANS}",f"sae-id:*"],
             "allow_localhost": "true",
             "allow_subdomains": "true",
             "allow_glob_domains": "true",
@@ -451,7 +452,7 @@ class VaultClient:
         logger.debug("Read policy response:")
         self._dump_response(read_policy_response, secret=False)
 
-    def vault_generate_client_cert(self, common_name: str):
+    def vault_generate_client_cert(self, common_name: str, uri_sans: str):
         """foo
         """
         role_str = "role_int_ca_cert_issuer"
@@ -459,6 +460,7 @@ class VaultClient:
         extra_param_dict = {
             "alt_names": settings.CLIENT_ALT_NAMES,
             "ip_sans": settings.CLIENT_IP_SANS,
+            "uri_sans": uri_sans,
             "format_str": "pem",
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
@@ -466,6 +468,7 @@ class VaultClient:
         logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
         logger.debug(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
         logger.debug(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
+        logger.debug(f"Adding URI SAN: \"{uri_sans}\" to client certificate")
         gen_cert_response = \
             self.vclient.secrets.pki.\
             generate_certificate(name=role_str,

@@ -38,6 +38,8 @@ class VaultInitSettings(BaseSettings):
     SECRET_THRESHOLD: int = 3
     CLIENT_ALT_NAMES: str = f"*.{GLOBAL.LOCAL_KME_ADDRESS},{GLOBAL.LOCAL_KME_ADDRESS}"
     CLIENT_IP_SANS: str = "" # comma-delimited
+    KME_URI_SANS: str = f"{GLOBAL.LOCAL_KME_ID}"
+    CLIENT_URI_SANS: str = f"{GLOBAL.LOCAL_SAE_ID}"
 
     # Make environment settings take precedence over __init__ and file
     class Config:
