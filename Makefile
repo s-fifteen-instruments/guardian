@@ -75,7 +75,7 @@ export REMOTE_KME_ID := KME-S15-Guardian-002-Guardian.Alice
 export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
 export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
 $(shell mv volumes/kme1 volumes/$(LOCAL_KME_ID))
-$(shell	mv volumes/kme2 volumes/$(REMOTE_KME_ID))
+$(shell mv volumes/kme2 volumes/$(REMOTE_KME_ID))
 else ifeq ($(KME), kme2)
 export LOCAL_KME_ID := KME-S15-Guardian-002-Guardian.Alice
 export REMOTE_KME_ID := KME-S15-Guardian-001-Guardian.Bob

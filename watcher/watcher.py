@@ -450,9 +450,9 @@ class watcherClient:
         raw_bytes = watcherClient.read_epoch_file(filepath)
         epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        if f"{settings.GLOBAL.LOCAL_KME_ID}" == 'kme1':
+        if f"{settings.GLOBAL.LOCAL_KME_ALT_ID}" == 'kme1':
             KME_id = 0 # set parity for
-        elif f"{settings.GLOBAL.LOCAL_KME_ID}" == 'kme2':
+        elif f"{settings.GLOBAL.LOCAL_KME_ALT_ID}" == 'kme2':
             KME_id = 1
         logger.debug(f"I am  {KME_id} even goes to masterslave; odd to slavemaster")
         if (int(epoch,16)+KME_id)%2:
