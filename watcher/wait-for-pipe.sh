@@ -20,5 +20,6 @@ until [ -p $PIPE ]; do
         sleep 1
 done
 >&2 echo "Notification pipe up!"
+sleep 30
 exec "$@"
 
