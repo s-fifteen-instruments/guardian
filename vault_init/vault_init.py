@@ -97,7 +97,7 @@ class VaultClient:
         self.connection_loop(self.vault_create_acl_policy,
                              policy_name_str="int_ca_cert_issuer")
         self.connection_loop(self.vault_create_or_update_entity_by_name,
-                                name_str="qkd_controller",
+                                entity_name="qkd_controller",
                                 policies=["int_ca_cert_issuer"])
         self.connection_loop(self.vault_create_or_update_userpass,
                                 user_str="qkd_controller",
@@ -446,7 +446,7 @@ class VaultClient:
                 metadata=dict(organization='s-fifteen', team='QA'),
                 policies=policies)
         logger.debug("Entity created/modified okay:")
-        self._dump_response(entity_response.ok, secret=False)
+        self._dump_response(entity_response, secret=False)
 
     def vault_list_entities_by_name(self):
         """Lists entities by name.
