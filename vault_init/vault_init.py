@@ -82,6 +82,7 @@ class VaultClient:
         logger.debug("Begin first phase initialization")
         self.connection_loop(self.vault_enable_audit_file)
         self.connection_loop(self.vault_enable_cert_auth_method)
+        self.connection_loop(self.vault_enable_userpass_auth_method)
         self.connection_loop(self.vault_enable_pki_int_secrets_engine)
         self.connection_loop(self.vault_write_int_ca_csr)
 
@@ -95,6 +96,16 @@ class VaultClient:
         self.connection_loop(self.vault_setup_int_ca_certs)
         self.connection_loop(self.vault_create_acl_policy,
                              policy_name_str="int_ca_cert_issuer")
+        self.connection_loop(self.vault_create_or_update_entity_by_name,
+                                name_str="qkd_controller",
+                                policies=["int_ca_cert_issuer"])
+        self.connection_loop(self.vault_create_or_update_userpass,
+                                user_str="qkd_controller",
+                                pass_str="qkd_controller")
+        self.connection_loop(self.vault_create_or_update_alias,
+                                entity_name="qkd_controller",
+                                alias="qkd_controller", 
+                                mount_path="userpass")
         self.connection_loop(self.vault_enable_kv_secrets_engine)
         self.connection_loop(self.vault_create_watcher_service_acl)
         self.connection_loop(self.vault_create_rest_service_acl)
@@ -295,6 +306,204 @@ class VaultClient:
         auth_methods = self.vclient.sys.list_auth_methods()
         logger.debug("Currently enabled auth methods:")
 
+    def vault_enable_userpass_auth_method(self):
+        """Enables the userpass auth access method.
+        """
+        auth_methods = self.vclient.sys.list_auth_methods()
+        logger.debug("Currently enabled auth methods:")
+        self._dump_response(auth_methods, secret=False)
+        method_type_str = "userpass"
+        description_str = "Username-password Authentication"
+        logger.debug("Attempt to enable Userpass auth method")
+        self.enable_cert_response = \
+            self.vclient.sys.enable_auth_method(method_type=method_type_str,
+                                                description=description_str)
+        logger.debug("Enable cert response okay:")
+        self._dump_response(self.enable_cert_response.ok, secret=False)
+        auth_methods = self.vclient.sys.list_auth_methods()
+        logger.debug("Currently enabled auth methods:")
+
+    def vault_get_policies(self):
+        """Returns all configured policies.
+
+        Returns:
+            list_policies_resp (list): List of strings of policy names.
+        """
+        list_policies = self.vclient.sys.list_policies()
+        list_policies_resp = list_policies['data']['policies']
+        return(list_policies_resp)
+    
+    def vault_list_policies(self):
+        """Prints all configured policies.
+        """
+        list_policies_resp = self.vault_get_policies()
+        print('List of currently configured policies: %s' % ', '.join(list_policies_resp))
+
+    def vault_create_or_update_userpass(self, user_str, pass_str, \
+        mount_point: str = 'userpass', policies: list = None):
+        """Vault creates/updates user with the Userpass auth method.
+
+        User policies can be assigned or changed here too.
+
+        Args:
+            user_str (str): Username string.
+            pass_str (str): Password string.
+            mount_point (str, optional): Path where the userpass
+                auth method is to be implmented.
+            policies (list, optional): Policies to be added
+                to user, provided the policies exist. Defaults to None.
+        """
+        if policies == None:
+            logger.debug("""Creating/Modifying user \"{user_str}\"
+            with no policies attached.""")
+            pass
+        else:
+            existing_policies = set(self.vault_get_policies())
+            # Compare requested policies to exisiting ones, taking
+            # the intersection of the two sets.
+            policies = \
+                list(\
+                    set(policies).intersection(existing_policies)
+                    )
+            logger.debug("Creating/Modifying user \"{user_str}\".")
+
+        # Official documentation says policies kwarg is type `str`
+        # but type `list` works fine, better actually.
+        user_response = \
+            hvac.api.auth_methods.Userpass.create_or_update_user(\
+            self.vclient, username=user_str, password=pass_str,\
+                mount_point=mount_point, policies=policies)
+        logger.debug("User created/modified okay:")
+        self._dump_response(user_response.ok, secret=False)
+        
+    def vault_userpass_login(self, user_str, pass_str):
+        """Login with the provided username and password.
+        """
+        hvac.api.auth_methods.Userpass.login(\
+            self.vclient, username=user_str, password=pass_str)
+
+    def vault_delete_userpass(self, user_str):
+        """Vault deletes user with the Userpass auth method.
+
+        Strangely, no logout method is provided.
+        """
+        hvac.api.auth_methods.Userpass.delete_user(\
+            self.vclient, username=user_str)
+
+    def vault_get_auth_method_accessor_from_path(self, path_str):
+        """Returns the accessor of the given auth method at given path.
+        """
+        response = self.vclient.sys.list_auth_methods()
+        path = path_str + "/"
+        filtered = response[path]['accessor']
+
+        return(filtered)
+
+    def vault_read_user(self, user_str, mount_point = 'userpass'):
+        """Returns user info as a dict.
+
+        Return Sample:
+        {'request_id': 'cda5834b-b9cc-a05e-1fc8-a5d46b68b817', 
+        'lease_id': '', 'renewable': False, 'lease_duration': 0, 
+        'data': {'token_bound_cidrs': [], 'token_explicit_max_ttl': 0, 
+        'token_max_ttl': 0, 'token_no_default_policy': False, 
+        'token_num_uses': 0, 'token_period': 0, 'token_policies': [], 
+        'token_ttl': 0, 'token_type': 'default'}, 
+        'wrap_info': None, 'warnings': None, 'auth': None}
+        """
+        response = hvac.api.auth_methods.Userpass.read_user(\
+            self.vclient, username=user_str)
+
+        print(response)
+
+    def vault_create_or_update_entity_by_name(self, entity_name, policies: list = None):
+        """Vault creates or updates entity with the given name.
+
+        Args:
+            entity_name (str): Entity's name.
+            policies (list, optional): Policies to be added
+                to user, provided the policies exist. Defaults to None.
+        """
+        if policies == None:
+            logger.debug("""Creating/Modifying Vault Entity
+             \"{entity_name}\" with no policies attached.""")
+            pass
+        else:
+            existing_policies = set(self.vault_get_policies())
+            # Compare requested policies to exisiting ones, taking
+            # the intersection of the two sets.
+            policies = \
+                list(\
+                    set(policies).intersection(existing_policies)
+                    )
+            logger.debug("Creating Vault Entity \"{entity_name}\"")
+
+        # Official documentation says policies kwarg is type `str`
+        # but type `list` works fine, better actually.
+        entity_response = \
+            self.vclient.secrets.identity.create_or_update_entity_by_name(\
+                name=entity_name,
+                metadata=dict(organization='s-fifteen', team='QA'),
+                policies=policies)
+        logger.debug("Entity created/modified okay:")
+        self._dump_response(entity_response.ok, secret=False)
+
+    def vault_list_entities_by_name(self):
+        """Lists entities by name.
+        """
+        list_response = self.vclient.secrets.identity.list_entities_by_name()
+        entity_keys = list_response['data']['keys']
+        print('The following entity names are currently configured: {keys}'.format(keys=entity_keys))
+    
+    def vault_create_or_update_alias(self, entity_name, alias, mount_path):
+        """Creates or updates existing alias of the given entity.
+
+        An entity can have multiple aliases, corresponding to a user
+        having different accounts which may have different access 
+        permissions or authentication methods.
+
+        Args:
+            entity_name (str): Entity that will be assigned the new alias.
+            alias (str): Name of new alias.
+            mount_path (str): Path of authenticaion method to be associated 
+                with the new alias. Used to retrieve the method's accessor.
+        """
+        # Get entity id from entity name
+        try:
+            read_response = self.vclient.secrets.identity.\
+                read_entity_by_name(
+                name=entity_name,
+            )
+            entity_id = read_response['data']['id']
+        except KeyError as e:
+            logger.debug(f"Error retrieving id of entity \"{entity_name}\".")
+
+        # Get auth method accessor
+        logger.debug("Obtaining method accessor for \"{mount_path}\"")
+        accessor = self.vault_get_auth_method_accessor_from_path(mount_path)
+
+        # Assign new alias to entity
+        logger.debug(f"Assigning alias \"{alias}\" to entity \"{entity_name}\" ...")
+        create_response = self.vclient.secrets.identity.create_or_update_entity_alias(
+        name=alias,
+        canonical_id=entity_id,
+        mount_accessor=accessor,
+        )
+        alias_id = create_response['data']['id']
+        logger.debug(f"Alias with id {alias_id} mounted at path {mount_path} successfully.")
+
+    def vault_list_user(self, mount_path):
+        """Lists users.
+
+        Sample response: {'request_id': '6346756c-56b7-242e-0cf2-86ad5aed16d4',
+         'lease_id': '', 'renewable': False, 'lease_duration': 0, 'data': {'keys': ['jhjh']},
+          'wrap_info': None, 'warnings': None, 'auth': None}
+
+        """
+        response = hvac.api.auth_methods.Userpass.list_user(self.vclient, 'userpass')
+        print(response)
+
+
     def vault_enable_pki_int_secrets_engine(self):
         """foo
         """
@@ -423,7 +632,7 @@ class VaultClient:
 
     @staticmethod
     def vault_read_hcl_file(policy_name_str, is_template=False):
-        """foo
+        """Read the hcl template of the given policy name.
         """
         template_dir = ""
         template_str = ""
@@ -436,7 +645,7 @@ class VaultClient:
         return open(filepath, "r").read()
 
     def vault_create_acl_policy(self, policy_name_str):
-        """foo
+        """Creates ACL policy of the given name from a template.
         """
         policy_hcl = VaultClient.vault_read_hcl_file(policy_name_str,
                                                      is_template=False)
@@ -446,7 +655,7 @@ class VaultClient:
                                                      policy=policy_hcl)
         logger.debug("Add ACL policy response okay:")
         self._dump_response(policy_response.ok, secret=False)
-        logger.debug("Attemp to read back policy")
+        logger.debug("Attempt to read back policy")
         read_policy_response = \
             self.vclient.get_policy(name=policy_name_str, parse=True)
         logger.debug("Read policy response:")
