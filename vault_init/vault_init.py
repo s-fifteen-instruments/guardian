@@ -112,7 +112,7 @@ class VaultClient:
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="watcher",uri_sans="")
         self.connection_loop(self.vault_generate_client_cert,
-                common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
+                             common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
         # NOTE: The SAE client will not interact directly with the
         # Vault instance. Therefore, no need to create an ACL policy.
         # NOTE: An SAE CSR may need to be signed instead of using this
@@ -338,6 +338,8 @@ class VaultClient:
         """
         list_policies_resp = self.vault_get_policies()
         print('List of currently configured policies: %s' % ', '.join(list_policies_resp))
+
+
 
     def vault_create_or_update_userpass(self, user_str, pass_str, \
         mount_point: str = 'userpass', policies: list = None):
@@ -711,6 +713,15 @@ class VaultClient:
                                      ca_chain=ca_chain_pem_str)
         VaultClient.create_pkcs12_file(dirpath=client_admin_dirpath,
                                        common_name=common_name)
+
+    def vault_create_ca_role(self, common_name):
+        certificate = f"{settings.GLOBAL.CERT_DIRPATH}/{common_name}/{common_name}.ca-chain.cert.pem"
+        policy = common_name
+        user_response = \
+            hvac.api.auth_methods.cert.Cert.create_ca_certificate_role(\
+            self.vclient, common_name, certificate, token_policies=policy)
+        logger.debug("CA certificate role  created/modified okay:")
+        #self._dump_response(user_response, secret=False)
 
     @staticmethod
     def write_client_credentials(dirpath: str, common_name: str,
