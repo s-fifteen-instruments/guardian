@@ -137,7 +137,7 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files:/root/code/qsim/epoch_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files:/root/code/qsim/epoch_files
       - type: bind
         source: ./common/qkd_config
         target: /root/code/qsim/qkd_config
@@ -153,7 +153,7 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
       - type: bind
         source: ./common/global_config.py
         target: /root/code/global_config.py
@@ -168,6 +168,8 @@ services:
     environment:
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+       - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["watcher.py"]
@@ -175,8 +177,8 @@ services:
       - internal-private
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
-      - ./volumes/kme1/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/epoch_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
       - type: bind
         source: ./common/global_config.py

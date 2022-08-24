@@ -37,6 +37,8 @@ services:
       # Pass in local and remote KME IDs to rest app container
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
       - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
       - REMOTE_KME_ADDRESS=${REMOTE_KME_ADDRESS:-SETMEINMAKEFILE}
     volumes:
@@ -48,7 +50,7 @@ services:
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - type: bind
         source: ./common/global_config.py
         target: /app/core/global_config.py
