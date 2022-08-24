@@ -156,7 +156,6 @@ clear: rest
 allclean: export KME = both
 allclean: clean
 	docker volume prune -f
-	rm -f docker-compose.yml
 # Clean local KME
 
 clean: down
