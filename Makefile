@@ -45,23 +45,23 @@ export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/cod
 ##########################
 ##### GET DEVICE PATHS####
 ##########################
-#tmst_dev := $(shell ls /dev/ioboards/usbtmst0 )
-#serial_devs := $(shell echo -e [ ;\
-#            for dev in /dev/serial/by-id/* ;\
-#            do echo -e "\'$$dev:$$dev\' " ; \
-#            done ; \
-#            echo -e ] ; )
-#
-#serial_devs := $(patsubst %comma, %] , $(serial_devs))
-#devices := $(patsubst [,[ '$(tmst_dev)', $(serial_devs))
-#dev_pl_holder := DEV_PLACE_HOLDER
-#
-#dev_inject:
-#ifeq (,$(wildcard ./docker-compose.yml))
-#	@echo "Creating docker-compose.yml"
-#	@sed  "s!$(dev_pl_holder)!$(devices)!" < docker-compose.yml.template > docker-compose.yml
-#	@sed -i "s/' '/', '/g"  docker-compose.yml
-#endif
+tmst_dev := $(shell ls /dev/ioboards/usbtmst0 )
+serial_devs := $(shell echo -e [ ;\
+            for dev in /dev/serial/by-id/* ;\
+            do echo -e "\'$$dev:$$dev\' " ; \
+            done ; \
+            echo -e ] ; )
+
+serial_devs := $(patsubst %comma, %] , $(serial_devs))
+devices := $(patsubst [,[ '$(tmst_dev)', $(serial_devs))
+dev_pl_holder := DEV_PLACE_HOLDER
+
+dev_inject:
+ifeq (,$(wildcard ./docker-compose.yml))
+	@echo "Creating docker-compose.yml"
+	@sed  "s!$(dev_pl_holder)!$(devices)!" < docker-compose.yml.template > docker-compose.yml
+	@sed -i "s/' '/', '/g"  docker-compose.yml
+endif
 ##########################
 ##### LEAVE ME ALONE #####
 ##########################
@@ -113,12 +113,11 @@ frozen_requirements:
 	sed -i '/uvicorn\[standard\]/d' rest/Dockerfile
 
 # KME rest app
-rest: init
+rest: init dev_inject
 	$(SCRIPTS)/run.sh
 
 # KME initialization steps
-
-init:
+init: dev_inject
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
 	mv volumes/$(LOCAL_KME_ALT_ID) volumes/$(LOCAL_KME_ID)
 	mv volumes/$(REMOTE_KME_ALT_ID) volumes/$(REMOTE_KME_ID)
@@ -126,21 +125,21 @@ endif
 	$(SCRIPTS)/init.sh
 
 # KME rest app docker logs
-log:
+log: dev_inject 
 	$(SCRIPTS)/log.sh $(SERVICES)
 
 # KME rest app shutdown
-down:
+down: dev_inject
 	$(SCRIPTS)/down.sh
 
 # QKD simulator make more keying material
 # Needs local Vault instance up and unsealed
-keys: rest
+keys: rest dev_inject
 	$(SCRIPTS)/keys.sh
 
 # Requires both local and remote
 # REST APIs up and running.
-compare:
+compare: dev_inject
 ifneq ($(LOCAL_KME_ID), kme1)
 	$(error Illegal KME configuration: $(KME) for compare target. Please run from "kme1"; Exiting)
 endif
@@ -148,18 +147,17 @@ endif
 
 # Reset local Vault instance
 # Needs local Vault instance up and unsealed
-clear: rest
+clear: rest dev_inject
 	$(SCRIPTS)/clear.sh
 
 .PHONY: clean allclean
 # Clean local and remote KMEs
 allclean: export KME = both
-allclean: clean
+allclean: clean dev_inject
 	docker volume prune -f
 	rm -f docker-compose.yml
 # Clean local KME
-
-clean: down
+clean: down dev_inject
 	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
 	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
 	sudo $(SCRIPTS)/clean.sh $(KME)

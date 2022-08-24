@@ -6,3 +6,4 @@ __pycache__
 *.pyc
 SECRETS
 .permissions
+docker-compose.yml
