@@ -83,7 +83,7 @@ class RestSettings(BaseSettings):
     KEY_ID_MAX_LENGTH: int = 128  # Number of characters
     KEY_ID_MIN_LENGTH: int = 16  # Number of characters
     KEY_SIZE: int = 32  # Bits
-    KME_ID_MAX_LENGTH: int = 32  # Number of characters
+    KME_ID_MAX_LENGTH: int = 64  # Number of characters
     KME_ID_MIN_LENGTH: int = 3  # Number of characters
     MAX_EX_MANADATORY_COUNT: int = 2
     MAX_EX_OPTIONAL_COUNT: int = 2
@@ -92,7 +92,7 @@ class RestSettings(BaseSettings):
     MAX_KEY_SIZE: int = 65536  # Bits
     MAX_SAE_ID_COUNT: int = 0
     MIN_KEY_SIZE: int = 8  # Bits
-    SAE_ID_MAX_LENGTH: int = 32  # Number of characters
+    SAE_ID_MAX_LENGTH: int = 64  # Number of characters
     SAE_ID_MIN_LENGTH: int = 3  # Number of characters
     STATUS_MIN_LENGTH: int = 8  # Number of characters
     STATUS_MAX_LENGTH: int = 9  # Number of characters

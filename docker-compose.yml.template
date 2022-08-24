@@ -37,6 +37,8 @@ services:
       # Pass in local and remote KME IDs to rest app container
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
       - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
       - REMOTE_KME_ADDRESS=${REMOTE_KME_ADDRESS:-SETMEINMAKEFILE}
     volumes:
@@ -48,7 +50,7 @@ services:
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      #- ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - type: bind
         source: ./common/global_config.py
         target: /app/core/global_config.py
@@ -184,12 +186,17 @@ services:
       dockerfile: ./watcher/Dockerfile
     env_file:
       - common/log.env
+    environment:
+      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
+      - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
     command: ["./wait-for-pipe.sh", "/epoch_files/notify.pipe", "python3", "-u", "watcher.py"]
     networks:
       - internal-private
     volumes:
       - "epochs:/epoch_files"
-      - ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
       - type: bind
         source: ./common/global_config.py
@@ -203,6 +210,11 @@ services:
     container_name: qkd
     volumes:
       - "/home/s-fifteen/code/QKDServer/S15qkd:/root/code/QKDserver/S15qkd"
+      - "/home/s-fifteen/code/QKDServer/S15qkd/qkd_engine_config.json:/root/code/QKDserver/Settings_WebClient/qkd_engine_config.json"
+      - "/home/s-fifteen/code/QKDServer/Settings_WebClient/apps/QKD_status.py:/root/code/QKDserver/Settings_WebClient/apps/QKD_status.py"
+      - "/home/s-fifteen/code/QKDServer/Settings_WebClient/apps/QKD_settings.py:/root/code/QKDserver/Settings_WebClient/apps/QKD_settings.py"
+      - "/home/s-fifteen/code/QKDServer/Settings_WebClient/app.py:/root/code/QKDserver/Settings_WebClient/app.py"
+      - "/home/s-fifteen/code/QKDServer/Settings_WebClient/index.py:/root/code/QKDserver/Settings_WebClient/index.py"
       - "/home/s-fifteen/code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
       - "epochs:/epoch_files"
     entrypoint: "/root/entrypoint.sh"

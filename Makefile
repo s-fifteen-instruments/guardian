@@ -70,15 +70,19 @@ SCRIPTS := ./scripts
 # Verbosity for 'compare' target
 V := 0 
 ifeq ($(KME), kme1)
-export LOCAL_KME_ID := kme1
-export REMOTE_KME_ID := kme2
-export LOCAL_SAE_ID := sae1
-export REMOTE_SAE_ID := sae2
+export LOCAL_KME_ID := KME-S15-Guardian-001-Guardian.Bob
+export REMOTE_KME_ID := KME-S15-Guardian-002-Guardian.Alice
+export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
+export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
+export LOCAL_KME_ALT_ID := kme1
+export REMOTE_KME_ALT_ID := kme2
 else ifeq ($(KME), kme2)
-export LOCAL_KME_ID := kme2
-export REMOTE_KME_ID := kme1
-export LOCAL_SAE_ID := sae2
-export REMOTE_SAE_ID := sae1
+export LOCAL_KME_ID := KME-S15-Guardian-002-Guardian.Alice
+export REMOTE_KME_ID := KME-S15-Guardian-001-Guardian.Bob
+export LOCAL_SAE_ID := SAE-S15-Test-002-sae2
+export REMOTE_SAE_ID := SAE-S15-Test-001-sae1
+export LOCAL_KME_ALT_ID := kme2
+export REMOTE_KME_ALT_ID := kme1
 else
 $(error KME input not recognized: $(KME). Please use "kme1" or "kme2"; Exiting)
 endif
@@ -113,7 +117,12 @@ rest: init
 	$(SCRIPTS)/run.sh
 
 # KME initialization steps
-init: 
+
+init:
+ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
+	mv volumes/$(LOCAL_KME_ALT_ID) volumes/$(LOCAL_KME_ID)
+	mv volumes/$(REMOTE_KME_ALT_ID) volumes/$(REMOTE_KME_ID)
+endif
 	$(SCRIPTS)/init.sh
 
 # KME rest app docker logs
@@ -147,6 +156,10 @@ clear: rest
 allclean: export KME = both
 allclean: clean
 	docker volume prune -f
+	rm -f docker-compose.yml
 # Clean local KME
+
 clean: down
+	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
+	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
 	sudo $(SCRIPTS)/clean.sh $(KME)
