@@ -1,5 +1,5 @@
-volumes/kme1/vault/data;755;100;1000
 volumes/kme1/vault/config;755;100;1000
+volumes/kme1/vault/data;755;100;1000
 volumes/kme1/vault/logs;755;100;1000
 volumes/kme2/vault/config;755;100;1000
 volumes/kme2/vault/data;755;100;1000

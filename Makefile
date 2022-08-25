@@ -159,6 +159,7 @@ allclean: clean
 # Clean local KME
 
 clean: down
+	rm -rf volumes/kme1
 	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
 	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
 	sudo $(SCRIPTS)/clean.sh $(KME)
