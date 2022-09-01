@@ -1,3 +1,5 @@
+# Superceded by https://guardian.readthedocs.io/en/latest/
+
 # Getting Started
 
 | Document | Description |
