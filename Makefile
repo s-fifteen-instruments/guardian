@@ -161,3 +161,10 @@ clean: down dev_inject
 	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
 	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
 	sudo $(SCRIPTS)/clean.sh $(KME)
+
+#Force watcher to restart
+restart_watcher:
+	docker stop guardian_watcher_1
+	sleep 1
+	docker-compose -f docker-compose.yml up -d --build watcher
+
