@@ -486,8 +486,9 @@ generate_detector_state_pair(const Epoch det_map_correlated[],
    *                1*2**1 = 2 (0010),
    *                1*2**2 = 4 (0100),
    *             or 1*2**3 = 8 (1000)
-   * Use left bit shift operator to achieve this */
-  hec_random_epoch = uniform_epoch((Epoch)3);
+   * Use left bit shift operator to achieve this
+   * Range of uniform_epoch is [0,A) */
+  hec_random_epoch = uniform_epoch((Epoch)4);
   ds_pair.hec_state = ONE << hec_random_epoch;
 
   /* Randomly sample to determine if LEC party will */
