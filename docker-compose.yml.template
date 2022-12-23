@@ -47,6 +47,10 @@ services:
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${REMOTE_KME_ID:-SETMEINMAKEFILE}
       # Mount a volume that stores the hex digest files of QKD keys
+      # NOTE: Only kme1 generates epoch files in this configuration
+      # TODO: May be removed if full QKD system provides
+      # keying material on both sides
+      #- ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - type: bind
         source: ./common/global_config.py
@@ -206,21 +210,21 @@ services:
     image: s-fifteen/qkdserver:qkd
     container_name: qkd
     volumes:
-      - "../../code/QKDServer/S15qkd:/root/code/QKDserver/S15qkd"
-      - "../../code/QKDServer/S15qkd/qkd_engine_config.json:/root/code/QKDserver/Settings_WebClient/qkd_engine_config.json"
-      - "../../code/QKDServer/Settings_WebClient/apps/QKD_status.py:/root/code/QKDserver/Settings_WebClient/apps/QKD_status.py"
-      - "../../code/QKDServer/Settings_WebClient/apps/QKD_settings.py:/root/code/QKDserver/Settings_WebClient/apps/QKD_settings.py"
-      - "../../code/QKDServer/Settings_WebClient/app.py:/root/code/QKDserver/Settings_WebClient/app.py"
-      - "../../code/QKDServer/Settings_WebClient/index.py:/root/code/QKDserver/Settings_WebClient/index.py"
+      - "../../code/QKDServer/S15qkd:/root/code/QKDServer/S15qkd"
+      - "../../code/QKDServer/S15qkd/qkd_engine_config.json:/root/code/QKDServer/Settings_WebClient/qkd_engine_config.json"
+      - "../../code/QKDServer/Settings_WebClient/apps/QKD_status.py:/root/code/QKDServer/Settings_WebClient/apps/QKD_status.py"
+      - "../../code/QKDServer/Settings_WebClient/apps/QKD_settings.py:/root/code/QKDServer/Settings_WebClient/apps/QKD_settings.py"
+      - "../../code/QKDServer/Settings_WebClient/app.py:/root/code/QKDServer/Settings_WebClient/app.py"
+      - "../../code/QKDServer/Settings_WebClient/index.py:/root/code/QKDServer/Settings_WebClient/index.py"
       - "../../code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
+      - "/root/keys/authd:/root/keys/authd"
       - "epochs:/epoch_files"
     entrypoint: "/root/entrypoint.sh"
     devices: DEV_PLACE_HOLDER
     ports:
       - "8000:8000"
       - "0.0.0.0:55555:55555"
-    networks:
-      - internal-private
+    network_mode: "host"
 
 volumes:
   epochs:
