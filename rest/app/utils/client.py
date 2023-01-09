@@ -33,7 +33,25 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     sae_hostname = request.url.hostname
     sae_common_name = ""
     sae_san = ""
+    sae_id = ""
     #  logger.debug(f"Headers: {request.headers['x-forwarded-tls-client-cert-info']}")
+    try:
+        # Header should be forwarded by Traefik
+        sae_id = request.headers["x-forwarded-tls-client-cert-info"]
+        # sae Common Name should be forwarded specifically
+        sae_id = urllib.parse.unquote(sae_id)
+        # Find the first CN - later ones are for CAs
+        sae_id = sae_id.split("sae-id:")[1]
+        # split on a colon to remove SAN information first
+        sae_id = sae_id.split(";")[0]
+        # Split on a comma if there are more CNs
+        sae_id = sae_id.split(",")[0]
+        # Remove backslashes and double quotes
+        sae_id = sae_id.strip('\\"')
+        # logger.debug(f"Got {sae_id} as sae ID")
+    except Exception as err:
+        logger.warn(f"Unparsable sae ID in sae certificate:\n{sae_id}")
+        logger.exception(err)
     try:
         # Header should be forwarded by Traefik
         sae_common_name = request.headers["x-forwarded-tls-client-cert-info"]
@@ -68,5 +86,6 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     return {"sae_ip": sae_ip,
             "sae_hostname": sae_hostname,
             "sae_common_name": sae_common_name,
-            "sae_san": sae_san
+            "sae_san": sae_san,
+            "sae_id": sae_id,
             }

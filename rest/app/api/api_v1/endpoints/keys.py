@@ -108,7 +108,7 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
                request: Request = Body(...)):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     stat_req = models.StatusRequest(
-        master_SAE_ID=request.state.sae_hostname,
+        master_SAE_ID=request.state.sae_id,
         slave_SAE_ID=slave_SAE_ID,
         stored_key_count=request.app.state.vclient.vault_calculate_total_num_keys()
     )
@@ -134,7 +134,7 @@ async def get_key(background_tasks: BackgroundTasks,
     logger.debug(f"size: {size}")
     key_con = await request.app.state.vclient.\
         fetch_keys(num_keys=number, key_size_bytes=bits2bytes(size),
-                   master_SAE_ID=request.state.sae_hostname,
+                   master_SAE_ID=request.state.sae_id,
                    slave_SAE_ID=slave_SAE_ID,
                    background_tasks=background_tasks)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
@@ -156,7 +156,7 @@ async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     key_id_ledger_con = await request.app.state.vclient.\
         query_ledger(key_IDs=key_id_req,
                      master_SAE_ID=master_SAE_ID,
-                     slave_SAE_ID=request.state.sae_hostname
+                     slave_SAE_ID=request.state.sae_id
                      )
     logger.debug("Resulting Key ID Ledger Container: ")
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
@@ -182,7 +182,7 @@ async def post_key(background_tasks: BackgroundTasks,
     key_con = await request.app.state.vclient.\
         fetch_keys(num_keys=key_req.number,
                    key_size_bytes=bits2bytes(key_req.size),
-                   master_SAE_ID=request.state.sae_hostname,
+                   master_SAE_ID=request.state.sae_id,
                    slave_SAE_ID=slave_SAE_ID,
                    background_tasks=background_tasks)
     logger.debug(f"key_con: {_dump_response(jsonable_encoder(key_con), secret=True)}")
@@ -203,7 +203,7 @@ async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
     key_id_ledger_con = await request.app.state.vclient.\
         query_ledger(key_IDs=key_ids_req,
                      master_SAE_ID=master_SAE_ID,
-                     slave_SAE_ID=request.state.sae_hostname
+                     slave_SAE_ID=request.state.sae_id
                      )
     logger.debug("Resulting Key ID Ledger Container: ")
     _dump_response(jsonable_encoder(key_id_ledger_con), secret=False)
