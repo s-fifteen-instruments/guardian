@@ -48,8 +48,9 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
         sae_id = sae_id.split(",")[0]
         # Remove backslashes and double quotes
         sae_id = sae_id.strip('\\"')
+        # logger.debug(f"Got {sae_id} as sae ID")
     except Exception as err:
-        logger.warn(f"Unparsable sae common name in sae certificate:\n{sae_common_name}")
+        logger.warn(f"Unparsable sae ID in sae certificate:\n{sae_id}")
         logger.exception(err)
     try:
         # Header should be forwarded by Traefik
