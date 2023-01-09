@@ -22,25 +22,28 @@
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
 #   kme1 => local, kme2 => remote
-export KME ?= kme1
+export KME ?= kme2
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_ADDRESS ?= b.qkd.external
-export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
-export LOCAL_KME_ADD_SSH ?= b.qkd.internal
-export LOCAL_KME_DIR_SSH ?= s-fifteen@$(LOCAL_KME_ADD_SSH):/home/s-fifteen/code/guardian
+export LOCAL_KME_ADDRESS ?= a.qkd.external
+export LOCAL_KME_DIRPATH ?= root@$(LOCAL_KME_ADDRESS):/root/code/guardian
+export LOCAL_KME_ADD_SSH ?= a.qkd.internal
+export LOCAL_KME_DIR_SSH ?= root@$(LOCAL_KME_ADD_SSH):/root/code/guardian
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
-export REMOTE_KME_ADDRESS ?= a.qkd.external
-export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
-export REMOTE_KME_ADD_SSH ?= a.qkd.internal
-export REMOTE_KME_DIR_SSH ?= s-fifteen@$(REMOTE_KME_ADD_SSH):/home/s-fifteen/code/guardian
+export REMOTE_KME_ADDRESS ?= b.qkd.external
+export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
+export REMOTE_KME_ADD_SSH ?= b.qkd.internal
+export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
+export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+
 ##########################
 ##########################
 ##########################

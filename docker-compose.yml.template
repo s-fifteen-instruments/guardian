@@ -88,6 +88,10 @@ services:
       # Use the private internal network created by Docker to be shared
       # by any backend service that needs to communicate amongst internal services
       - internal-private
+    extra_hosts:
+      - `${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}`
+      - `${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}`
+
 
 
   vault:
@@ -224,7 +228,11 @@ services:
     ports:
       - "8000:8000"
       - "0.0.0.0:55555:55555"
-    network_mode: "host"
+    # For systems with no DNS resolution available.
+    extra_hosts:
+      - "${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}"
+      - "${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}"
+
 
 volumes:
   epochs:
