@@ -220,6 +220,7 @@ services:
       - "../../code/QKDServer/Settings_WebClient/apps/QKD_settings.py:/root/code/QKDServer/Settings_WebClient/apps/QKD_settings.py"
       - "../../code/QKDServer/Settings_WebClient/app.py:/root/code/QKDServer/Settings_WebClient/app.py"
       - "../../code/QKDServer/Settings_WebClient/index.py:/root/code/QKDServer/Settings_WebClient/index.py"
+      - "../../code/QKDServer/Settings_WebClient/certs:/root/code/QKDServer/Settings_WebClient/certs"
       - "../../code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
       - "/root/keys/authd:/root/keys/authd"
       - "epochs:/epoch_files"
