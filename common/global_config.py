@@ -34,6 +34,8 @@ class GlobalSettings(BaseSettings):
     REMOTE_SAE_ID: str = os.environ.get("REMOTE_SAE_ID", "sae2")
     LOCAL_KME_ADDRESS: str = os.environ.get("LOCAL_KME_ADDRESS", "SETMEINMAKEFILE")
     REMOTE_KME_ADDRESS: str = os.environ.get("REMOTE_KME_ADDRESS", "SETMEINMAKEFILE")
+    LOCAL_ADD_SSH: str = os.environ.get("LOCAL_ADD_SSH", "SETMEINMAKEFILE")
+    REMOTE_ADD_SSH: str = os.environ.get("REMOTE_ADD_SSH", "SETMEINMAKEFILE")
     SHOW_SECRETS: bool = True
     VAULT_NAME: str = "vault"
     VAULT_SERVER_URL: str = f"https://{VAULT_NAME}:8200"
