@@ -674,10 +674,10 @@ class VaultClient:
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
         }
-        logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
-        logger.debug(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
-        logger.debug(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
-        logger.debug(f"Adding URI SAN: \"{uri_sans}\" to client certificate")
+        logger.info(f"Attempt to issue \"{common_name}\" client certificate")
+        logger.info(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
+        logger.info(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
+        logger.info(f"Adding URI SAN: \"{uri_sans}\" to client certificate")
         gen_cert_response = \
             self.vclient.secrets.pki.\
             generate_certificate(name=role_str,
