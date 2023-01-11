@@ -89,8 +89,8 @@ services:
       # by any backend service that needs to communicate amongst internal services
       - internal-private
     extra_hosts:
-      - `${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}`
-      - `${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}`
+      - "${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}"
+      - "${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}"
 
 
 
