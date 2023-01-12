@@ -43,9 +43,6 @@ COPY ["${TOP_DIR}/wait-for-pipe.sh", "${HOME}/"]
 # Set a working directory into the image
 WORKDIR ${HOME}/
 
-# Flush all unread epochs into pipe.
-CMD ["ls", "-I", "notify.pipe", "/epoch_files", ">", "/epoch_files/notify.pipe"] 
-
 # Set the scripts for the python entrypoint to run
 CMD ["python3", "-u", "watcher.py"]
 
