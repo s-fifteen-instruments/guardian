@@ -49,6 +49,9 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
         # Remove backslashes and double quotes
         sae_id = sae_id.strip('\\"')
         # logger.debug(f"Got {sae_id} as sae ID")
+    except IndexError:
+        #No sae-id: in cert
+        sae_id = ""
     except Exception as err:
         logger.warn(f"Unparsable sae ID in sae certificate:\n{sae_id}")
         logger.exception(err)
