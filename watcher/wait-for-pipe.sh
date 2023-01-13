@@ -21,7 +21,7 @@ until [ -p $PIPE ]; do
 done
 >&2 echo "Notification pipe up!"
 # Flush all unread epochs into pipe.
-ls -I notify.pipe /epoch_files > /epoch_files/notify.pipe
+ls /epoch_files | grep -v notify.pipe > /epoch_files/notify.pipe
 sleep 30
 exec "$@"
 
