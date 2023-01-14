@@ -35,6 +35,10 @@ export REMOTE_KME_ADDRESS ?= b.qkd.external
 export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= b.qkd.internal
 export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
+export LOCAL_KME_ID := KME-S15-Guardian-002-Guardian.Alice
+export REMOTE_KME_ID := KME-S15-Guardian-001-Guardian.Bob
+export LOCAL_SAE_ID := SAE-S15-Test-002-sae2
+export REMOTE_SAE_ID := SAE-S15-Test-001-sae1
 
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
@@ -77,17 +81,10 @@ SCRIPTS := ./scripts
 # Verbosity for 'compare' target
 V := 0 
 ifeq ($(KME), kme1)
-export LOCAL_KME_ID := KME-S15-Guardian-001-Guardian.Bob
-export REMOTE_KME_ID := KME-S15-Guardian-002-Guardian.Alice
-export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
-export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
+export REMOTE_SAE_ID := $(REMOTE_SAE_ID)
 export LOCAL_KME_ALT_ID := kme1
 export REMOTE_KME_ALT_ID := kme2
 else ifeq ($(KME), kme2)
-export LOCAL_KME_ID := KME-S15-Guardian-002-Guardian.Alice
-export REMOTE_KME_ID := KME-S15-Guardian-001-Guardian.Bob
-export LOCAL_SAE_ID := SAE-S15-Test-002-sae2
-export REMOTE_SAE_ID := SAE-S15-Test-001-sae1
 export LOCAL_KME_ALT_ID := kme2
 export REMOTE_KME_ALT_ID := kme1
 else
@@ -165,8 +162,8 @@ allclean: clean dev_inject
 	rm -f docker-compose.yml
 # Clean local KME
 clean: down dev_inject
-	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
-	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
+	-[ -d "volumes/$(LOCAL_KME_ID)" ] && mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
+	-[ -d "volumes/$(REMOTE_KME_ID)" ] && mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
 	sudo $(SCRIPTS)/clean.sh $(KME)
 
 #Force watcher to restart
