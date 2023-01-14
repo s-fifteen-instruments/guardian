@@ -35,7 +35,7 @@ if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
   rm -rf ./volumes/kme1/certificates/production/watcher
   rm -rf ./volumes/kme1/certificates/production/sae1
   rm -rf ./volumes/kme1/certificates/production/admin
-  rm -rf ./volumes/kme1/certificates/generation/root
+  #rm -rf ./volumes/kme1/certificates/generation/root
   rm -rf ./volumes/kme1/vault/data/file
   rm -f  ./volumes/kme1/vault/logs/audit.log
   rm -f  ./volumes/kme1/vault/policies/watcher.policy.hcl
@@ -56,7 +56,7 @@ if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
   rm -rf ./volumes/kme2/certificates/production/watcher
   rm -rf ./volumes/kme2/certificates/production/sae2
   rm -rf ./volumes/kme2/certificates/production/admin
-  rm -rf ./volumes/kme2/certificates/generation/root
+  #rm -rf ./volumes/kme2/certificates/generation/root
   rm -rf ./volumes/kme2/vault/data/file
   rm -f  ./volumes/kme2/vault/logs/audit.log
   rm -f  ./volumes/kme2/vault/policies/watcher.policy.hcl
