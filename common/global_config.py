@@ -39,6 +39,7 @@ class GlobalSettings(BaseSettings):
     VAULT_NAME: str = "vault"
     VAULT_SERVER_URL: str = f"https://{VAULT_NAME}:8200"
     CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
+    CERT_SUFFIX: str = ".cert.pem"
     KEY_SUFFIX: str = ".key.pem"
     CSR_SUFFIX: str = ".csr.pem"
     DIGEST_KEY: bytes = b"TODO: Change me; no hard code"

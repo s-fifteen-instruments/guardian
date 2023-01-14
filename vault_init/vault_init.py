@@ -720,6 +720,14 @@ class VaultClient:
         """
         # Ensure the directory exists
         pathlib.Path(dirpath).mkdir(parents=True, exist_ok=True)
+        # Write cert as 0o644
+        with open(os.open(f"{dirpath}/"
+                          f"{common_name}{settings.GLOBAL.CERT_SUFFIX}",
+                          os.O_CREAT | os.O_WRONLY,
+                          stat.S_IRUSR | stat.S_IWUSR |
+                          stat.S_IRGRP | stat.S_IROTH), "w") as f:
+            # Write client cert first
+            f.write(client_cert + "\n")
         # Write CA cert chain as 0o644
         with open(os.open(f"{dirpath}/"
                           f"{common_name}{settings.GLOBAL.CA_CHAIN_SUFFIX}",
