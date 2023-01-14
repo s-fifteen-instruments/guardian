@@ -81,7 +81,6 @@ SCRIPTS := ./scripts
 # Verbosity for 'compare' target
 V := 0 
 ifeq ($(KME), kme1)
-export REMOTE_SAE_ID := $(REMOTE_SAE_ID)
 export LOCAL_KME_ALT_ID := kme1
 export REMOTE_KME_ALT_ID := kme2
 else ifeq ($(KME), kme2)
