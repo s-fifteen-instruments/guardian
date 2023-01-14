@@ -88,21 +88,21 @@ if [ "${ACTION}" == "CAGEN" ]; then
 
 # Only invoke certificate generation if
 # root CA dir does NOT already exist
-if [ -d "${ca_dir}" ]; then
-  set +x
-  echo -e "\n\n"
-  echo "================================================"
-  echo "================================================"
-  echo "Root CA directory already exists..."
-  echo "To preserve the root and intermediate CA,"
-  echo "all subsequent generation actions are skipped."
-  echo "Issue a 'make clean' if you truly wish to remove"
-  echo "the root and intermediate CAs."
-  echo "================================================"
-  echo "================================================"
-  echo -e "\n\n"
-  exit 0
-fi
+#if [ -d "${ca_dir}" ]; then
+#  set +x
+#  echo -e "\n\n"
+#  echo "================================================"
+#  echo "================================================"
+#  echo "Root CA directory already exists..."
+#  echo "To preserve the root and intermediate CA,"
+#  echo "all subsequent generation actions are skipped."
+#  echo "Issue a 'make clean' if you truly wish to remove"
+#  echo "the root and intermediate CAs."
+#  echo "================================================"
+#  echo "================================================"
+#  echo -e "\n\n"
+#  exit 0
+#fi
 
 # Create root Certificate Authority directory and configuration
 mkdir -p ${ca_dir}
@@ -110,7 +110,9 @@ cd ${ca_dir}
 mkdir -p certs crl newcerts private
 chmod 0700 private
 touch index.txt
-echo 1000 > serial
+if [ ! -f serial ]; then
+	echo 1000 > serial
+fi
 cp -a ${base_dir}/openssl.root.cnf.template ${ca_dir}/openssl.cnf
 sed -i "s#<<<BASE_DIRECTORY>>>#${base_dir}#g" ${ca_dir}/openssl.cnf
 
