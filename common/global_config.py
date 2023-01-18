@@ -38,6 +38,7 @@ class GlobalSettings(BaseSettings):
     SHOW_SECRETS: bool = True
     VAULT_NAME: str = "vault"
     VAULT_SERVER_URL: str = f"https://{VAULT_NAME}:8200"
+    VAULT_CRL_URL: str = f"https://{VAULT_NAME}.{LOCAL_KME_ADDRESS}:8200"
     CA_CHAIN_SUFFIX: str = ".ca-chain.cert.pem"
     CERT_SUFFIX: str = ".cert.pem"
     KEY_SUFFIX: str = ".key.pem"

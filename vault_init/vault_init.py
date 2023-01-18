@@ -583,7 +583,7 @@ class VaultClient:
         self._dump_response(self.set_int_ca_cert_response.ok, secret=False)
         params_dict = {
             "issuing_certificates": f"{settings.GLOBAL.VAULT_SERVER_URL}/v1/{mount_point}/ca",
-            "crl_distribution_points": f"{settings.GLOBAL.VAULT_SERVER_URL}/v1/{mount_point}/crl",
+            "crl_distribution_points": f"{settings.GLOBAL.VAULT_CRL_URL}/v1/{mount_point}/crl",
             "ocsp_servers": ""
         }
         logger.debug("Attempting to set intermediate CA URLs")
