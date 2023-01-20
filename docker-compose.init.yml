@@ -32,6 +32,8 @@ services:
       - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
       - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
       - LOCAL_KME_ADD_SSH=${LOCAL_KME_ADD_SSH:-SETMEINMAKEFILE}
+      - LOCAL_KME_IP=${LOCAL_KME_IP:-SETMEINMAKEFILE}
+      - LOCAL_KME_IP2=${LOCAL_KME_IP2:-SETMEINMAKEFILE}
     # WARNING:
     # Entrypoint is set to "make"; only 'make clean' to remove
     # and rebuild root and intermediate certificate authorities

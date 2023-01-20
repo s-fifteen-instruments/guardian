@@ -45,6 +45,7 @@ export REMOTE_SAE_ID := SAE-S15-Test-001-sae1
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
+export LOCAL_KME_IP2 ?= $(shell ping -c1 $(LOCAL_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 
