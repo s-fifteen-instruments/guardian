@@ -26,7 +26,6 @@ path "<<<KV_MOUNT_POINT>>>/metadata/<<<QKDE_ID>>>/<<<REV_QCHANNEL_ID>>>/*" {
     capabilities = ["read"]
 }
 
-
 path "auth/token/renew" {
     capabilities = ["update"]
 }
