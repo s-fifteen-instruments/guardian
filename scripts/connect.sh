@@ -27,13 +27,6 @@ DIRPATH=$(dirname "${FILEPATH}")
 # Check for docker daemon and docker-compose
 . "${DIRPATH}/docker_check.sh"
 
-# If this file exists, we've already gone through
-# the whole initialization process...skip it.
-if [ -f "${DIRPATH}/.kme.initialized" ]; then
-	echo "KME  already initialized ... continuing"
-  exit 0
-fi
-
 export CONFIG_FILE="docker-compose.init.yml"
 export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
 export LOG="docker-compose -f \${CONFIG_FILE} logs \${F} \${S} || { echo \"\${S} logs failed\" ; exit 1; } "
@@ -57,10 +50,25 @@ else
   echo "The \"traefik-public\" network is already present"
 fi
 
-S=certauth           WAIT=0 F=-f eval ${STARTUP}
-S=vault              WAIT=1 F=   eval ${STARTUP}
-S=vault_init         WAIT=0 F=-f eval ${STARTUP}
-S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-                     WAIT=3      eval ${SHUTDOWN}
 
-touch "${DIRPATH}/.kme.initialized"
+if ssh $REMOTE_KME_DIRPATH "test -d $REMOTE_KME_DIRPATH/volumes/${REMOTE_KME_ID}/qkd/epoch_files/${LOCAL_KME_ID}" ; then
+
+  S=vault              WAIT=0 F=   eval ${STARTUP}
+  S=unsealer           WAIT=0 F=   eval ${STARTUP}
+  S=vault_init_phase_2 WAIT=2 F=-f eval ${STARTUP}
+  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  # NOTE: Only necessary when using rsync to remotely transfer keying material
+  /bin/sh ${DIRPATH}/transfer_keys.sh
+  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
+                       WAIT=3      eval ${SHUTDOWN}
+else
+  
+  S=vault              WAIT=0 F=   eval ${STARTUP}
+  S=unsealer           WAIT=0 F=   eval ${STARTUP}
+  S=vault_init_phase_2 WAIT=2 F=-f eval ${STARTUP}
+  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  S=qkd                WAIT=0 F=-f eval ${STARTUP}
+  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
+                       WAIT=3      eval ${SHUTDOWN}
+
+fi

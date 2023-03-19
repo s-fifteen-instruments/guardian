@@ -57,7 +57,7 @@ class GlobalSettings(BaseSettings):
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 64.0  # seconds
     VAULT_KV_ENDPOINT: str = "QKEYS"
-    VAULT_QKDE_ID: str = "QKDE0001"
+    VAULT_QKDE_ID: str = os.environ.get("REMOTE_QKDE_ID", "QKDE0001")
     VAULT_QCHANNEL_ID: str = "masterslave"
     VAULT_REV_QCHANNEL_ID: str = "slavemaster"
     VAULT_LEDGER_ID: str = "LEDGER"
