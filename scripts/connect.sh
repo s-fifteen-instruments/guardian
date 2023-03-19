@@ -50,8 +50,8 @@ else
   echo "The \"traefik-public\" network is already present"
 fi
 
-
-if ssh $REMOTE_KME_DIRPATH "test -d $REMOTE_KME_DIRPATH/volumes/${REMOTE_KME_ID}/qkd/epoch_files/${LOCAL_KME_ID}" ; then
+# SSH config needs to be setup
+if ssh $REMOTE_KME_ADDRESS "test -d ${DIRPATH}/../volumes/${REMOTE_KME_ID}/qkd/epoch_files/${LOCAL_KME_ID}" ; then
 
   S=vault              WAIT=0 F=   eval ${STARTUP}
   S=unsealer           WAIT=0 F=   eval ${STARTUP}
@@ -61,6 +61,7 @@ if ssh $REMOTE_KME_DIRPATH "test -d $REMOTE_KME_DIRPATH/volumes/${REMOTE_KME_ID}
   /bin/sh ${DIRPATH}/transfer_keys.sh
   S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
+
 else
   
   S=vault              WAIT=0 F=   eval ${STARTUP}

@@ -22,19 +22,19 @@
 set -x
 
 rm -f  ./scripts/.kme.initialized
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault_init
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/rest
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/watcher
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/sae1
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/admin
-rm -rf ./volumes/${LOCAL_KME_ID}/certificates/generation/root
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault_init
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/rest
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/watcher
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/sae1
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/admin
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/generation/root
 sudo rm -rf ./volumes/${LOCAL_KME_ID}/vault/data/file
 sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/logs/audit.log
 sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/policies/watcher.policy.hcl
 sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/policies/rest.policy.hcl
-rm -rf ./volumes/${LOCAL_KME_ID}/qkd/epoch_files/*
-rm -rf ./volumes/${LOCAL_KME_ID}/qkd/digest_files/*
-rm -f  ./volumes/${LOCAL_KME_ID}/traefik/logs/access.log
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/qkd/epoch_files/*
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/qkd/digest_files/*
+sudo rm -f  ./volumes/${LOCAL_KME_ID}/traefik/logs/access.log
 # For remote client CA chain
 rm -rf ./volumes/${REMOTE_KME_ID}/certificates/production/rest

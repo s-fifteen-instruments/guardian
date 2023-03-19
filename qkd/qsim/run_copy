@@ -24,9 +24,9 @@ set -x
 source qkd_config
 
 if [ "${count_type}" = "hec" ]; then
-  export out_dir=kme1
+  export out_dir=${LOCAL_KME_ID}
 elif [ "${count_type}" = "lec" ]; then
-  export out_dir=kme2
+  export out_dir=${REMOTE_KME_ID}
 else
   echo "Unknown count_type: ${count_type}; exiting..."
   exit -1
