@@ -105,13 +105,13 @@ rest:
 
 init:
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
-	cp -r volumes/kme1 volumes/$(LOCAL_KME_ID)
+	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
 endif
 	$(SCRIPTS)/init.sh
 
 connect:
 ifeq (,$(wildcard volumes/$(REMOTE_KME_ID)))
-	cp -r volumes/kme1 volumes/$(REMOTE_KME_ID)
+	cp -pr volumes/kme1 volumes/$(REMOTE_KME_ID)
 endif
 	$(SCRIPTS)/connect.sh
 

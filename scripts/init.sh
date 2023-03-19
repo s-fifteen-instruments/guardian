@@ -30,7 +30,7 @@ DIRPATH=$(dirname "${FILEPATH}")
 # If this file exists, we've already gone through
 # the whole initialization process...skip it.
 if [ -f "${DIRPATH}/.kme.initialized" ]; then
-	echo "KME  already initialized ... continuing"
+	echo "\"${LOCAL_KME_ID}\" already initialized ... continuing"
   exit 0
 fi
 

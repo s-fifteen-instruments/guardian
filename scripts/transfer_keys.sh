@@ -25,17 +25,17 @@ FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
-if [ "${KME}" = "kme2" ]; then
-  # kme1 generates the simulated QKD epoch files
-  # Transfer kme2's epoch files over and remove
-  # the source files on kme1 once the transfer is
-  # complete. This prevents reingestion of previously
-  # ingested epoch files which can cause sync issues.
-  # Ignore missing arguments suppresses the link_stat
-  # error message that arises if there are no epoch
-  # files to transfer.
-  mkdir -p ${DIRPATH}/../volumes/kme1/qkd/epoch_files/kme2/
-  rsync --remove-source-files --ignore-missing-args -avz --timeout=5 \
-    ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/kme1/qkd/epoch_files/kme2/* \
-    ${DIRPATH}/../volumes/kme1/qkd/epoch_files/kme2/
-fi
+# kme1 generates the simulated QKD epoch files
+# Transfer kme2's epoch files over and remove
+# the source files on kme1 once the transfer is
+# complete. This prevents reingestion of previously
+# ingested epoch files which can cause sync issues.
+# Ignore missing arguments suppresses the link_stat
+# error message that arises if there are no epoch
+# files to transfer.
+mkdir -p ${DIRPATH}/../volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/
+rsync --remove-source-files --ignore-missing-args -avz --timeout=5 \
+  ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/${REMOTE_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/* \
+  ${DIRPATH}/../volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/
+
+
