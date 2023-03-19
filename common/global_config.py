@@ -29,7 +29,7 @@ class GlobalSettings(BaseSettings):
     LOCAL_KME_ID: str = os.environ.get("LOCAL_KME_ID", "kme1")
     LOCAL_KME_ALT_ID: str = os.environ.get("LOCAL_KME_ALT_ID", "kme1")
     REMOTE_KME_ID: str = os.environ.get("REMOTE_KME_ID", "kme2")
-    REMOTE_KME_ALT_ID: str = os.environ.get("REMOTE_KME_ALT_ID", "kme2")
+#   REMOTE_KME_ALT_ID: str = os.environ.get("REMOTE_KME_ALT_ID", "kme2")
     LOCAL_SAE_ID: str = os.environ.get("LOCAL_SAE_ID", "sae1")
     REMOTE_SAE_ID: str = os.environ.get("REMOTE_SAE_ID", "sae2")
     LOCAL_KME_ADDRESS: str = os.environ.get("LOCAL_KME_ADDRESS", "SETMEINMAKEFILE")

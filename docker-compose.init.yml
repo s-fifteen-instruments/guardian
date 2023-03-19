@@ -173,6 +173,7 @@ services:
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
       - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
+      - REMOTE_QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["watcher.py"]

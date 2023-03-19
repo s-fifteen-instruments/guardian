@@ -37,8 +37,6 @@ export REMOTE_KME_ID ?= KME-S15-Guardian-002-Guardian.Alice
 export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
 export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
 export REMOTE_QKDE_ID := QKDE0002
-export LOCAL_KME_ALT_ID := kme1
-
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
@@ -84,6 +82,7 @@ $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
 $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
 $(info REMOTE_SAE_ID: $(REMOTE_SAE_ID))
+$(info LOCAL_KME_HASH: $(LOCAL_KME_HASH))
 $(info )
 
 # Not strictly necessary but this
@@ -98,7 +97,7 @@ frozen_requirements:
 	sed -i '/uvicorn\[standard\]/d' rest/Dockerfile
 
 # KME rest app
-rest:
+rest: init
 	$(SCRIPTS)/run.sh
 
 # KME initialization steps
