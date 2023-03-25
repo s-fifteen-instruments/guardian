@@ -53,9 +53,10 @@ local_kme_id_path = \
             response_model_exclude_none=True,
             response_model_exclude_unset=True,
             status_code=status.HTTP_201_CREATED)
-async def put_key_id_ledger(local_KME_ID: str = local_kme_id_path,
+async def put_key_id_ledger(request: Request,
+                            local_KME_ID: str = local_kme_id_path,
                             key_id_ledger_con: schemas.KeyIDLedgerContainer = Body(...),
-                            request: Request = Body(...)):
+                            ):
     logger.debug(f"local_KME_ID: {local_KME_ID}")
     key_ids_req = await request.app.state.vclient.\
         vault_commit_local_key_id_ledger_container(key_id_ledger_con=key_id_ledger_con,
