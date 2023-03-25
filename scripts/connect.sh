@@ -23,9 +23,9 @@ set -x
 LOCAL_KME_HASH=$((0x$(echo ${LOCAL_KME_ID} | shasum)0))
 REMOTE_KME_HASH=$((0x$(echo ${REMOTE_KME_ID} | shasum)0)) ; \
 if [[ $LOCAL_KME_HASH -gt $REMOTE_KME_HASH ]]; then
-   export LOCAL_KME_ALT_ID=kme1
+  export LOCAL_KME_ALT_ID=kme1
 else 
-    export LOCAL_KME_ALT_ID=kme2
+  export LOCAL_KME_ALT_ID=kme2
 fi
 echo $LOCAL_KME_ALT_ID
 
