@@ -42,6 +42,8 @@ export REMOTE_QKDE_ID := QKDE0002
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
+export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 ##########################
 ##########################
 ##########################

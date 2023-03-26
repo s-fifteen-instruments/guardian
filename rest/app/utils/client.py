@@ -34,6 +34,7 @@ def parse_sae_client_info(request: Request) -> typing.Dict:
     sae_common_name = ""
     sae_san = ""
     sae_id = ""
+    logger.debug(f"Headers: {request.headers}")
     #  logger.debug(f"Headers: {request.headers['x-forwarded-tls-client-cert-info']}")
     try:
         # Header should be forwarded by Traefik
