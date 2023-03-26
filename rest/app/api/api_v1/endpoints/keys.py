@@ -111,7 +111,7 @@ def get_status(request: Request,
     stat_req = models.StatusRequest(
         master_SAE_ID=request.state.sae_id,
         slave_SAE_ID=slave_SAE_ID,
-        stored_key_count=request.app.state.vclient.vault_calculate_total_num_keys()
+        stored_key_count=request.app.state.vclient.vault_calculate_total_num_keys(slave_SAE_ID)
     )
     return stat_req
 

@@ -61,6 +61,6 @@ S=certauth           WAIT=0 F=-f eval ${STARTUP}
 S=vault              WAIT=1 F=   eval ${STARTUP}
 S=vault_init         WAIT=0 F=-f eval ${STARTUP}
 S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-                     WAIT=3      eval ${SHUTDOWN}
+                     WAIT=1      eval ${SHUTDOWN}
 
 touch "${DIRPATH}/.kme.initialized"

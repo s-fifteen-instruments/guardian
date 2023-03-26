@@ -55,13 +55,14 @@ class VaultManager(VaultSemaphore):
         # Critical Start
         KME_direction_path = self.get_sae_connection(SAE = 'slave')
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+        vault_qkde_id = self.get_connected_qkde_from_sae(slave_SAE_ID)
+        status_path =  vault_qkde_id + f"/" + \
                         KME_direction_path + f"/status"
         worker_uid, epoch_status_dict = \
             self.vault_claim_epoch_files(requested_num_bytes=(num_keys * key_size_bytes),
                                          mount_point = mount_point, status_path = status_path )
         
-        qchannel_path =  f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+        qchannel_path = vault_qkde_id + f"/" + \
                         KME_direction_path + f"/"
         
         sorted_epoch_file_list = await \
@@ -165,15 +166,16 @@ class VaultManager(VaultSemaphore):
         #TODO: Use actual SAE ID 
         KME_direction_path = self.get_sae_connection(SAE = 'master')
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
-                        KME_direction_path + f"/status"
+        vault_qkde_id = self.get_connected_qkde_from_sae(ledger.slave_SAE_ID)
+        status_path = vault_qkde_id + f"/" + \
+                      KME_direction_path + f"/status"
         # Use Vault status file to reserve epoch files for manipulation
         worker_uid, epoch_status_dict = await self.\
             vault_ledger_claim_epoch_files(key_id_ledger_con=key_id_ledger_con,
                                            mount_point=mount_point,
                                            status_path=status_path)
         
-        qchannel_path =  f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+        qchannel_path = vault_qkde_id + f"/" + \
                         KME_direction_path + f"/"
         # Query Vault for each epoch file's keying material
         sorted_epoch_file_list = await \
@@ -340,7 +342,8 @@ class VaultManager(VaultSemaphore):
         # Find Key ID request duplicates
         KME_direction_path = self.get_sae_connection(SAE = 'master')
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        qchannel_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+        vault_qkde_id = self.get_connected_qkde_from_sae(slave_SAE_ID)
+        qchannel_path = vault_qkde_id + f"/" + \
                         KME_direction_path + f"/"
         key_id_list = list()
         duplicate_key_id_list = list()
@@ -547,7 +550,8 @@ class VaultManager(VaultSemaphore):
         _dump_response(key_id_ledger_con.dict(), secret=False)
         KME_direction_path = self.get_kme_connection(KME=calling_kme_id)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        qchannel_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" + \
+        vault_qkde_id = self.get_connected_qkde_from_kme(calling_kme_id)
+        qchannel_path = vault_qkde_id + f"/" + \
                         KME_direction_path + f"/"
         task_list = list()
         key_id_list = list()

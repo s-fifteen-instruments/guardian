@@ -19,6 +19,7 @@
 #
 
 import hvac
+import json
 from typing import Any, Dict
 import uuid
 
@@ -205,11 +206,12 @@ class VaultSemaphore(VaultClient):
 
         return data_index
 
-    def vault_calculate_total_bytes(self) -> int:
+    def vault_calculate_total_bytes(self, slave_SAE_ID: str) -> int:
         """foo
         """
+        vault_qkde_id = self.get_connected_qkde_from_sae(slave_SAE_ID)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        status_path = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
+        status_path = vault_qkde_id + "/" \
             f"{settings.GLOBAL.VAULT_QCHANNEL_ID}/" \
             "status"
         status_version, status_data = \
@@ -223,10 +225,10 @@ class VaultSemaphore(VaultClient):
 
         return total_byte_count
 
-    def vault_calculate_total_num_keys(self) -> int:
+    def vault_calculate_total_num_keys(self, slave_SAE_ID: str) -> int:
         """foo
         """
-        total_key_bytes = self.vault_calculate_total_bytes()
+        total_key_bytes = self.vault_calculate_total_bytes(slave_SAE_ID)
         logger.debug(f"Vault Total Keying Material (bytes): {total_key_bytes}")
         total_num_keys: int = 0
         if settings.KEY_SIZE > 0:
@@ -290,3 +292,19 @@ class VaultSemaphore(VaultClient):
             cas_error = self.\
                 vault_commit_secret(path=status_path, secret=updated_status_data,
                                     version=status_version, mount_point=mount_point)
+
+    def get_connected_qkde_from_sae(self, slave_SAE_ID: str ) -> str:
+        """Returns connected QKDE for vault from slave_SAE_ID"""
+        kme = get_connected_kme_from_sae(slave_SAE_ID)
+        return self.get_connected_qkde_from_kme(kme)
+
+    def get_connected_qkde_from_kme(self, KME_ID: str ) -> str:
+        """Returns QKDE from kme. Based on initial make and residing in a file somewhere. """
+        qkd_list = settings.connections
+        qkde = qkd_list[KME_ID]
+        return qkde
+
+    def get_connected_kme_from_sae(self,SAE_ID: str) -> str:
+        qkd_list = settings.connections
+        kme = qkd_list[SAE_ID]
+        return kme
