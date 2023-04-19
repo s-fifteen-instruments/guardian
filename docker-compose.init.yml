@@ -122,6 +122,10 @@ services:
     <<: *vault_init_label
     command: ["vault_init.py", "--second"]
 
+  vault_connect:
+    <<: *vault_init_label
+    command: ["vault_init.py", "--connect"]
+
   vault_clear:
     <<: *vault_init_label
     command: ["vault_init.py", "--clear"]

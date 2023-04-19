@@ -65,7 +65,7 @@ if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${REMOTE_KME_ID}/qkd
   echo Remote files found
   S=vault              WAIT=0 F=   eval ${STARTUP}
   S=unsealer           WAIT=0 F=   eval ${STARTUP}
-  S=vault_init_phase_2 WAIT=2 F=-f eval ${STARTUP}
+  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
   # NOTE: Only necessary when using rsync to remotely transfer keying material
   /bin/sh ${DIRPATH}/transfer_keys.sh
@@ -77,7 +77,7 @@ else
   echo Remote files not found
   S=vault              WAIT=0 F=   eval ${STARTUP}
   S=unsealer           WAIT=0 F=   eval ${STARTUP}
-  S=vault_init_phase_2 WAIT=2 F=-f eval ${STARTUP}
+  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
   S=qkd                WAIT=0 F=-f eval ${STARTUP}
   S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
