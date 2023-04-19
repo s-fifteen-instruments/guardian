@@ -35,7 +35,7 @@ DIRPATH=$(dirname "${FILEPATH}")
 # files to transfer.
 mkdir -p ${DIRPATH}/../volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/
 rsync --remove-source-files --ignore-missing-args -avz --timeout=5 \
-  ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/${REMOTE_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/* \
+  ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/* \
   ${DIRPATH}/../volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}/
 
 

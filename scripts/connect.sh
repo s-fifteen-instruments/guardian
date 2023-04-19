@@ -60,7 +60,7 @@ else
 fi
 
 # SSH config needs to be setup
-if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${REMOTE_KME_ID}/qkd/epoch_files/${LOCAL_KME_ID}" ; then
+if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}" ; then
 
   echo Remote files found
   S=vault              WAIT=0 F=   eval ${STARTUP}

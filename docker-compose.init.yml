@@ -145,6 +145,7 @@ services:
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files:/root/code/qsim/epoch_files
+      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files:/root/code/qsim/rem/epoch_files
       - type: bind
         source: ./common/qkd_config
         target: /root/code/qsim/qkd_config
