@@ -84,6 +84,7 @@ def load_connections(filepath: str='/app/core/connections') -> dict:
 
 class RestSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    connections = load_connections()
     REST_LOG_LEVEL: str = os.environ.get("REST_LOG_LEVEL", str(logging.info))
     API_V1_STR: str = "/api/v1"
     DIGEST_COMPARE_TO_FILE: bool = True
@@ -136,7 +137,6 @@ class RestSettings(BaseSettings):
 
 
 settings = RestSettings()
-settings.connections = load_connections()
 
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
 gunicorn_logger = logging.getLogger("gunicorn")

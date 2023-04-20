@@ -295,7 +295,7 @@ class VaultSemaphore(VaultClient):
 
     def get_connected_qkde_from_sae(self, slave_SAE_ID: str ) -> str:
         """Returns connected QKDE for vault from slave_SAE_ID"""
-        kme = get_connected_kme_from_sae(slave_SAE_ID)
+        kme = self.get_connected_kme_from_sae(slave_SAE_ID)
         return self.get_connected_qkde_from_kme(kme)
 
     def get_connected_qkde_from_kme(self, KME_ID: str ) -> str:
