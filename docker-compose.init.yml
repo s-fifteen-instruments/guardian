@@ -187,7 +187,7 @@ services:
     volumes:
       # NOTE: Only kme1 generates epoch files in this configuration
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/epoch_files/${REMOTE_KME_ID:-SETMEINMAKEFILE}:/epoch_files
-      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${REMOTE_KME_ID:-SETMEINMAKEFILE}:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files:/digest_files
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates:/certificates
       - type: bind
         source: ./common/global_config.py
