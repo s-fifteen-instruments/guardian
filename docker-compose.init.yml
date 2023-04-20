@@ -96,12 +96,12 @@ services:
     build:
       context: ./
       dockerfile: ./vault_init/Dockerfile
-    environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
-      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
-      - REMOTE_SAE_ID=${REMOTE_SAE_ID:-SETMEINMAKEFILE}
-      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
+    environment: &vault_init_env_label
+      LOCAL_KME_ID: ${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      REMOTE_KME_ID: ${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      LOCAL_SAE_ID: ${LOCAL_SAE_ID:-SETMEINMAKEFILE}
+      REMOTE_SAE_ID: ${REMOTE_SAE_ID:-SETMEINMAKEFILE}
+      LOCAL_KME_ADDRESS: ${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["vault_init.py", "--first"]
@@ -120,19 +120,22 @@ services:
   vault_init_phase_2:
     <<: *vault_init_label
     environment:
-      - QKDE_ID=${LOCAL_QKDE_ID:-SETMEINMAKEFILE}
+      <<: *vault_init_env_label
+      QKDE_ID: ${LOCAL_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--second"]
 
   vault_connect:
     <<: *vault_init_label
     environment:
-      - QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
+      <<: *vault_init_env_label
+      QKDE_ID: ${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--connect"]
 
   vault_clear:
     <<: *vault_init_label
     environment:
-      - QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
+      <<: *vault_init_env_label
+      QKDE_ID: ${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--clear"]
 
   qkd:
