@@ -176,7 +176,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${LOCAL_KME_ID:-SETMEINMAKEFILE}
-      - ./volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID1:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID1:-SETMEINMAKEFILE}
+      - ./volumes/${REMOTE_KME_ID2:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID2:-SETMEINMAKEFILE}
       # Mount the configuration directory
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/configuration:/etc/traefik
       # Mount the log directory

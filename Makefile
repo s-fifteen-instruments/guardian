@@ -29,14 +29,25 @@ export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
+export LOCAL_KME_ID ?= KME-S15-Guardian-005-Guardian.Faiz
+export LOCAL_SAE_ID := SAE-S15-Test-005-sae5
+
+export REMOTE_KME ?= 2# or 2
+ifeq ($(REMOTE_KME), 1)
 export REMOTE_KME_ADDRESS ?= c.qkd.internal
 export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
-
-export LOCAL_KME_ID ?= KME-S15-Guardian-001-Guardian.Bob
-export REMOTE_KME_ID ?= KME-S15-Guardian-002-Guardian.Alice
-export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
-export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
-export REMOTE_QKDE_ID := QKDE0002
+export REMOTE_KME_ID ?= KME-S15-Guardian-003-Guardian.Charlie
+export REMOTE_SAE_ID := SAE-S15-Test-003-sae3
+export REMOTE_QKDE_ID := QKDE0003
+else ifeq ($(REMOTE_KME), 2)
+export REMOTE_KME_ADDRESS ?= d.qkd.internal
+export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
+export REMOTE_KME_ID ?= KME-S15-Guardian-004-Guardian.Daud
+export REMOTE_SAE_ID := SAE-S15-Test-004-sae4
+export REMOTE_QKDE_ID := QKDE0004
+else
+$(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
+endif
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
