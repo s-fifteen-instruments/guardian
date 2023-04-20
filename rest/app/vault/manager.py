@@ -543,6 +543,7 @@ class VaultManager(VaultSemaphore):
         vault_commit_local_key_id_ledger_container(self, key_id_ledger_con:
                                                    schemas.KeyIDLedgerContainer,
                                                    calling_kme_id: str,
+                                                   receiving_kme_id: str,
                                                    reset_status: bool = False) -> schemas.KeyIDs:
         """foo
         """
@@ -550,7 +551,7 @@ class VaultManager(VaultSemaphore):
         _dump_response(key_id_ledger_con.dict(), secret=False)
         KME_direction_path = self.get_kme_connection(KME=calling_kme_id)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        vault_qkde_id = self.get_connected_qkde_from_kme(calling_kme_id)
+        vault_qkde_id = self.get_connected_qkde_from_kme(receiving_kme_id)
         qchannel_path = vault_qkde_id + f"/" + \
                         KME_direction_path + f"/"
         task_list = list()
