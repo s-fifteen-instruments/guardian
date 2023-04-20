@@ -122,7 +122,8 @@ init:
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
 	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
 	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
-	sed -i 's/{{ env "REMOTE_KME_ID" }}/$(REMOTE_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "REMOTE_KME_ID1" }}/$(REMOTE_KME_ID1)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "REMOTE_KME_ID2" }}/$(REMOTE_KME_ID2)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_KME_ADDRESS" }}/$(LOCAL_KME_ADDRESS)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_SAE_ID" }}/MYsaeCN/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 endif

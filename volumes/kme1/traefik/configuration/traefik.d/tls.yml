@@ -25,7 +25,8 @@ tls:
         caFiles:
         # Allow clients from both KME CA chains
         - /certificates/{{ env "LOCAL_KME_ID" }}/rest/rest.ca-chain.cert.pem
-        - /certificates/{{ env "REMOTE_KME_ID" }}/rest/rest.ca-chain.cert.pem
+        - /certificates/{{ env "REMOTE_KME_ID1" }}/rest/rest.ca-chain.cert.pem
+        - /certificates/{{ env "REMOTE_KME_ID2" }}/rest/rest.ca-chain.cert.pem
         # Allow only local SAE client CA chain
         - /certificates/{{ env "LOCAL_KME_ID" }}/{{ env "LOCAL_SAE_ID" }}/{{ env "LOCAL_SAE_ID" }}.ca-chain.cert.pem
         clientAuthType: RequireAndVerifyClientCert

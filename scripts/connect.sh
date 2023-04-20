@@ -68,6 +68,7 @@ if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/
   S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
   # NOTE: Only necessary when using rsync to remotely transfer keying material
+  /bin/sh ${DIRPATH}/transfer_certs.sh
   /bin/sh ${DIRPATH}/transfer_keys.sh
   S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
@@ -79,6 +80,7 @@ else
   S=unsealer           WAIT=0 F=   eval ${STARTUP}
   S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
   S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  /bin/sh ${DIRPATH}/transfer_certs.sh
   S=qkd                WAIT=0 F=-f eval ${STARTUP}
   S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
