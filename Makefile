@@ -48,6 +48,8 @@ export REMOTE_QKDE_ID := QKDE0004
 else
 $(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
 endif
+export REMOTE_KME_ID1 := KME-S15-Guardian-003-Guardian.Charlie
+export REMOTE_KME_ID2 := KME-S15-Guardian-004-Guardian.Daud
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
