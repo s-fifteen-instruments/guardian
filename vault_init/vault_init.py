@@ -110,6 +110,15 @@ class VaultClient:
                                 alias="qkd_controller", 
                                 mount_path="userpass")
         self.connection_loop(self.vault_enable_kv_secrets_engine)
+        # This load the bare policy for reading/writing the common ledger
+        # and to update tokens
+        self.connection_loop(self.vault_create_rest_service_acl)
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
+        # NOTE: The SAE client will not interact directly with the
+        # Vault instance. Therefore, no need to create an ACL policy.
+        # NOTE: An SAE CSR may need to be signed instead of using this
+        # cert and key combination. This is for convenience.
         self.connection_loop(self.vault_generate_client_cert,
                 common_name=f"MYsaeCN",uri_sans=f"sae-id:{settings.CLIENT_URI_SANS}")
 
@@ -120,10 +129,6 @@ class VaultClient:
                              common_name="watcher",uri_sans="")
         self.connection_loop(self.vault_generate_client_cert,
                              common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
-        # NOTE: The SAE client will not interact directly with the
-        # Vault instance. Therefore, no need to create an ACL policy.
-        # NOTE: An SAE CSR may need to be signed instead of using this
-        # cert and key combination. This is for convenience.
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """Attempts the given callback multiple times till success or limit reached.

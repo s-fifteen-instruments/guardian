@@ -166,7 +166,7 @@ class VaultManager(VaultSemaphore):
         #TODO: Use actual SAE ID 
         KME_direction_path = self.get_sae_connection(SAE = 'master')
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        vault_qkde_id = self.get_connected_qkde_from_sae(ledger.slave_SAE_ID)
+        vault_qkde_id = self.get_connected_qkde_from_sae(ledger.master_SAE_ID)
         status_path = vault_qkde_id + f"/" + \
                       KME_direction_path + f"/status"
         # Use Vault status file to reserve epoch files for manipulation

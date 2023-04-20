@@ -31,6 +31,7 @@ export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
 export LOCAL_KME_ID ?= KME-S15-Guardian-005-Guardian.Faiz
 export LOCAL_SAE_ID := SAE-S15-Test-005-sae5
+export LOCAL_QKDE_ID := QKDE0005
 
 export REMOTE_KME ?= 2# or 2
 ifeq ($(REMOTE_KME), 1)
