@@ -298,6 +298,11 @@ class VaultSemaphore(VaultClient):
         kme = self.get_connected_kme_from_sae(slave_SAE_ID)
         return self.get_connected_qkde_from_kme(kme)
 
+    def get_kme_url_from_kme(self, KME_ID: str) -> str:
+        """Returns KME url from KME_ID"""
+        qkde = self.get_connected_qkde_from_kme(KME_ID)
+        return self.get_kme_url_from_qkde(qkde)
+
     def get_connected_qkde_from_kme(self, KME_ID: str ) -> str:
         """Returns QKDE from kme. Based on initial make and residing in a file somewhere. """
         qkd_list = settings.connections
@@ -308,3 +313,9 @@ class VaultSemaphore(VaultClient):
         qkd_list = settings.connections
         kme = qkd_list[SAE_ID]
         return kme
+
+    def get_kme_url_from_qkde(self, QKDE: str ) -> str:
+        """Returns url from qkde. """
+        qkd_list = settings.connections
+        url = qkd_list[QKDE]
+        return url

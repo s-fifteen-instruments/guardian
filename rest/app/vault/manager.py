@@ -58,6 +58,7 @@ class VaultManager(VaultSemaphore):
         vault_qkde_id = self.get_connected_qkde_from_sae(slave_SAE_ID)
         status_path =  vault_qkde_id + f"/" + \
                         KME_direction_path + f"/status"
+        remote_kme = self.get_connected_kme_from_sae(slave_SAE_ID)
         worker_uid, epoch_status_dict = \
             self.vault_claim_epoch_files(requested_num_bytes=(num_keys * key_size_bytes),
                                          mount_point = mount_point, status_path = status_path )
@@ -112,7 +113,8 @@ class VaultManager(VaultSemaphore):
         # Remote tasks to complete
         remote_task_list = list()
         remote_task_list.append(self.send_remote_key_id_ledger_container(key_id_ledger_con=
-                                                                         key_id_ledger_con))
+                                                                         key_id_ledger_con,
+                                                                         remote_kme=remote_kme))
         remote_kme_status_code = await asyncio.gather(*remote_task_list)
 
         # Release any epoch files held before processing remote KME status codes
@@ -210,10 +212,13 @@ class VaultManager(VaultSemaphore):
             task_list.append(self.vault_update_epoch_file(epoch_file=epoch_file,
                                                           mount_point = mount_point, 
                                                           qchannel_path = qchannel_path))
+        ledger_vault_qkde_id = self.get_connected_qkde_from_sae(ledger.slave_SAE_ID)
+        ledger_qchannel_path = ledger_vault_qkde_id + f"/" + \
+                        KME_direction_path + f"/"
         for ledger in updated_key_id_ledger_con.ledgers:
             task_list.append(self.vault_commit_local_key_id_ledger(ledger,
                                                                    mount_point = mount_point, 
-                                                                   qchannel_path = qchannel_path))
+                                                                   qchannel_path = ledger_qchannel_path))
 
         await asyncio.gather(*task_list)
 
@@ -599,22 +604,26 @@ class VaultManager(VaultSemaphore):
         return secret_dict
 
     async def send_remote_key_id_ledger_container(self, key_id_ledger_con:
-                                                  schemas.KeyIDLedgerContainer):
+                                                  schemas.KeyIDLedgerContainer,
+                                                  remote_kme: str):
         """foo
         """
         ledger_send_status_code = 0
         cert_tuple = (settings.VAULT_CLIENT_CERT_FILEPATH,
                       settings.VAULT_CLIENT_KEY_FILEPATH)
-        logger.debug(f"Sending Key ID Ledger Container to Remote KME: {settings.REMOTE_KME_URL}")
+        remote_url = self.get_kme_url_from_kme(remote_kme)
+        remote_req_url = f"https://{remote_url}{settings.API_V1_STR}/ledger/{settings.GLOBAL.LOCAL_KME_ID}/key_ids"
+        verify_path = f"{settings.GLOBAL.CERT_DIRPATH}/{remote_kme}/{settings.CLIENT_NAME}/{settings.CLIENT_NAME}{settings.GLOBAL.CA_CHAIN_SUFFIX}"
+        logger.debug(f"Sending Key ID Ledger Container to Remote KME: {remote_url}")
         logger.debug(f"As a dict: {key_id_ledger_con.dict()}")
         try:
             async with httpx.AsyncClient(cert=cert_tuple,
-                                         verify=settings.REMOTE_KME_CERT_FILEPATH,
+                                         verify=verify_path,
                                          trust_env=False,
                                          timeout=settings.REMOTE_KME_RESPONSE_TIMEOUT,
                                          ) as client:
                 remote_kme_response = \
-                    await client.put(url=settings.REMOTE_KME_URL,
+                    await client.put(url=remote_req_url,
                                      json=jsonable_encoder(key_id_ledger_con.dict()),
                                      follow_redirects=False
                                      )
