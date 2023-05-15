@@ -19,6 +19,7 @@
 #
 #
 
+import json
 import logging
 import os
 from pydantic import BaseSettings
@@ -27,9 +28,16 @@ from typing import Tuple
 
 from global_config import GlobalSettings
 
+def load_connections(filepath: str='/app/core/connections') -> dict:
+    """Load connections dictionary
+    """
+    with open(filepath ,'r') as f:
+        res = f.read()
+        return json.loads(res)
 
 class WatcherSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    connections = load_connections()
     WATCHER_LOG_LEVEL: str = os.environ.get("WATCHER_LOG_LEVEL", str(logging.info))
     DELETE_EPOCH_FILES: bool = True
     CLIENT_NAME: str = "watcher"

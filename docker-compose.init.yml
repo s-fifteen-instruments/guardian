@@ -164,7 +164,7 @@ services:
       dockerfile: ./notifier/Dockerfile
     env_file:
       - common/log.env
-    command: ["notifier.py"]
+    command: ["notifier.py", "${LOCAL_KME_ID:-SETMEINMAKEFILE}", "${REMOTE_KME_ID:-SETMEINMAKEFILE}"]
     networks:
       - internal-private
     volumes:
@@ -184,9 +184,9 @@ services:
     environment:
       - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
       - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
-      - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
-      - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
-      - QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
+        # - LOCAL_KME_ALT_ID=${LOCAL_KME_ALT_ID:-SETMEINMAKEFILE}
+        # - REMOTE_KME_ALT_ID=${REMOTE_KME_ALT_ID:-SETMEINMAKEFILE}
+        # - QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["watcher.py"]
@@ -203,7 +203,10 @@ services:
       - type: bind
         source: ./common/watcher_config.py
         target: /root/code/watcher_config.py
-
+      - type: bind
+        source: ./volumes/connections
+        target: /app/core/connections
+        read_only: true
   unsealer:
     build:
       context: ./

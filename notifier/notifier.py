@@ -35,9 +35,14 @@ class NotifierClient:
     """foo
     """
 
-    def __init__(self):
+    def __init__(self,
+            LOCAL_KME_ID = settings.GLOBAL.LOCAL_KME_ID,
+            REMOTE_KME_ID = settings.GLOBAL.REMOTE_KME_ID,
+            ):
         """foo
         """
+        connected_kme = REMOTE_KME_ID
+        hash_comp = hash(LOCAL_KME_ID) > hash(REMOTE_KME_ID)
         try:
             os.mkfifo(settings.GLOBAL.NOTIFY_PIPE_FILEPATH)
         except OSError:
@@ -62,7 +67,9 @@ class NotifierClient:
                         num_epoch_delay = int(current_file_hex - last_file_hex)
                     logger.info(f"Notification Delay [s]: {num_epoch_delay * settings.EPOCH_DELAY_INTERVAL}; "
                                 f"Epoch Filename: {epoch_file_name}")
-                    FIFO.write(epoch_file_name + "\n")
+                    direction = "masterslave" if hash_comp else "slavemaster"
+                    hash_comp = not hash_comp
+                    FIFO.write(epoch_file_name + " " + connected_kme + " " + direction + "\n")
                     FIFO.flush()
                     time.sleep(settings.EPOCH_DELAY_INTERVAL * num_epoch_delay)
                     last_file_hex = current_file_hex
@@ -79,4 +86,4 @@ class NotifierClient:
 
 
 if __name__ == "__main__":
-    notifier = NotifierClient()
+    notifier = NotifierClient(LOCAL_KME_ID = sys.argv[1], REMOTE_KME_ID = sys.argv[2])
