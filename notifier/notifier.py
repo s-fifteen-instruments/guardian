@@ -43,6 +43,7 @@ class NotifierClient:
         """
         connected_kme = REMOTE_KME_ID
         hash_comp = hash(LOCAL_KME_ID) > hash(REMOTE_KME_ID)
+        logger.info(f"Hash compare of {LOCAL_KME_ID} and {REMOTE_KME_ID} is {hash_comp}")
         try:
             os.mkfifo(settings.GLOBAL.NOTIFY_PIPE_FILEPATH)
         except OSError:
@@ -65,10 +66,11 @@ class NotifierClient:
                     num_epoch_delay = 0
                     if settings.REAL_TIME_DELAY:
                         num_epoch_delay = int(current_file_hex - last_file_hex)
-                    logger.info(f"Notification Delay [s]: {num_epoch_delay * settings.EPOCH_DELAY_INTERVAL}; "
-                                f"Epoch Filename: {epoch_file_name}")
                     direction = "masterslave" if hash_comp else "slavemaster"
                     hash_comp = not hash_comp
+                    logger.debug(f"Notification Delay [s]: {num_epoch_delay * settings.EPOCH_DELAY_INTERVAL}; "
+                                 f"Epoch Filename: {epoch_file_name}"
+                                 f"direction: {direction}")
                     FIFO.write(epoch_file_name + " " + connected_kme + " " + direction + "\n")
                     FIFO.flush()
                     time.sleep(settings.EPOCH_DELAY_INTERVAL * num_epoch_delay)
