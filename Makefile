@@ -33,7 +33,7 @@ export LOCAL_KME_ID ?= KME-S15-Guardian-005-Guardian.Faiz
 export LOCAL_SAE_ID := SAE-S15-Test-005-sae5
 export LOCAL_QKDE_ID := QKDE0005
 
-export REMOTE_KME ?= 2# or 2
+export REMOTE_KME ?= 1# or 2
 ifeq ($(REMOTE_KME), 1)
 export REMOTE_KME_ADDRESS ?= c.qkd.internal
 export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian

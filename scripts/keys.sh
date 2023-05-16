@@ -45,6 +45,7 @@ if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/
   S="watcher notifier"     WAIT=5 F=   eval ${STARTUP}
   S="watcher notifier"     WAIT=1      eval ${SHUTDOWN}
   rm -rf ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}
+  ssh $REMOTE_KME_ADDRESS "rmdir ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}"
 else
   echo Remote files not found
   S=qkd                    WAIT=0 F=-f eval ${STARTUP}
