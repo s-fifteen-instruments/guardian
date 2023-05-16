@@ -72,7 +72,7 @@ if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/
   /bin/sh ${DIRPATH}/transfer_keys.sh
   S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
                        WAIT=3      eval ${SHUTDOWN}
-
+  rm -rf ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}
 else
 
   echo Remote files not found
