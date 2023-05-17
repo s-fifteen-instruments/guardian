@@ -45,8 +45,7 @@ services:
       # Mount a volume that stores the TLS certificates
       # TODO: Pair down mounts for remote client auth only
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${LOCAL_KME_ID:-SETMEINMAKEFILE}
-      - ./volumes/${REMOTE_KME_ID1:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${REMOTE_KME_ID1:-SETMEINMAKEFILE}
-      - ./volumes/${REMOTE_KME_ID2:-SETMEINMAKEFILE}/certificates/production:/certificates/production/${REMOTE_KME_ID2:-SETMEINMAKEFILE}
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/remote:/certificates/remote
       # Mount a volume that stores the hex digest files of QKD keys
       # NOTE: Only kme1 generates epoch files in this configuration
       # TODO: May be removed if full QKD system provides
@@ -177,8 +176,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount a volume that stores the TLS certificates
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/${LOCAL_KME_ID:-SETMEINMAKEFILE}
-      - ./volumes/${REMOTE_KME_ID1:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID1:-SETMEINMAKEFILE}
-      - ./volumes/${REMOTE_KME_ID2:-SETMEINMAKEFILE}/certificates/production:/certificates/${REMOTE_KME_ID2:-SETMEINMAKEFILE}
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/remote:/certificates/remote
       # Mount the configuration directory
       - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/traefik/configuration:/etc/traefik
       # Mount the log directory

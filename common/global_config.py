@@ -45,6 +45,7 @@ class GlobalSettings(BaseSettings):
     NOTIFY_PIPE_FILEPATH: str = f"{EPOCH_FILES_DIRPATH}/notify.pipe"
     DIGEST_FILES_DIRPATH: str = "/digest_files"
     CERT_DIRPATH: str = "/certificates/production"
+    REMOTE_CERT_DIRPATH: str = "/certificates/remote"
     ADMIN_DIRPATH: str = f"{CERT_DIRPATH}/admin"
     POLICIES_DIRPATH: str = "/vault/policies"
     LOG_DIRPATH: str = "/vault/logs"

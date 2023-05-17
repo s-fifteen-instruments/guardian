@@ -613,7 +613,7 @@ class VaultManager(VaultSemaphore):
                       settings.VAULT_CLIENT_KEY_FILEPATH)
         remote_url = self.get_kme_url_from_kme(remote_kme)
         remote_req_url = f"https://{remote_url}{settings.API_V1_STR}/ledger/{settings.GLOBAL.LOCAL_KME_ID}/key_ids"
-        verify_path = f"{settings.GLOBAL.CERT_DIRPATH}/{remote_kme}/{settings.CLIENT_NAME}/{settings.CLIENT_NAME}{settings.GLOBAL.CA_CHAIN_SUFFIX}"
+        verify_path = f"{settings.GLOBAL.REMOTE_CERT_DIRPATH}/{remote_kme}/{settings.CLIENT_NAME}/{settings.CLIENT_NAME}{settings.GLOBAL.CA_CHAIN_SUFFIX}"
         logger.debug(f"Sending Key ID Ledger Container to Remote KME: {remote_url}")
         logger.debug(f"As a dict: {key_id_ledger_con.dict()}")
         try:

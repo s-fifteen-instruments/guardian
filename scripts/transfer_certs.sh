@@ -25,8 +25,8 @@ FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 
-mkdir -p ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production/rest
+mkdir -p ${DIRPATH}/../volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/remote/${REMOTE_KME_ID:-SETMEINMAKEFILE}/rest
 rsync -avz --timeout=3 \
   ${REMOTE_KME_DIRPATH:-SETMEINMAKEFILE}/volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production/rest/rest.ca-chain.cert.pem \
-  ${DIRPATH}/../volumes/${REMOTE_KME_ID:-SETMEINMAKEFILE}/certificates/production/rest/rest.ca-chain.cert.pem
+  ${DIRPATH}/../volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/remote/${REMOTE_KME_ID:-SETMEINMAKEFILE}/rest/rest.ca-chain.cert.pem
 
