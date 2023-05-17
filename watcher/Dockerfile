@@ -45,5 +45,3 @@ WORKDIR ${HOME}/
 
 # Set the scripts for the python entrypoint to run
 CMD ["python3", "-u", "watcher.py"]
-
-#ENTRYPOINT ["python3", "-u"]

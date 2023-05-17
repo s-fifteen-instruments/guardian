@@ -18,55 +18,23 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-if [ "${1}" != "kme1" ] && [ "${1}" != "kme2" ] && [ "${1}" != "both" ]; then
-  echo "Expecting \"kme1\", \"kme2\", or \"both\" as the first argument."
-  echo "Received ${1}. Exiting ..."
-  exit -1
-fi
 # Run as root
 set -x
 
-if [ "${1}" = "kme1" ] || [ "${1}" = "both" ]; then
-
-  rm -f  ./scripts/.kme1.initialized
-  rm -rf ./volumes/kme1/certificates/production/vault
-  rm -rf ./volumes/kme1/certificates/production/vault_init
-  rm -rf ./volumes/kme1/certificates/production/rest
-  rm -rf ./volumes/kme1/certificates/production/watcher
-  rm -rf ./volumes/kme1/certificates/production/sae1
-  rm -rf ./volumes/kme1/certificates/production/admin
-  #Keep the root (intermediate QKD box) ca  directory
-  rm -rf ./volumes/kme1/certificates/generation/root/ca/intermediate
-  rm -rf ./volumes/kme1/vault/data/file
-  rm -f  ./volumes/kme1/vault/logs/audit.log
-  rm -f  ./volumes/kme1/vault/policies/watcher.policy.hcl
-  rm -f  ./volumes/kme1/vault/policies/rest.policy.hcl
-  rm -rf ./volumes/kme1/qkd/epoch_files/*
-  rm -rf ./volumes/kme1/qkd/digest_files/*
-  rm -f  ./volumes/kme1/traefik/logs/access.log
-  # For remote client CA chain
-  rm -rf ./volumes/kme2/certificates/production/rest
-
-fi
-if [ "${1}" = "kme2" ] || [ "${1}" = "both" ]; then
-
-  rm -f  ./scripts/.kme2.initialized
-  rm -rf ./volumes/kme2/certificates/production/vault
-  rm -rf ./volumes/kme2/certificates/production/vault_init
-  rm -rf ./volumes/kme2/certificates/production/rest
-  rm -rf ./volumes/kme2/certificates/production/watcher
-  rm -rf ./volumes/kme2/certificates/production/sae2
-  rm -rf ./volumes/kme2/certificates/production/admin
-  #Keep the root (intermediate QKD box) ca  directory
-  rm -rf ./volumes/kme2/certificates/generation/root/ca/intermediate
-  rm -rf ./volumes/kme2/vault/data/file
-  rm -f  ./volumes/kme2/vault/logs/audit.log
-  rm -f  ./volumes/kme2/vault/policies/watcher.policy.hcl
-  rm -f  ./volumes/kme2/vault/policies/rest.policy.hcl
-  rm -rf ./volumes/kme2/qkd/epoch_files/*
-  rm -rf ./volumes/kme2/qkd/digest_files/*
-  rm -f  ./volumes/kme2/traefik/logs/access.log
-  # For remote client CA chain
-  rm -rf ./volumes/kme1/certificates/production/rest
-
-fi
+rm -f  ./scripts/.kme.initialized
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/vault_init
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/rest
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/watcher
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/sae1
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/production/admin
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/certificates/generation/root
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/vault/data/file
+sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/logs/audit.log
+sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/policies/watcher.policy.hcl
+sudo rm -f  ./volumes/${LOCAL_KME_ID}/vault/policies/rest.policy.hcl
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/qkd/epoch_files/*
+sudo rm -rf ./volumes/${LOCAL_KME_ID}/qkd/digest_files/*
+sudo rm -f  ./volumes/${LOCAL_KME_ID}/traefik/logs/access.log
+# For remote client CA chain
+rm -rf ./volumes/${REMOTE_KME_ID}/certificates/production/rest

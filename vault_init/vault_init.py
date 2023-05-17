@@ -47,6 +47,8 @@ class VaultClient:
             self.phase_1_startup()
         if self.args.second:
             self.phase_2_startup()
+        if self.args.connect:
+            self.connect_to_remote()
         if self.args.clear:
             self.clear_vault_instance()
 
@@ -58,6 +60,7 @@ class VaultClient:
         parser = argparse.ArgumentParser()
         parser.add_argument("--first", action="store_true", help="First stage of initialization")
         parser.add_argument("--second", action="store_true", help="Second stage of initialization")
+        parser.add_argument("--connect", action="store_true", help="Connect to remote defined in config")
         parser.add_argument("--clear", action="store_true", help="Clear the Vault instance QKD Secret Engine")
         self.args = parser.parse_args()
 
@@ -107,18 +110,25 @@ class VaultClient:
                                 alias="qkd_controller", 
                                 mount_path="userpass")
         self.connection_loop(self.vault_enable_kv_secrets_engine)
-        self.connection_loop(self.vault_create_watcher_service_acl)
+        # This load the bare policy for reading/writing the common ledger
+        # and to update tokens
         self.connection_loop(self.vault_create_rest_service_acl)
         self.connection_loop(self.vault_generate_client_cert,
-                             common_name="watcher",uri_sans="")
-        self.connection_loop(self.vault_generate_client_cert,
-                common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
+                             common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
         # NOTE: The SAE client will not interact directly with the
         # Vault instance. Therefore, no need to create an ACL policy.
         # NOTE: An SAE CSR may need to be signed instead of using this
         # cert and key combination. This is for convenience.
         self.connection_loop(self.vault_generate_client_cert,
                 common_name=f"{settings.GLOBAL.LOCAL_SAE_ID}",uri_sans=f"sae-id:{settings.CLIENT_URI_SANS}")
+
+    def connect_to_remote(self):
+        self.connection_loop(self.vault_create_watcher_service_acl)
+        self.connection_loop(self.vault_create_rest_service_acl)
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="watcher",uri_sans="")
+        self.connection_loop(self.vault_generate_client_cert,
+                             common_name="rest",uri_sans=f"kme-id:{settings.KME_URI_SANS}")
 
     def connection_loop(self, connection_callback, *args, **kwargs) -> None:
         """Attempts the given callback multiple times till success or limit reached.
@@ -674,10 +684,10 @@ class VaultClient:
             "private_key_format_str": "pem",
             "exclude_cn_from_sans": "false"
         }
-        logger.info(f"Attempt to issue \"{common_name}\" client certificate")
-        logger.info(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
-        logger.info(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
-        logger.info(f"Adding URI SAN: \"{uri_sans}\" to client certificate")
+        logger.debug(f"Attempt to issue \"{common_name}\" client certificate")
+        logger.debug(f"Adding SAN: \"{settings.CLIENT_ALT_NAMES}\" to client certificate")
+        logger.debug(f"Adding IP SAN: \"{settings.CLIENT_IP_SANS}\" to client certificate")
+        logger.debug(f"Adding URI SAN: \"{uri_sans}\" to client certificate")
         gen_cert_response = \
             self.vclient.secrets.pki.\
             generate_certificate(name=role_str,
@@ -711,6 +721,15 @@ class VaultClient:
                                      ca_chain=ca_chain_pem_str)
         VaultClient.create_pkcs12_file(dirpath=client_admin_dirpath,
                                        common_name=common_name)
+
+    def vault_create_ca_role(self, common_name):
+        certificate = f"{settings.GLOBAL.CERT_DIRPATH}/{common_name}/{common_name}.ca-chain.cert.pem"
+        policy = common_name
+        user_response = \
+            hvac.api.auth_methods.cert.Cert.create_ca_certificate_role(\
+            self.vclient, common_name, certificate, token_policies=policy)
+        logger.debug("CA certificate role  created/modified okay:")
+        #self._dump_response(user_response, secret=False)
 
     @staticmethod
     def write_client_credentials(dirpath: str, common_name: str,
@@ -815,20 +834,41 @@ class VaultClient:
         """foo
         """
         policy_name_str = "watcher"
-        policy_template = \
-            VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
-                                            is_template=True)
-        policy_str = policy_template
-        policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
-                                        settings.GLOBAL.VAULT_KV_ENDPOINT)
-        policy_str = policy_str.replace("<<<QKDE_ID>>>",
-                                        settings.GLOBAL.VAULT_QKDE_ID)
-        policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
-                                        settings.GLOBAL.VAULT_QCHANNEL_ID)
-        policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
-                                        settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
         filepath = f"{settings.GLOBAL.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
+        if not os.path.isfile(filepath):
+            logger.debug(f"No existing  {policy_name_str} policy file. Loading from template")
+            policy_template = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                            is_template=True)
+            policy_str = policy_template
+            policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                            settings.GLOBAL.VAULT_KV_ENDPOINT)
+            policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                            settings.GLOBAL.VAULT_QKDE_ID)
+            policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
+        else:
+            logger.debug(f"{policy_name_str} policy file exists. Appending")
+            current_policy = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                                is_template=False)
+            policy_append_name_str = f"append.{policy_name_str}"
+            append_template_policy = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_append_name_str,
+                                                is_template=True)
+            policy_str = append_template_policy
+            policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                            settings.GLOBAL.VAULT_KV_ENDPOINT)
+            policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                            settings.GLOBAL.VAULT_QKDE_ID)
+            policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
+            policy_str = current_policy + policy_str
         logger.debug(f"Writing out policy to: {filepath}")
         with open(filepath, "w") as f:
             f.write(policy_str)
@@ -838,22 +878,45 @@ class VaultClient:
         """foo
         """
         policy_name_str = "rest"
-        policy_template = \
-            VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
-                                            is_template=True)
-        policy_str = policy_template
-        policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
-                                        settings.GLOBAL.VAULT_KV_ENDPOINT)
-        policy_str = policy_str.replace("<<<QKDE_ID>>>",
-                                        settings.GLOBAL.VAULT_QKDE_ID)
-        policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
-                                        settings.GLOBAL.VAULT_QCHANNEL_ID)
-        policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
-                                        settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
-        policy_str = policy_str.replace("<<<LEDGER_ID>>>",
-                                        settings.GLOBAL.VAULT_LEDGER_ID)
         filepath = f"{settings.GLOBAL.POLICIES_DIRPATH}/" \
                    f"{policy_name_str}.policy.hcl"
+        if not os.path.isfile(filepath):
+            logger.debug(f"No existing  {policy_name_str} policy file. Loading from template")
+            policy_template = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                            is_template=True)
+            policy_str = policy_template
+            policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                            settings.GLOBAL.VAULT_KV_ENDPOINT)
+            policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                            settings.GLOBAL.VAULT_QKDE_ID)
+            policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<LEDGER_ID>>>",
+                                            settings.GLOBAL.VAULT_LEDGER_ID)
+        else:
+            logger.debug(f"{policy_name_str} policy file exists. Appending")
+            current_policy = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_name_str,
+                                                is_template=False)
+            policy_append_name_str = f"append.{policy_name_str}"
+            append_template_policy = \
+                VaultClient.vault_read_hcl_file(policy_name_str=policy_append_name_str,
+                                                is_template=True)
+            policy_str = append_template_policy
+            policy_str = policy_str.replace("<<<KV_MOUNT_POINT>>>",
+                                            settings.GLOBAL.VAULT_KV_ENDPOINT)
+            policy_str = policy_str.replace("<<<QKDE_ID>>>",
+                                            settings.GLOBAL.VAULT_QKDE_ID)
+            policy_str = policy_str.replace("<<<QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<REV_QCHANNEL_ID>>>",
+                                            settings.GLOBAL.VAULT_REV_QCHANNEL_ID)
+            policy_str = policy_str.replace("<<<LEDGER_ID>>>",
+                                            settings.GLOBAL.VAULT_LEDGER_ID)
+            policy_str = current_policy + policy_str
         logger.debug(f"Writing out policy to: {filepath}")
         with open(filepath, "w") as f:
             f.write(policy_str)

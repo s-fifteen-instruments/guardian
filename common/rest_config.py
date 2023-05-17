@@ -74,8 +74,17 @@ def bits2bytes(bits: int):
     return bits // 8
 
 
+def load_connections(filepath: str='/app/core/connections') -> dict:
+    """Load connections dictionary
+    """
+    with open(filepath ,'r') as f:
+        res = f.read()
+        return json.loads(res)
+
+
 class RestSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
+    connections = load_connections()
     REST_LOG_LEVEL: str = os.environ.get("REST_LOG_LEVEL", str(logging.info))
     API_V1_STR: str = "/api/v1"
     DIGEST_COMPARE_TO_FILE: bool = True

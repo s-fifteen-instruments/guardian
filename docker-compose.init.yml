@@ -126,10 +126,23 @@ services:
 
   vault_init_phase_2:
     <<: *vault_init_label
+    environment:
+      <<: *vault_init_env_label
+      QKDE_ID: ${LOCAL_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--second"]
+
+  vault_connect:
+    <<: *vault_init_label
+    environment:
+      <<: *vault_init_env_label
+      QKDE_ID: ${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
+    command: ["vault_init.py", "--connect"]
 
   vault_clear:
     <<: *vault_init_label
+    environment:
+      <<: *vault_init_env_label
+      QKDE_ID: ${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--clear"]
 
 networks:
