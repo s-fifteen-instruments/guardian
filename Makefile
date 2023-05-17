@@ -132,11 +132,10 @@ endif
 
 connect:
 ifeq (,$(wildcard volumes/$(REMOTE_KME_ID)))
-	mkdir -pv volumes/$(REMOTE_KME_ID)/certificates/production/rest
-	mkdir -pv volumes/$(REMOTE_KME_ID)/qkd/epoch_files
+	mkdir -pv volumes/$(LOCAL_KME_ID)/certificates/remote/$(REMOTE_KME_ID)/certificates/rest
 endif
-        sed -n -i 'p; s/{{ env "REMOTE_KME_ID" }}/$(REMOTE_KME_ID)/p' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
-        sed -i "/$(REMOTE_KME_ID)/s/^#//" ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -n -i 'p; s/{{ env "REMOTE_KME_ID" }}/$(REMOTE_KME_ID)/p' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i "/$(REMOTE_KME_ID)/s/^#//" ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	$(SCRIPTS)/connect.sh
 
 # KME rest app docker logs

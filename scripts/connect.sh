@@ -59,31 +59,9 @@ else
   echo "The \"traefik-public\" network is already present"
 fi
 
-# SSH config needs to be setup
-if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}" ; then
-
-  echo Remote files found
-  S=vault              WAIT=0 F=   eval ${STARTUP}
-  S=unsealer           WAIT=0 F=   eval ${STARTUP}
-  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
-  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-  # NOTE: Only necessary when using rsync to remotely transfer keying material
-  /bin/sh ${DIRPATH}/transfer_certs.sh
-  /bin/sh ${DIRPATH}/transfer_keys.sh
-  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
-                       WAIT=3      eval ${SHUTDOWN}
-  rm -rf ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}
-  ssh $REMOTE_KME_ADDRESS "rmdir ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}"
-else
-
-  echo Remote files not found
-  S=vault              WAIT=0 F=   eval ${STARTUP}
-  S=unsealer           WAIT=0 F=   eval ${STARTUP}
-  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
-  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
-  /bin/sh ${DIRPATH}/transfer_certs.sh
-  S=qkd                WAIT=0 F=-f eval ${STARTUP}
-  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
-                       WAIT=3      eval ${SHUTDOWN}
-
-fi
+S=vault              WAIT=0 F=   eval ${STARTUP}
+S=unsealer           WAIT=0 F=   eval ${STARTUP}
+S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
+S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+/bin/sh ${DIRPATH}/transfer_certs.sh
+                     WAIT=3      eval ${SHUTDOWN}

@@ -103,12 +103,12 @@ services:
     build:
       context: ./
       dockerfile: ./vault_init/Dockerfile
-    environment:
-      - LOCAL_KME_ID=${LOCAL_KME_ID:-SETMEINMAKEFILE}
-      - REMOTE_KME_ID=${REMOTE_KME_ID:-SETMEINMAKEFILE}
-      - LOCAL_SAE_ID=${LOCAL_SAE_ID:-SETMEINMAKEFILE}
-      - LOCAL_KME_ADDRESS=${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
-      - LOCAL_KME_ADD_SSH=${LOCAL_KME_ADD_SSH:-SETMEINMAKEFILE}
+    environment: &vault_init_env_label
+      LOCAL_KME_ID: ${LOCAL_KME_ID:-SETMEINMAKEFILE}
+      REMOTE_KME_ID: ${REMOTE_KME_ID:-SETMEINMAKEFILE}
+      LOCAL_SAE_ID: ${LOCAL_SAE_ID:-SETMEINMAKEFILE}
+      LOCAL_KME_ADDRESS: ${LOCAL_KME_ADDRESS:-SETMEINMAKEFILE}
+      LOCAL_KME_ADD_SSH: ${LOCAL_KME_ADD_SSH:-SETMEINMAKEFILE}
     env_file:
       - common/log.env
     command: ["vault_init.py", "--first"]
@@ -144,6 +144,29 @@ services:
       <<: *vault_init_env_label
       QKDE_ID: ${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
     command: ["vault_init.py", "--clear"]
+
+  unsealer:
+    build:
+      context: ./
+      dockerfile: ./unsealer/Dockerfile
+    env_file:
+      - common/log.env
+    command: ["unsealer.py"]
+    volumes:
+      # Listen to the Docker Daemon through this socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount a volume that stores the TLS certificates
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/certificates/production:/certificates/production
+      - type: bind
+        source: ./common/global_config.py
+        target: /root/code/global_config.py
+      - type: bind
+        source: ./common/unsealer_config.py
+        target: /root/code/unsealer_config.py
+    networks:
+      # Use only the private internal network created by Docker to be shared
+      # by any backend service that needs to communicate amongst internal services
+      - internal-private
 
 networks:
 
