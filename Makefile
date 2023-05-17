@@ -49,8 +49,6 @@ export REMOTE_QKDE_ID := QKDE0004
 else
 $(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
 endif
-export REMOTE_KME_ID1 := KME-S15-Guardian-003-Guardian.Charlie
-export REMOTE_KME_ID2 := KME-S15-Guardian-004-Guardian.Daud
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
@@ -122,8 +120,6 @@ init:
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
 	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
 	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
-	sed -i 's/{{ env "REMOTE_KME_ID1" }}/$(REMOTE_KME_ID1)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
-	sed -i 's/{{ env "REMOTE_KME_ID2" }}/$(REMOTE_KME_ID2)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_KME_ADDRESS" }}/$(LOCAL_KME_ADDRESS)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_SAE_ID" }}/MYsaeCN/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 endif
@@ -134,7 +130,8 @@ ifeq (,$(wildcard volumes/$(REMOTE_KME_ID)))
 	mkdir -pv volumes/$(REMOTE_KME_ID)/certificates/production/rest
 	mkdir -pv volumes/$(REMOTE_KME_ID)/qkd/epoch_files
 endif
-	sed -i "/$(REMOTE_KME_ID)/s/^#//g" ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -n -i 'p; s/{{ env "REMOTE_KME_ID" }}/$(REMOTE_KME_ID)/p' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i "/$(REMOTE_KME_ID)/s/^#//" ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	$(SCRIPTS)/connect.sh
 
 # KME rest app docker logs
