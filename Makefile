@@ -37,6 +37,7 @@ export LOCAL_QKDE_ID ?= QKDE0005
 export REMOTE_KME ?= 1# or 2
 ifeq ($(REMOTE_KME), 1)
 export REMOTE_KME_ADDRESS ?= c.qkd.internal
+export REMOTE_KME2_ADDRESS ?= d.qkd.internal
 export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= c.qkd.internal
 export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
@@ -45,6 +46,7 @@ export REMOTE_SAE_ID ?= SAE-S15-Test-003-sae3
 export REMOTE_QKDE_ID ?= QKDE0003
 else ifeq ($(REMOTE_KME), 2)
 export REMOTE_KME_ADDRESS ?= d.qkd.internal
+export REMOTE_KME2_ADDRESS ?= c.qkd.internal
 export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= d.qkd.internal
 export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
@@ -62,6 +64,7 @@ endif
 export LOCAL_KME_IP2 ?= $(shell ping -c1 $(LOCAL_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME2_IP ?= $(shell ping -c1 $(REMOTE_KME2_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 ##########################
 ##########################
 ##########################
