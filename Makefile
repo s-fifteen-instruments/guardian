@@ -22,21 +22,42 @@
 ##########################
 # - Choose "kme1" or "kme2" for the local KME identity.
 #   kme1 => local, kme2 => remote
-export KME ?= kme1
+#export KME ?= kme1
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_ADDRESS ?= b.qkd.internal
+export LOCAL_KME_ADDRESS ?= e.qkd.internal
 export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
-export REMOTE_KME_ADDRESS ?= a.qkd.internal
-export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
+export LOCAL_KME_ID ?= KME-S15-Guardian-005-Guardian.Faiz
+export LOCAL_SAE_ID := SAE-S15-Test-005-sae5
+export LOCAL_QKDE_ID := QKDE0005
 
+export REMOTE_KME ?= 1# or 2
+ifeq ($(REMOTE_KME), 1)
+export REMOTE_KME_ADDRESS ?= c.qkd.internal
+export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
+export REMOTE_KME_ID ?= KME-S15-Guardian-003-Guardian.Charlie
+export REMOTE_SAE_ID := SAE-S15-Test-003-sae3
+export REMOTE_QKDE_ID := QKDE0003
+else ifeq ($(REMOTE_KME), 2)
+export REMOTE_KME_ADDRESS ?= d.qkd.internal
+export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
+export REMOTE_KME_ID ?= KME-S15-Guardian-004-Guardian.Daud
+export REMOTE_SAE_ID := SAE-S15-Test-004-sae4
+export REMOTE_QKDE_ID := QKDE0004
+else
+$(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
+endif
+export REMOTE_KME_ID1 := KME-S15-Guardian-003-Guardian.Charlie
+export REMOTE_KME_ID2 := KME-S15-Guardian-004-Guardian.Daud
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
 # - Use a full absolute path. Do not use env variables or tilde (~) as
 #   they will not necessarily expand correctly in a remote context.
+export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 ##########################
 ##########################
 ##########################
@@ -69,36 +90,15 @@ SERVICES := rest
 SCRIPTS := ./scripts
 # Verbosity for 'compare' target
 V := 0 
-ifeq ($(KME), kme1)
-export LOCAL_KME_ID := KME-S15-Guardian-001-Guardian.Bob
-export REMOTE_KME_ID := KME-S15-Guardian-002-Guardian.Alice
-export LOCAL_SAE_ID := SAE-S15-Test-001-sae1
-export REMOTE_SAE_ID := SAE-S15-Test-002-sae2
-export LOCAL_KME_ALT_ID := kme1
-export REMOTE_KME_ALT_ID := kme2
-else ifeq ($(KME), kme2)
-export LOCAL_KME_ID := KME-S15-Guardian-002-Guardian.Alice
-export REMOTE_KME_ID := KME-S15-Guardian-001-Guardian.Bob
-export LOCAL_SAE_ID := SAE-S15-Test-002-sae2
-export REMOTE_SAE_ID := SAE-S15-Test-001-sae1
-export LOCAL_KME_ALT_ID := kme2
-export REMOTE_KME_ALT_ID := kme1
-else
-$(error KME input not recognized: $(KME). Please use "kme1" or "kme2"; Exiting)
-endif
-$(info )
-$(info Using Local KME configuration: '$(KME)')
-$(info Use the command-line syntax, e.g. 'KME=kme2' to change)
-$(info )
-$(info Remote KME Repository Location: '$(REMOTE_KME_DIRPATH)')
-$(info Use the command-line syntax, e.g. 'REMOTE_KME_DIRPATH=alice@kme1:/home/alice/code/guardian' to change)
+
+
 $(info )
 $(info Environment variables used throughout Guardian:)
-$(info KME: $(KME))
 $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
 $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
 $(info REMOTE_SAE_ID: $(REMOTE_SAE_ID))
+$(info LOCAL_KME_HASH: $(LOCAL_KME_HASH))
 $(info )
 
 # Not strictly necessary but this
@@ -120,10 +120,22 @@ rest: init
 
 init:
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
-	mv volumes/$(LOCAL_KME_ALT_ID) volumes/$(LOCAL_KME_ID)
-	mv volumes/$(REMOTE_KME_ALT_ID) volumes/$(REMOTE_KME_ID)
+	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
+	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "REMOTE_KME_ID1" }}/$(REMOTE_KME_ID1)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "REMOTE_KME_ID2" }}/$(REMOTE_KME_ID2)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "LOCAL_KME_ADDRESS" }}/$(LOCAL_KME_ADDRESS)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	sed -i 's/{{ env "LOCAL_SAE_ID" }}/MYsaeCN/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 endif
 	$(SCRIPTS)/init.sh
+
+connect:
+ifeq (,$(wildcard volumes/$(REMOTE_KME_ID)))
+	mkdir -pv volumes/$(REMOTE_KME_ID)/certificates/production/rest
+	mkdir -pv volumes/$(REMOTE_KME_ID)/qkd/epoch_files
+endif
+	sed -i "/$(REMOTE_KME_ID)/s/^#//g" ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
+	$(SCRIPTS)/connect.sh
 
 # KME rest app docker logs
 log:
@@ -153,13 +165,12 @@ clear: rest
 
 .PHONY: clean allclean
 # Clean local and remote KMEs
-allclean: export KME = both
 allclean: clean
 	docker volume prune -f
+	sudo find volumes -maxdepth 1 -type d -not \( -name "kme1" -or -name "kme2" -or -name "volumes" \) -exec rm -rf {} +
+
 # Clean local KME
 
 clean: down
-	rm -rf volumes/kme1
-	mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
-	mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
-	sudo $(SCRIPTS)/clean.sh $(KME)
+	$(SCRIPTS)/clean.sh
+

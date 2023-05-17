@@ -443,24 +443,17 @@ class watcherClient:
                 vault_commit_secret(path=status_path, secret=status_data,
                                     version=status_version, mount_point=mount_point)
 
-    def process_epoch_file(self, filepath):
+    def process_epoch_file(self, args):
         """foo
         """
+        filepath, connected_kme, direction = args
         logger.debug(f"Worker started on Filename: {filepath}")
         raw_bytes = watcherClient.read_epoch_file(filepath)
         epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        if f"{settings.GLOBAL.LOCAL_KME_ALT_ID}" == 'kme1':
-            KME_id = 0 # set parity for
-        elif f"{settings.GLOBAL.LOCAL_KME_ALT_ID}" == 'kme2':
-            KME_id = 1
-        logger.debug(f"I am  {KME_id} even goes to masterslave; odd to slavemaster")
-        if (int(epoch,16)+KME_id)%2:
-            qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                        f"masterslave/"
-        else:
-            qchannel_path: str = f"{settings.GLOBAL.VAULT_QKDE_ID}/" \
-                        f"slavemaster/"
+        VAULT_QKDE_ID = self.get_connected_qkde_from_kme(connected_kme)
+        qchannel_path: str = f"{VAULT_QKDE_ID}/" \
+                        f"{direction}/"
         self.vault_write_key(epoch, raw_key,
                              mount_point=mount_point,
                              qchannel_path=qchannel_path
@@ -531,7 +524,8 @@ class watcherClient:
                             total_stall_time = 0.0
                             total_notify_sleep_time = 0.0
                             # Data should point us to a final key epoch filename
-                            epoch_filepath = f"{settings.GLOBAL.EPOCH_FILES_DIRPATH}/{data}"
+                            filename, connected_kme, direction  = data.split()
+                            epoch_filepath = f"{settings.GLOBAL.EPOCH_FILES_DIRPATH}/{filename}"
                             # Check if token is about to be passed its leased time. If so, renew with renew-token. If fail, get new token with vault_client_auth()
                             if time.time() > self.vclient.lease_end - 10:
                                 try:
@@ -546,7 +540,10 @@ class watcherClient:
 
                             # Name of thread worker callback function and argument filepath
                             args = (self.process_epoch_file,
-                                    epoch_filepath)
+                                    [epoch_filepath,
+                                    connected_kme,
+                                    direction]
+                                    )
                             logger.debug(f"Filename submitted to worker threadpool: {epoch_filepath}")
                             # Submit the filepath to a worker thread for processing
                             workers[self.executor.submit(*args)] = epoch_filepath
@@ -581,6 +578,11 @@ class watcherClient:
                 is_vault_sealed = True
                 time.sleep(stall_time)
 
+    def get_connected_qkde_from_kme(self, KME_ID: str ) -> str:
+        """Returns QKDE from kme. Based on initial make and residing in a file somewhere. """
+        qkd_list = settings.connections
+        qkde = qkd_list[KME_ID]
+        return qkde
 
 if __name__ == "__main__":
     watcher = watcherClient()

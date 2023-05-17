@@ -29,7 +29,7 @@ class GlobalSettings(BaseSettings):
     LOCAL_KME_ID: str = os.environ.get("LOCAL_KME_ID", "kme1")
     LOCAL_KME_ALT_ID: str = os.environ.get("LOCAL_KME_ALT_ID", "kme1")
     REMOTE_KME_ID: str = os.environ.get("REMOTE_KME_ID", "kme2")
-    REMOTE_KME_ALT_ID: str = os.environ.get("REMOTE_KME_ALT_ID", "kme2")
+#   REMOTE_KME_ALT_ID: str = os.environ.get("REMOTE_KME_ALT_ID", "kme2")
     LOCAL_SAE_ID: str = os.environ.get("LOCAL_SAE_ID", "sae1")
     REMOTE_SAE_ID: str = os.environ.get("REMOTE_SAE_ID", "sae2")
     LOCAL_KME_ADDRESS: str = os.environ.get("LOCAL_KME_ADDRESS", "SETMEINMAKEFILE")
@@ -57,7 +57,7 @@ class GlobalSettings(BaseSettings):
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 64.0  # seconds
     VAULT_KV_ENDPOINT: str = "QKEYS"
-    VAULT_QKDE_ID: str = "QKDE0001"
+    VAULT_QKDE_ID: str = os.environ.get("QKDE_ID", "QKDE0001")
     VAULT_QCHANNEL_ID: str = "masterslave"
     VAULT_REV_QCHANNEL_ID: str = "slavemaster"
     VAULT_LEDGER_ID: str = "LEDGER"

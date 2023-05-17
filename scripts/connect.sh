@@ -20,19 +20,21 @@
 #
 set -x
 
+#LOCAL_KME_HASH=$((0x$(echo ${LOCAL_KME_ID} | shasum)0))
+#REMOTE_KME_HASH=$((0x$(echo ${REMOTE_KME_ID} | shasum)0)) ; \
+#if [[ $LOCAL_KME_HASH -gt $REMOTE_KME_HASH ]]; then
+#  export LOCAL_KME_ALT_ID=kme1
+#else
+#  export LOCAL_KME_ALT_ID=kme2
+#fi
+#echo $LOCAL_KME_ALT_ID
+
 # Absolute filepath to this script
 FILEPATH=$(readlink -f "${0}")
 # Absolute dirpath to this script
 DIRPATH=$(dirname "${FILEPATH}")
 # Check for docker daemon and docker-compose
 . "${DIRPATH}/docker_check.sh"
-
-# If this file exists, we've already gone through
-# the whole initialization process...skip it.
-if [ -f "${DIRPATH}/.kme.initialized" ]; then
-	echo "\"${LOCAL_KME_ID}\" already initialized ... continuing"
-  exit 0
-fi
 
 export CONFIG_FILE="docker-compose.init.yml"
 export UP="docker-compose -f \${CONFIG_FILE} up -d --build \${S} || { echo \"\${S} up failed\" ; exit 1; } "
@@ -57,11 +59,31 @@ else
   echo "The \"traefik-public\" network is already present"
 fi
 
-S=certauth           WAIT=0 F=-f eval ${STARTUP}
-S=vault              WAIT=1 F=   eval ${STARTUP}
-S=vault_init         WAIT=0 F=-f eval ${STARTUP}
-S=certauth_csr       WAIT=0 F=-f eval ${STARTUP}
-S=vault_init_phase_2 WAIT=2 F=-f eval ${STARTUP}
-                     WAIT=1      eval ${SHUTDOWN}
+# SSH config needs to be setup
+if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}" ; then
 
-touch "${DIRPATH}/.kme.initialized"
+  echo Remote files found
+  S=vault              WAIT=0 F=   eval ${STARTUP}
+  S=unsealer           WAIT=0 F=   eval ${STARTUP}
+  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
+  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  # NOTE: Only necessary when using rsync to remotely transfer keying material
+  /bin/sh ${DIRPATH}/transfer_certs.sh
+  /bin/sh ${DIRPATH}/transfer_keys.sh
+  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
+                       WAIT=3      eval ${SHUTDOWN}
+  rm -rf ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}
+  ssh $REMOTE_KME_ADDRESS "rmdir ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}"
+else
+
+  echo Remote files not found
+  S=vault              WAIT=0 F=   eval ${STARTUP}
+  S=unsealer           WAIT=0 F=   eval ${STARTUP}
+  S=vault_connect      WAIT=2 F=-f eval ${STARTUP}
+  S=vault_client_auth  WAIT=0 F=-f eval ${STARTUP}
+  /bin/sh ${DIRPATH}/transfer_certs.sh
+  S=qkd                WAIT=0 F=-f eval ${STARTUP}
+  S="watcher notifier" WAIT=5 F=   eval ${STARTUP}
+                       WAIT=3      eval ${SHUTDOWN}
+
+fi

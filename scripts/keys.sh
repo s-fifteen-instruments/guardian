@@ -36,16 +36,22 @@ export STALL="sleep \${WAIT}"
 export STARTUP="${UP} && ${STALL} && ${LOG}"
 export SHUTDOWN="${STALL} && ${STOP} && ${REMOVE}"
 
-if [ "${KME}" = "kme1" ]; then
-  S=qkd                    WAIT=0 F=-f eval ${STARTUP}
-fi
 
-if [ "${KME}" = "kme2" ]; then
+# SSH config needs to be setup
+if ssh $REMOTE_KME_ADDRESS "test -d ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}" ; then
   # NOTE: Only necessary when using rsync to remotely transfer keying material
+  echo Remote files found
   /bin/sh ${DIRPATH}/transfer_keys.sh
+  S="watcher notifier"     WAIT=5 F=   eval ${STARTUP}
+  S="watcher notifier"     WAIT=1      eval ${SHUTDOWN}
+  rm -rf ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}
+  ssh $REMOTE_KME_ADDRESS "rmdir ~/code/guardian/volumes/${LOCAL_KME_ID}/qkd/epoch_files/${REMOTE_KME_ID}"
+else
+  echo Remote files not found
+  S=qkd                    WAIT=0 F=-f eval ${STARTUP}
+  S="watcher notifier"     WAIT=5 F=   eval ${STARTUP}
+  S="watcher notifier qkd" WAIT=1      eval ${SHUTDOWN}
 fi
 
-S="watcher notifier"     WAIT=5 F=   eval ${STARTUP}
-S="watcher notifier qkd" WAIT=1      eval ${SHUTDOWN}
 
 # NOTE: This assumes a Vault instance is up and unsealed.

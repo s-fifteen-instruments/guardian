@@ -114,7 +114,7 @@ do
   bits=$((bits + bitsthisround))
   packets=$((packets + 1))
   # Check if we can send a number of epochs for error correction
-  if (($bits >= $ECMINBITS))
+  if (($bits >= $ECMINBITS && $packets%2 ))
   then
     # start processing of a number of epochs into command pipe
     echo "found $bits bits from epoch $startepoch onwards"

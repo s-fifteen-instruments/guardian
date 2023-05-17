@@ -104,13 +104,15 @@ response_model_settings_dict = {
             response_model_exclude_none=True,
             response_model_exclude_unset=False,
             response_model_exclude_defaults=False)
-def get_status(slave_SAE_ID: str = slave_sae_path,
-               request: Request = Body(...)):
+def get_status(request: Request,
+               slave_SAE_ID: str = slave_sae_path,
+               ):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     stat_req = models.StatusRequest(
         master_SAE_ID=request.state.sae_id,
         slave_SAE_ID=slave_SAE_ID,
-        stored_key_count=request.app.state.vclient.vault_calculate_total_num_keys()
+        target_KME_ID=request.app.state.vclient.get_connected_kme_from_sae(slave_SAE_ID),
+        stored_key_count=request.app.state.vclient.vault_calculate_total_num_keys(slave_SAE_ID)
     )
     return stat_req
 
@@ -120,7 +122,8 @@ def get_status(slave_SAE_ID: str = slave_sae_path,
 
 @router.get("/{slave_SAE_ID}/enc_keys",
             **response_model_settings_dict)
-async def get_key(background_tasks: BackgroundTasks,
+async def get_key(request: Request,
+                  background_tasks: BackgroundTasks,
                   slave_SAE_ID: str = slave_sae_path,
                   number: Optional[int] = number_query,
                   size: Optional[conint(le=settings.MAX_KEY_SIZE,
@@ -128,7 +131,7 @@ async def get_key(background_tasks: BackgroundTasks,
                                         multiple_of=settings.MIN_KEY_SIZE
                                         )
                                  ] = key_size_query,
-                  request: Request = Body(...)):
+                  ):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"number: {number}")
     logger.debug(f"size: {size}")
@@ -146,9 +149,10 @@ async def get_key(background_tasks: BackgroundTasks,
 
 @router.get("/{master_SAE_ID}/dec_keys",
             **response_model_settings_dict)
-async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+async def get_key_with_key_ids(request: Request,
+                               master_SAE_ID: str = master_sae_path,
                                key_ID: str = key_id_query,
-                               request: Request = Body(...)):
+                               ):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug(f"key_ID: {key_ID}")
     # Create a KeyIDs so that both GET and POST are handled identically
@@ -173,10 +177,11 @@ async def get_key_with_key_ids(master_SAE_ID: str = master_sae_path,
 
 @router.post("/{slave_SAE_ID}/enc_keys",
              **response_model_settings_dict)
-async def post_key(background_tasks: BackgroundTasks,
+async def post_key(request: Request,
+                   background_tasks: BackgroundTasks,
                    slave_SAE_ID: str = slave_sae_path,
                    key_req: models.KeyRequest = Body(...),
-                   request: Request = Body(...)):
+                   ):
     logger.debug(f"slave_SAE_ID: {slave_SAE_ID}")
     logger.debug(f"key_req: {_dump_response(jsonable_encoder(key_req), secret=False)}")
     key_con = await request.app.state.vclient.\
@@ -194,9 +199,10 @@ async def post_key(background_tasks: BackgroundTasks,
 
 @router.post("/{master_SAE_ID}/dec_keys",
              **response_model_settings_dict)
-async def post_key_with_key_ids(master_SAE_ID: str = master_sae_path,
+async def post_key_with_key_ids(request: Request,
+                                master_SAE_ID: str = master_sae_path,
                                 key_ids_req: schemas.KeyIDs = Body(...),
-                                request: Request = Body(...)):
+                                ):
     logger.debug(f"master_SAE_ID: {master_SAE_ID}")
     logger.debug("key_ids_req: ")
     _dump_response(jsonable_encoder(key_ids_req), secret=False)
