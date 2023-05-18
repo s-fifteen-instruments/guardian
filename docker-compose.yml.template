@@ -51,7 +51,7 @@ services:
       # TODO: May be removed if full QKD system provides
       # keying material on both sides
       #- ./volumes/kme1/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
-      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files:/digest_files
+      - ./volumes/${LOCAL_KME_ID:-SETMEINMAKEFILE}/qkd/digest_files/${LOCAL_KME_ID:-SETMEINMAKEFILE}:/digest_files
       - type: bind
         source: ./common/global_config.py
         target: /app/core/global_config.py
@@ -213,6 +213,10 @@ services:
       - type: bind
         source: ./common/watcher_config.py
         target: /root/code/watcher_config.py
+      - type: bind
+        source: ./volumes/connections
+        target: /root/code/connections
+        read_only: true
 
   qkd:
     image: s-fifteen/qkdserver:qkd

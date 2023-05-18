@@ -28,7 +28,7 @@ from typing import Tuple
 
 from global_config import GlobalSettings
 
-def load_connections(filepath: str='/app/core/connections') -> dict:
+def load_connections(filepath: str='/root/code/connections') -> dict:
     """Load connections dictionary
     """
     with open(filepath ,'r') as f:
