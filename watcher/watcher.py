@@ -529,7 +529,7 @@ class watcherClient:
                             # Check if token is about to be passed its leased time. If so, renew with renew-token. If fail, get new token with vault_client_auth()
                             if time.time() > self.vclient.lease_end - 10:
                                 try:
-                                    auth_response = self.vclient.renew_self_token()
+                                    auth_response = self.vclient.renew_token(self.vclient.token)
                                     self.vclient.token = auth_response["auth"]["client_token"]
                                     TTL = auth_response["auth"]["lease_duration"]
                                     self.vclient.lease_end = TTL + time.time()
