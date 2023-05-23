@@ -182,3 +182,8 @@ restart_watcher:
 	sleep 1
 	docker-compose -f docker-compose.yml up -d --build watcher
 
+#Force qkd to restart
+restart_qkd:
+	docker stop qkd
+	sleep 7
+	docker-compose -f docker-compose.yml up -d --build qkd
