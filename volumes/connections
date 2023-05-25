@@ -1,9 +1,12 @@
 {"QKDE0005": "e.qkd.internal",
  "QKDE0004": "d.qkd.internal",
  "QKDE0003": "c.qkd.internal",
+ "QKDE0006": "g.qkd.internal",
  "KME-S15-Guardian-005-Guardian.Faiz": "QKDE0005",
  "KME-S15-Guardian-004-Guardian.Daud": "QKDE0004",
  "KME-S15-Guardian-003-Guardian.Charlie": "QKDE0003",
+ "KME-S15-Guardian-006-Guardian.Gleb": "QKDE0006",
  "SAE-S15-Test-005-sae5": "KME-S15-Guardian-005-Guardian.Faiz",
  "SAE-S15-Test-004-sae4": "KME-S15-Guardian-004-Guardian.Daud",
+ "SAE-S15-Test-006-sae6": "KME-S15-Guardian-006-Guardian.Gleb",
  "SAE-S15-Test-003-sae3": "KME-S15-Guardian-003-Guardian.Charlie"}
