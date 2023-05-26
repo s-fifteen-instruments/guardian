@@ -451,7 +451,8 @@ class watcherClient:
         raw_bytes = watcherClient.read_epoch_file(filepath)
         epoch, raw_key = watcherClient.parse_raw_key_bytes(filepath, raw_bytes)
         mount_point = settings.GLOBAL.VAULT_KV_ENDPOINT
-        VAULT_QKDE_ID = self.get_connected_qkde_from_kme(connected_kme)
+        #VAULT_QKDE_ID = self.get_connected_qkde_from_kme(connected_kme)
+        VAULT_QKDE_ID = connected_kme
         qchannel_path: str = f"{VAULT_QKDE_ID}/" \
                         f"{direction}/"
         self.vault_write_key(epoch, raw_key,
