@@ -7,7 +7,7 @@
 #
 # Alternative suggested in 'https://docs.docker.com/compose/startup-order/'
 # to implement a 'wait-for-it.sh' equivalent script to prepend in CMD.
-set -e
+#set -e
 
 # Retrieve required parameters
 PIPE="$1"
@@ -20,9 +20,10 @@ until [ -p $PIPE ]; do
         sleep 1
 done
 >&2 echo "Notification pipe up!"
-sleep 60 # Process whatever is in the pipe first
+sleep 6 # Process whatever is in the pipe first
 # Flush all unread epochs into pipe.
 #ls /epoch_files | grep -v notify.pipe > /epoch_files/notify.pipe
+for i in `ls /epoch_files/ | grep -v noti` ; do grep $i /epoch_files/notified > /epoch_files/notify.pipe ; done
 sleep 30
 exec "$@"
 
