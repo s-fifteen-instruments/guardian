@@ -186,4 +186,5 @@ restart_watcher:
 restart_qkd:
 	docker stop qkd
 	sleep 7
+	docker rm qkd
 	docker-compose -f docker-compose.yml up -d --build qkd
