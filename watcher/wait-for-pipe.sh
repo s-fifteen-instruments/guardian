@@ -24,6 +24,5 @@ sleep 6 # Process whatever is in the pipe first
 # Flush all unread epochs into pipe.
 #ls /epoch_files | grep -v notify.pipe > /epoch_files/notify.pipe
 for i in `find /epoch_files/ -type f -size +16c -exec basename {} \; | grep -v noti` ; do grep $i /epoch_files/notified > /epoch_files/notify.pipe ; done
-sleep 30
 exec "$@"
 
