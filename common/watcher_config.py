@@ -22,8 +22,8 @@
 import json
 import logging
 import os
-from pydantic import BaseSettings
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic_settings import BaseSettings
+#from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
 from global_config import GlobalSettings
@@ -37,7 +37,7 @@ def load_connections(filepath: str='/root/code/connections') -> dict:
 
 class WatcherSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
-    connections = load_connections()
+    connections: dict = load_connections()
     WATCHER_LOG_LEVEL: str = os.environ.get("WATCHER_LOG_LEVEL", str(logging.info))
     DELETE_EPOCH_FILES: bool = True
     CLIENT_NAME: str = "watcher"
@@ -48,6 +48,7 @@ class WatcherSettings(BaseSettings):
     NOTIFY_SLEEP_TIME_DELTA: float = 30.0  # seconds
 
     # Make environment settings take precedence over __init__ and file
+'''
     class Config:
         @classmethod
         def customise_sources(
@@ -57,6 +58,6 @@ class WatcherSettings(BaseSettings):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return env_settings, init_settings, file_secret_settings
-
+'''
 
 settings = WatcherSettings()

@@ -2,3 +2,5 @@ hvac
 pyhcl
 aiofiles
 httpx
+pydantic-settings
+pydantic

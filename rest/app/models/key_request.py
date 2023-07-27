@@ -51,26 +51,26 @@ class KeyRequest(ForbidBase):
                              )
     additional_slave_SAE_IDs: Optional[conlist(constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained list of constrained strings; min string length to SAE_ID_MIN_LENGTH
                                                       max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
-                                                      regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
+                                                      pattern=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"  # Regex for each string # Ignore Pyflakes error: https://stackoverflow.com/questions/64909849/syntax-error-with-flake8-and-pydantic-constrained-types-constrregex
                                                       ),
-                                               min_items=0,  # Minimum number of allowed items in list
-                                               max_items=settings.MAX_SAE_ID_COUNT  # Maximum number of allowed items in list (potentially zero-inclusive)
+                                               min_length=0,  # Minimum number of allowed items in list
+                                               max_length=settings.MAX_SAE_ID_COUNT  # Maximum number of allowed items in list (potentially zero-inclusive)
                                                )
                                        ] = Field(None,  # Default value of nothing
                                                  title="List of Additional Slave SAE IDs",
                                                  description="List of Addtional Slave SAE IDs up to max_SAE_ID_count"
                                                  )
     extension_mandatory: Optional[conlist(ExtensionMandatory,  # Constrained list of ExtensionMandatory objects
-                                          min_items=0,  # Min number of items in list
-                                          max_items=settings.MAX_EX_MANADATORY_COUNT  # Max number of items in list
+                                          min_length=0,  # Min number of items in list
+                                          max_length=settings.MAX_EX_MANADATORY_COUNT  # Max number of items in list
                                           )
                                   ] = Field(None,  # Default value of nothing
                                             title="List of Mandatory Extension Parameters",
                                             description="Array of extension parameters specified as name/value pairs that KME shall handle or return an error"
                                             )
     extension_optional: Optional[conlist(ExtensionOptional,  # Constrained list of ExtensionOptional objects
-                                         min_items=0,  # Min number of items in list
-                                         max_items=settings.MAX_EX_OPTIONAL_COUNT  # Max number of items in list
+                                         min_length=0,  # Min number of items in list
+                                         max_length=settings.MAX_EX_OPTIONAL_COUNT  # Max number of items in list
                                          )
                                  ] = Field(None,  # Default value of nothing
                                            title="List of Optional Extension Parameters",

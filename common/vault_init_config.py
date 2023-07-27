@@ -21,9 +21,9 @@
 
 import logging
 import os
-from pydantic.env_settings import SettingsSourceCallable
+#from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from global_config import GlobalSettings
 
 
@@ -41,7 +41,7 @@ class VaultInitSettings(BaseSettings):
     KME_URI_SANS: str = f"{GLOBAL.LOCAL_KME_ID}"
     CLIENT_URI_SANS: str = f"{GLOBAL.LOCAL_SAE_ID}"
 
-    # Make environment settings take precedence over __init__ and file
+'''    # Make environment settings take precedence over __init__ and file
     class Config:
         @classmethod
         def customise_sources(
@@ -51,6 +51,6 @@ class VaultInitSettings(BaseSettings):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return env_settings, init_settings, file_secret_settings
-
+'''
 
 settings = VaultInitSettings()
