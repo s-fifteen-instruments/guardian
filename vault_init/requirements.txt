@@ -1,3 +1,4 @@
 hvac
 pyhcl
 pydantic
+pydantic-settings

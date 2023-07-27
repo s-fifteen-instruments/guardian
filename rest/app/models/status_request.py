@@ -39,28 +39,28 @@ class StatusRequest(ForbidBase):
                                description="KME ID of the Local KME",
                                min_length=settings.KME_ID_MIN_LENGTH,
                                max_length=settings.KME_ID_MAX_LENGTH,
-                               regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+                               pattern=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                                )
     target_KME_ID: str = Field(..., # Required value; no default
                                title="KME ID of the Target KME",
                                description="KME ID of the Target KME",
                                min_length=settings.KME_ID_MIN_LENGTH,
                                max_length=settings.KME_ID_MAX_LENGTH,
-                               regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+                               pattern=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                                )
     master_SAE_ID: str = Field(...,  # Required value; no default
                                title="Master SAE ID",
                                description="Unique Master Security Application Entity (SAE) String",
                                min_length=settings.SAE_ID_MIN_LENGTH,
                                max_length=settings.SAE_ID_MAX_LENGTH,
-                               regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+                               pattern=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                                )
     slave_SAE_ID: str = Field(...,  # Required value; no default
                               title="Slave SAE ID",
                               description="Unique Slave Security Application Entity (SAE) String",
                               min_length=settings.SAE_ID_MIN_LENGTH,
                               max_length=settings.SAE_ID_MAX_LENGTH,
-                              regex=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
+                              pattern=f"{settings.VALID_HOSTNAME_REGEX}|{settings.VALID_IP_ADDRESS_REGEX}"
                               )
     key_size: conint(le=settings.MAX_KEY_SIZE,
                      ge=settings.MIN_KEY_SIZE,

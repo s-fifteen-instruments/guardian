@@ -21,8 +21,8 @@
 import json
 from math import ceil
 import os
-from pydantic import BaseSettings
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic_settings import BaseSettings
+#from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
 import logging
@@ -84,7 +84,7 @@ def load_connections(filepath: str='/app/core/connections') -> dict:
 
 class RestSettings(BaseSettings):
     GLOBAL: GlobalSettings = GlobalSettings()
-    connections = load_connections()
+    connections: dict = load_connections()
     REST_LOG_LEVEL: str = os.environ.get("REST_LOG_LEVEL", str(logging.info))
     API_V1_STR: str = "/api/v1"
     DIGEST_COMPARE_TO_FILE: bool = True
@@ -124,7 +124,7 @@ class RestSettings(BaseSettings):
     BACKOFF_FACTOR: float = 1.0
     BACKOFF_MAX: float = 8.0  # seconds
 
-    # Make environment settings take precedence over __init__ and file
+'''    # Make environment settings take precedence over __init__ and file
     class Config:
         @classmethod
         def customise_sources(
@@ -134,7 +134,7 @@ class RestSettings(BaseSettings):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return env_settings, init_settings, file_secret_settings
-
+'''
 
 settings = RestSettings()
 

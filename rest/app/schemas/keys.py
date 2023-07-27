@@ -52,8 +52,8 @@ class KeyIDsExtension(ForbidBase):
 
 class KeyIDs(KeyIDsExtension):
     key_IDs: conlist(KeyID,  # Constrained list of KeyIDs
-                     min_items=1,  # Min number of KeyIDs
-                     max_items=settings.MAX_KEY_PER_REQUEST  # Max number of KeyIDs
+                     min_length=1,  # Min number of KeyIDs
+                     max_length=settings.MAX_KEY_PER_REQUEST  # Max number of KeyIDs
                      ) = Field(...,  # Required value; no default
                                title="Array of key IDs",
                                description="Array of key IDs"
@@ -92,8 +92,8 @@ class KeyContainerExtension(ForbidBase):
 
 class KeyContainer(KeyContainerExtension):
     keys: conlist(KeyPair,  # Constrained list of KeyPairs
-                  min_items=1,  # Min number of KeyPairs
-                  max_items=settings.MAX_KEY_PER_REQUEST  # Max number of KeyPairs
+                  min_length=1,  # Min number of KeyPairs
+                  max_length=settings.MAX_KEY_PER_REQUEST  # Max number of KeyPairs
                   ) = Field(...,  # Required value; no default
                             title="Key Container",
                             description="Response Data Model of API \"Get key\" Method and \"Get key with key IDs\" Method"
@@ -132,21 +132,21 @@ class ByteRange(ForbidBase):
 class KeyIDLedger(KeyID):
     status: constr(min_length=settings.STATUS_MIN_LENGTH,  # Constrained string; min string length to STATUS_MIN_LENGTH
                    max_length=settings.STATUS_MAX_LENGTH,  # max string length to STATUS_MAX_LENGTH
-                   regex=settings.VALID_STATUS_REGEX
+                   pattern=settings.VALID_STATUS_REGEX
                    ) = Field(...,  # Required value; no default
                              title="Local Consumption Status of KeyIDLedger",
                              description="Local Consumption Status of KeyIDLedger"
                              )
     master_SAE_ID: constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained string; min string length to SAE_ID_MIN_LENGTH
                           max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
-                          regex=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
+                          pattern=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
                           ) = Field(...,  # Required value; no default
                                     title="Master SAE ID",
                                     description="Master SAE ID Creating this Ledger"
                                     )
     slave_SAE_ID: constr(min_length=settings.SAE_ID_MIN_LENGTH,  # Constrained string; min string length to SAE_ID_MIN_LENGTH
                          max_length=settings.SAE_ID_MAX_LENGTH,  # max string length to SAE_ID_MAX_LENGTH
-                         regex=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
+                         pattern=settings.VALID_SAE_REGEX  # Constrained to hostnames and IP addresses
                          ) = Field(...,  # Required value; no default
                                    title="Slave SAE ID",
                                    description="Slave SAE ID Receiving this Ledger"
@@ -172,8 +172,8 @@ class KeyIDLedgerContainerExtension(ForbidBase):
 
 class KeyIDLedgerContainer(KeyIDLedgerContainerExtension):
     ledgers: conlist(KeyIDLedger,  # Constrained list of KeyIDLedgers
-                     min_items=1,  # Min number of KeyIDLedgers
-                     max_items=settings.MAX_KEY_PER_REQUEST  # Max number of KeyIDLedgers
+                     min_length=1,  # Min number of KeyIDLedgers
+                     max_length=settings.MAX_KEY_PER_REQUEST  # Max number of KeyIDLedgers
                      ) = Field(...,  # Required value; no default
                                title="KeyIDLedger Container",
                                description="Data Model of API \"ledger\" Method"
