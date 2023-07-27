@@ -41,6 +41,7 @@ class VaultClient:
     def __init__(self) -> None:
         """foo
         """
+        self.init_response = None
         self.parse_args()
         self.start_connection()
         if self.args.first:
