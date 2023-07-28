@@ -165,16 +165,15 @@ clear: rest dev_inject
 	$(SCRIPTS)/clear.sh
 
 .PHONY: clean allclean
-# Clean local and remote KMEs
-allclean: clean dev_inject
+# Clean local KME of all configs and images except Makefile changes
+allclean: clean
+	rm -f common/CERTAUTH_SECRETS common/CERTAUTH_CONFIG docker-compose.yml
 	docker volume prune -f
-	sudo find volumes -maxdepth 1 -type d -not \( -name "kme1" -or -name "kme2" -or -name "volumes" \) -exec rm -rf {} +
 
 # Clean local KME
-clean: down dev_inject
-#	-[ -d "volumes/$(LOCAL_KME_ID)" ] && mv volumes/$(LOCAL_KME_ID) volumes/$(LOCAL_KME_ALT_ID)
-#	-[ -d "volumes/$(REMOTE_KME_ID)" ] && mv volumes/$(REMOTE_KME_ID) volumes/$(REMOTE_KME_ALT_ID)
+clean: down
 	sudo $(SCRIPTS)/clean.sh
+	sudo find volumes -maxdepth 1 -type d -not \( -name "kme1" -or -name "volumes" \) -exec rm -rf {} +
 
 #Force watcher to restart
 restart_watcher:
