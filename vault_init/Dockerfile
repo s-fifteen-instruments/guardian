@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM python:3.9.6-alpine3.14
+FROM python:3.9-alpine
 LABEL author="Cyrus Proctor"
 
 # NOTE: 0 does not imply a false value

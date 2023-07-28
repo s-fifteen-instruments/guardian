@@ -16,7 +16,7 @@ export INT_CA_STATE="${CA_STATE}"
 export INT_CA_LOCALITY="${CA_LOCALITY}"
 export INT_CA_ORGANIZATION="${CA_ORGANIZATION}"
 export INT_CA_UNIT="${CA_UNIT}"
-export INT_CA_COMMON_NAME="${INT_CA_ORGANIZATION} Intermediate CA ${LOCAL_KME_ID}"
+export INT_CA_COMMON_NAME="Intermediate CA ${LOCAL_KME_ID}"
 export INT_CA_EMAIL="${CA_EMAIL}"
 
 # Subject Alternative Names (SANs) for Intermediate CA

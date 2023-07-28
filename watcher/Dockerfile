@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM alpine:3.14.0
+FROM python:3.9-alpine
 LABEL author="Cyrus Proctor"
 
 # NOTE: 0 does not imply a false value
@@ -29,13 +29,7 @@ COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 # Set a volume to the epoch file directory to process
 VOLUME ["/epoch_files"]
 
-RUN apk update --no-cache \
-    && apk add --no-cache \
-        python3 \
-        python3-dev \
-        py-pip \
-        build-base \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt
+RUN pip install --no-cache-dir -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/watcher.py", "${HOME}/"]
 COPY ["${TOP_DIR}/wait-for-pipe.sh", "${HOME}/"]
