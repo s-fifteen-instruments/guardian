@@ -37,7 +37,7 @@ class VaultInitSettings(BaseSettings):
     SECRET_SHARES: int = 5
     SECRET_THRESHOLD: int = 3
     CLIENT_ALT_NAMES: str = f"*.{GLOBAL.LOCAL_KME_ADDRESS},{GLOBAL.LOCAL_KME_ADDRESS},{GLOBAL.LOCAL_KME_ADD_SSH}"
-    CLIENT_IP_SANS: str = "" # comma-delimited
+    CLIENT_IP_SANS: str = f"{GLOBAL.LOCAL_KME_IP},{GLOBAL.LOCAL_KME_IP2}" # comma-delimited
     KME_URI_SANS: str = f"{GLOBAL.LOCAL_KME_ID}"
     CLIENT_URI_SANS: str = f"{GLOBAL.LOCAL_SAE_ID}"
 
