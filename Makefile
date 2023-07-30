@@ -42,7 +42,6 @@ export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= c.qkd.internal
 export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 export REMOTE_KME_ID ?= KME-S15-Guardian-003-Guardian.Charlie
-export REMOTE_SAE_ID ?= SAE-S15-Test-003-sae3
 export REMOTE_QKDE_ID ?= QKDE0003
 else ifeq ($(REMOTE_KME), 2)
 export REMOTE_KME_ADDRESS ?= d.qkd.internal
@@ -51,7 +50,6 @@ export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= d.qkd.internal
 export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 export REMOTE_KME_ID ?= KME-S15-Guardian-004-Guardian.Daud
-export REMOTE_SAE_ID ?= SAE-S15-Test-004-sae4
 export REMOTE_QKDE_ID ?= QKDE0004
 else
 $(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
@@ -102,7 +100,6 @@ $(info Environment variables used throughout Guardian:)
 $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
 $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
-$(info REMOTE_SAE_ID: $(REMOTE_SAE_ID))
 $(info )
  
 # Not strictly necessary but this
