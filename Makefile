@@ -38,22 +38,20 @@ export REMOTE_KME ?= 1# or 2
 ifeq ($(REMOTE_KME), 1)
 export REMOTE_KME_ADDRESS ?= c.qkd.internal
 export REMOTE_KME2_ADDRESS ?= d.qkd.internal
-export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= c.qkd.internal
-export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 export REMOTE_KME_ID ?= KME-S15-Guardian-003-Guardian.Charlie
 export REMOTE_QKDE_ID ?= QKDE0003
 else ifeq ($(REMOTE_KME), 2)
 export REMOTE_KME_ADDRESS ?= d.qkd.internal
 export REMOTE_KME2_ADDRESS ?= c.qkd.internal
-export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
 export REMOTE_KME_ADD_SSH ?= d.qkd.internal
-export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 export REMOTE_KME_ID ?= KME-S15-Guardian-004-Guardian.Daud
 export REMOTE_QKDE_ID ?= QKDE0004
 else
 $(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
 endif
+export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
+export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
