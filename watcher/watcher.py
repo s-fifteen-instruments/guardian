@@ -526,7 +526,7 @@ class watcherClient:
                             total_notify_sleep_time = 0.0
                             # Data should point us to a final key epoch filename
                             filename, connected_kme, direction_id  = data.split()
-                            direction = "masterslave" if direction_id == 1 else "slavemaster"
+                            direction = "masterslave" if int(direction_id) == 1 else "slavemaster"
                             epoch_filepath = f"{settings.GLOBAL.EPOCH_FILES_DIRPATH}/{filename}"
                             # Check if token is about to be passed its leased time. If so, renew with renew-token. If fail, get new token with vault_client_auth()
                             if time.time() > self.vclient.lease_end - 10:
