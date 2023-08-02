@@ -28,10 +28,13 @@ ENV TOP_DIR=./rest
 
 COPY ["${TOP_DIR}/start.sh", "${TOP_DIR}/gunicorn_conf.py",\
       "${TOP_DIR}/start-reload.sh", "${TOP_DIR}/requirements.txt", "/"]
-RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
-    && pip install --no-cache-dir "uvicorn[standard]" gunicorn fastapi \
-    && pip install --no-cache-dir -r /requirements.txt \
-    && apk del .build-deps gcc libc-dev make \
+COPY ["${TOP_DIR}/apk", "/"]
+COPY ["${TOP_DIR}/whl", "/"]
+
+RUN apk add --repositories-file=/dev/null --virtual .build-deps --allow-untrusted /*.apk \
+    && pip install --no-index --find-links / "uvicorn[standard]" gunicorn fastapi \
+    && pip install --no-index --find-links / -r /requirements.txt \
+    && apk del .build-deps \
     && chmod +x /start-reload.sh \
     && chmod +x /start.sh
 

@@ -25,11 +25,12 @@ ENV HOME=/root/code
 ENV TOP_DIR=./watcher
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
+COPY ["${TOP_DIR}/whl", "${HOME}/"]
 
 # Set a volume to the epoch file directory to process
 VOLUME ["/epoch_files"]
 
-RUN pip install --no-cache-dir -r ${HOME}/requirements.txt
+RUN pip install --no-index --find-links ${HOME} -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/watcher.py", "${HOME}/"]
 COPY ["${TOP_DIR}/wait-for-pipe.sh", "${HOME}/"]

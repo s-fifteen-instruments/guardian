@@ -28,14 +28,17 @@ VOLUME ["/certificates", "/vault/policies" ]
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 
+COPY ["${TOP_DIR}/apk", "${HOME}/"]
+COPY ["${TOP_DIR}/whl", "${HOME}/"]
+
 # Create a vault user and group plus a vault client first so the IDs get
 # set the same way, even as the rest of this may change over time.
 # NOTE: UID/GID set based on Hashicorp Vault Dockerfile behavior:
 # https://github.com/hashicorp/docker-vault/blob/master/0.X/Dockerfile v1.7.2
 RUN addgroup vault                                       && \
     adduser --system vaultinit --ingroup vault --uid 101 && \
-    apk add --no-cache openssl                           && \
-    pip install --no-cache-dir -r ${HOME}/requirements.txt
+    apk add --allow-untrusted ${HOME}/*.apk       && \
+    pip install --no-index --find-links ${HOME}/ -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/vault_init.py", "${HOME}/"]
 

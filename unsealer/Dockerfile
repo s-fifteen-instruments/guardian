@@ -25,15 +25,12 @@ ENV HOME=/root/code
 ENV TOP_DIR=./unsealer
 
 COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
+COPY ["${TOP_DIR}/apk", "${HOME}/"]
+COPY ["${TOP_DIR}/whl", "${HOME}/"]
 
-RUN apk update --no-cache \
-    && apk add --no-cache \
-        python3 \
-        py-pip \
-        docker \
-        openrc \
-    && rc-update add docker boot \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt
+RUN apk add --repositories-file=/dev/null --allow-untrusted ${HOME}/*.apk 	&& \
+    rc-update add docker boot 		&& \
+    pip install --no-index --find-links ${HOME} -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/unsealer.py", "${HOME}/"]
 
