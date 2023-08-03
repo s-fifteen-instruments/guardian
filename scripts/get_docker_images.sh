@@ -12,6 +12,16 @@ do
 done
 
 
+# If the packagelist are known, then we don't need to build each docker container and just use
+
+cont=certauth
+apk_url=http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/x86_64/
+file_list_name=apk_file_list
+format=apk
+mkdir ${cont}/${format}
+for each in `more ${cont}/${file_list_name}`
+do wget $apk_url$each -P${cont}/${format} ; done
+
 tag=ap_copy_things
 # Certauth
 
