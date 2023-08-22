@@ -21,8 +21,8 @@
 
 import logging
 import os
-from pydantic import BaseSettings
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic_settings import BaseSettings
+#from pydantic.env_settings import SettingsSourceCallable
 from typing import Tuple
 
 from global_config import GlobalSettings
@@ -35,7 +35,7 @@ class UnsealerSettings(BaseSettings):
     CLIENT_KEY_FILEPATH: str = f"{GLOBAL.CERT_DIRPATH}/{GLOBAL.VAULT_INIT_NAME}/{GLOBAL.VAULT_INIT_NAME}{GLOBAL.KEY_SUFFIX}"
     TIME_WINDOW: float = 30.0  # seconds
 
-    # Make environment settings take precedence over __init__ and file
+'''    # Make environment settings take precedence over __init__ and file
     class Config:
         @classmethod
         def customise_sources(
@@ -45,6 +45,6 @@ class UnsealerSettings(BaseSettings):
             file_secret_settings: SettingsSourceCallable,
         ) -> Tuple[SettingsSourceCallable, ...]:
             return env_settings, init_settings, file_secret_settings
-
+'''
 
 settings = UnsealerSettings()
