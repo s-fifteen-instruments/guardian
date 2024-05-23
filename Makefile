@@ -89,6 +89,7 @@ endif
 ##########################
 ##### LEAVE ME ALONE #####
 ##########################
+LOCAL_REPO_DIRPATH := $(word 2, $(subst :, ,$(LOCAL_KME_DIRPATH)))
 SERVICES := rest
 SCRIPTS := ./scripts
 # Verbosity for 'compare' target
@@ -119,6 +120,10 @@ rest: init dev_inject
 init: dev_inject
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
 	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
+	sed -i 's:{{ env "LOCAL_REPO_DIRPATH" }}:$(LOCAL_REPO_DIRPATH):g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.conf
+	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.conf
+	sed -i 's:{{ env "LOCAL_REPO_DIRPATH" }}:$(LOCAL_REPO_DIRPATH):g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.sh
+	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.sh
 	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_KME_ADDRESS" }}/$(LOCAL_KME_ADDRESS)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
 	sed -i 's/{{ env "LOCAL_SAE_ID" }}/$(LOCAL_SAE_ID)/g' ./volumes/$(LOCAL_KME_ID)/traefik/configuration/traefik.d/tls.yml
