@@ -591,7 +591,7 @@ class VaultClient:
             set_signed_intermediate(certificate=self.int_ca_cert,
                                     mount_point=mount_point)
         logger.debug("Intermediate CA cert response:")
-        self._dump_response(self.set_int_ca_cert_response.ok, secret=False)
+        self._dump_response(self.set_int_ca_cert_response, secret=False)
         params_dict = {
             "issuing_certificates": f"{settings.GLOBAL.VAULT_SERVER_URL}/v1/{mount_point}/ca",
             "crl_distribution_points": f"{settings.GLOBAL.VAULT_CRL_URL}/v1/{mount_point}/crl",
@@ -602,7 +602,7 @@ class VaultClient:
             self.vclient.secrets.pki.set_urls(params=params_dict,
                                               mount_point=mount_point)
         logger.debug("Set intermediate CA URLs response okay:")
-        self._dump_response(url_response.ok, secret=False)
+        self._dump_response(url_response, secret=False)
         role_name_str = "role_int_ca_cert_issuer"
         # TODO: pull this out to use CERTAUTH configuration settings
         role_param_dict = {
@@ -633,7 +633,7 @@ class VaultClient:
                                   extra_params=role_param_dict,
                                   mount_point=mount_point)
         logger.debug("Create intermediate CA role response okay:")
-        self._dump_response(create_role_response.ok, secret=False)
+        self._dump_response(create_role_response, secret=False)
         logger.debug("Attempt to read newly created role")
         read_role_resposne = \
             self.vclient.secrets.pki.read_role(name=role_name_str,
