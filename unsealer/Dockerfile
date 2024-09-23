@@ -29,11 +29,12 @@ COPY ["${TOP_DIR}/requirements.txt", "${HOME}/"]
 RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
-        py-pip \
+        py3-pip \
+        py3-pydantic-settings \
         docker \
         openrc \
     && rc-update add docker boot \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt
+    && pip install --break-system-packages --no-cache-dir -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/unsealer.py", "${HOME}/"]
 

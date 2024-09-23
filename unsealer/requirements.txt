@@ -1,5 +1,2 @@
 hvac
-pydantic
-pydantic-settings
-pyhcl
 docker

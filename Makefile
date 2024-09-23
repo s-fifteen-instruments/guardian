@@ -177,7 +177,7 @@ clean: down
 
 #Force watcher to restart
 restart_watcher:
-	docker stop guardian_watcher_1
+	docker stop guardian-watcher-1
 	sleep 1
 	docker-compose -f docker-compose.yml up -d --build watcher
 

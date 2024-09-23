@@ -57,7 +57,7 @@ class UnsealerClient:
         self.dclient = docker.from_env()
         filter_dict = {
             "label": "unsealer=watch",
-            "image": "vault"
+            "image": "hashicorp/vault"
         }
         since = datetime.datetime.now() - datetime.timedelta(seconds=settings.TIME_WINDOW)
         logger.info("Waiting for Vault instance start or restart events...")

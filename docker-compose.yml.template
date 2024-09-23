@@ -101,7 +101,7 @@ services:
 
   vault:
     # Use the latest Hashicorp Vault v1.7.x image available
-    image: vault:${VAULT_TAG:-latest}
+    image: hashicorp/vault:${VAULT_TAG:-latest}
     #image: vault:1.7.3
     env_file:
       - common/log.env
