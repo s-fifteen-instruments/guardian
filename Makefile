@@ -21,26 +21,26 @@
 ## OR SET ME IN THE ENV ##
 ##########################
 # - Location of Local KME's guardian git repository
-export LOCAL_KME_ADDRESS ?= e.qkd.internal
-export LOCAL_KME_DIRPATH ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
-export LOCAL_KME_ADD_SSH ?= e.qkd.internal
-export LOCAL_KME_DIR_SSH ?= s-fifteen@$(LOCAL_KME_ADD_SSH):/home/s-fifteen/code/guardian
+export LOCAL_KME_ADDRESS ?= qkde0002.public
+export LOCAL_KME_DIRPATH ?= justin@$(LOCAL_KME_ADDRESS):/home/justin/programs/software/s-fifteen/guardian
+export LOCAL_KME_ADD_SSH ?= qkde0002.internal
+export LOCAL_KME_DIR_SSH ?= justin@$(LOCAL_KME_ADD_SSH):/home/justin/programs/software/s-fifteen/guardian
 
 # - Location of Remote KME's guardian git repository
 #   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
 #         transfer certs (to replace full-chain authentication with int+root ca-chain)
-export LOCAL_KME_ID ?= KME-S15-Guardian-005-Guardian.Faiz
-export LOCAL_SAE_ID ?= SAE-S15-Test-005-sae5
-export LOCAL_QKDE_ID ?= QKDE0005
+export LOCAL_KME_ID ?= KME-S15-Guardian-002-Guardian
+export LOCAL_SAE_ID ?= SAE-S15-Test-002-sae1
+export LOCAL_QKDE_ID ?= QKDE0002
 
 # - Choose "1" or "2" for the remote KME identity during make connect.
 export REMOTE_KME ?= 1# or 2
 ifeq ($(REMOTE_KME), 1)
-export REMOTE_KME_ADDRESS ?= c.qkd.internal
-export REMOTE_KME2_ADDRESS ?= d.qkd.internal
-export REMOTE_KME_ADD_SSH ?= c.qkd.internal
-export REMOTE_KME_ID ?= KME-S15-Guardian-003-Guardian.Charlie
-export REMOTE_QKDE_ID ?= QKDE0003
+export REMOTE_KME_ADDRESS ?= qkde0001.public
+export REMOTE_KME2_ADDRESS ?= qkde0001.public
+export REMOTE_KME_ADD_SSH ?= qkde0001.internal
+export REMOTE_KME_ID ?= KME-S15-Guardian-001-Guardian
+export REMOTE_QKDE_ID ?= QKDE0001
 else ifeq ($(REMOTE_KME), 2)
 export REMOTE_KME_ADDRESS ?= d.qkd.internal
 export REMOTE_KME2_ADDRESS ?= c.qkd.internal
@@ -50,8 +50,8 @@ export REMOTE_QKDE_ID ?= QKDE0004
 else
 $(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
 endif
-export REMOTE_KME_DIRPATH ?= root@$(REMOTE_KME_ADDRESS):/root/code/guardian
-export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
+export REMOTE_KME_DIRPATH ?= qitlab@$(REMOTE_KME_ADDRESS):/home/qitlab/programs/software/s-fifteen/guardian
+export REMOTE_KME_DIR_SSH ?= qitlab@$(REMOTE_KME_ADD_SSH):/home/qitlab/programs/software/s-fifteen/guardian
 # NOTE:
 # - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
 # - It is expected that passwordless SSH access is set up to this location.
@@ -100,6 +100,9 @@ $(info Environment variables used throughout Guardian:)
 $(info LOCAL_KME_ID: $(LOCAL_KME_ID))
 $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
+$(info LOCAL_KME_IP: $(LOCAL_KME_IP))
+$(info REMOTE_KME_IP: $(REMOTE_KME_IP))
+$(info REMOTE_KME2_IP: $(REMOTE_KME2_IP))
 $(info )
  
 # Not strictly necessary but this

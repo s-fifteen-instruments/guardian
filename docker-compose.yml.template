@@ -218,31 +218,6 @@ services:
         target: /root/code/connections
         read_only: true
 
-  qkd:
-    image: s-fifteen/qkdserver:qkd
-    container_name: qkd
-    volumes:
-      - "../../code/QKDServer/S15qkd:/root/code/QKDServer/S15qkd"
-      - "../../code/QKDServer/S15qkd/qkd_engine_config.json:/root/code/QKDServer/Settings_WebClient/qkd_engine_config.json"
-      - "../../code/QKDServer/Settings_WebClient/apps/QKD_status.py:/root/code/QKDServer/Settings_WebClient/apps/QKD_status.py"
-      - "../../code/QKDServer/Settings_WebClient/apps/QKD_settings.py:/root/code/QKDServer/Settings_WebClient/apps/QKD_settings.py"
-      - "../../code/QKDServer/Settings_WebClient/app.py:/root/code/QKDServer/Settings_WebClient/app.py"
-      - "../../code/QKDServer/Settings_WebClient/index.py:/root/code/QKDServer/Settings_WebClient/index.py"
-      - "../../code/QKDServer/Settings_WebClient/certs:/root/code/QKDServer/Settings_WebClient/certs"
-      - "../../code/QKDServer/entrypoint.sh:/root/entrypoint.sh"
-      - "/root/keys/authd:/root/keys/authd"
-      - "epochs:/epoch_files"
-    entrypoint: "/root/entrypoint.sh"
-    devices: DEV_PLACE_HOLDER
-    ports:
-      - "8000:8000"
-      - "0.0.0.0:55555:55555"
-    # For systems with no DNS resolution available.
-    extra_hosts:
-      - "${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}"
-      - "${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}"
-      - "${REMOTE_KME2_ADDRESS}:${REMOTE_KME2_IP}"
-
 
 volumes:
   epochs:
