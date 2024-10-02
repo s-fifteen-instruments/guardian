@@ -158,8 +158,8 @@ services:
 
   traefik:
     # Use the latest Traefik v2.4.x image available
-    image: traefik:${TRAEFIK_TAG:-latest}
-    #image: traefik:2.4.9
+    #image: traefik:${TRAEFIK_TAG:-latest}
+    image: traefik:2.11.10
     env_file:
       - common/log.env
     environment:
