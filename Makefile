@@ -20,48 +20,25 @@
 ##### CAN CHANGE ME ######
 ## OR SET ME IN THE ENV ##
 ##########################
-# - Location of Local KME's guardian git repository
+# Location of local and remote KME's guardian git repository
+# - For transferring REST client certificates for inter-KME communication.
+# - Passwordless SSH access must be set up to the remote directory.
 export LOCAL_KME_ADDRESS ?= qkde0002.public
-export LOCAL_KME_DIRPATH ?= justin@$(LOCAL_KME_ADDRESS):/home/justin/programs/software/s-fifteen/guardian
 export LOCAL_KME_ADD_SSH ?= qkde0002.internal
-export LOCAL_KME_DIR_SSH ?= justin@$(LOCAL_KME_ADD_SSH):/home/justin/programs/software/s-fifteen/guardian
+export REMOTE_KME_ADDRESS ?= qkde0001.public
+export REMOTE_KME_ADD_SSH ?= qkde0001.internal
+export REMOTE_KME_DIR_SSH ?= qitlab@$(REMOTE_KME_ADD_SSH):/home/qitlab/programs/software/s-fifteen/guardian
 
-# - Location of Remote KME's guardian git repository
-#   TODO: Verify currently only used to transfer keys (to be handled by qcrypto) and
-#         transfer certs (to replace full-chain authentication with int+root ca-chain)
+# Identity strings for QKDE and KME, with an initial local SAE bootstrapped, swap at remote
+export LOCAL_QKDE_ID ?= QKDE0002
 export LOCAL_KME_ID ?= KME-S15-Guardian-002-Guardian
 export LOCAL_SAE_ID ?= SAE-S15-Test-002-sae1
-export LOCAL_QKDE_ID ?= QKDE0002
-
-# - Choose "1" or "2" for the remote KME identity during make connect.
-export REMOTE_KME ?= 1# or 2
-ifeq ($(REMOTE_KME), 1)
-export REMOTE_KME_ADDRESS ?= qkde0001.public
-export REMOTE_KME2_ADDRESS ?= qkde0001.public
-export REMOTE_KME_ADD_SSH ?= qkde0001.internal
-export REMOTE_KME_ID ?= KME-S15-Guardian-001-Guardian
 export REMOTE_QKDE_ID ?= QKDE0001
-else ifeq ($(REMOTE_KME), 2)
-export REMOTE_KME_ADDRESS ?= d.qkd.internal
-export REMOTE_KME2_ADDRESS ?= c.qkd.internal
-export REMOTE_KME_ADD_SSH ?= d.qkd.internal
-export REMOTE_KME_ID ?= KME-S15-Guardian-004-Guardian.Daud
-export REMOTE_QKDE_ID ?= QKDE0004
-else
-$(error REMOTE_KME input not recognized: $(REMOTE KME). Please use "1" or "2"; Exiting)
-endif
-export REMOTE_KME_DIRPATH ?= qitlab@$(REMOTE_KME_ADDRESS):/home/qitlab/programs/software/s-fifteen/guardian
-export REMOTE_KME_DIR_SSH ?= qitlab@$(REMOTE_KME_ADD_SSH):/home/qitlab/programs/software/s-fifteen/guardian
-# NOTE:
-# - Set to <username>@<hostnameORip>:<path/to/guardian/repository>
-# - It is expected that passwordless SSH access is set up to this location.
-# - Use a full absolute path. Do not use env variables or tilde (~) as
-#   they will not necessarily expand correctly in a remote context.
-export LOCAL_KME_IP2 ?= $(shell ping -c1 $(LOCAL_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
-export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
-export REMOTE_KME_IP2 ?= $(shell ping -c1 $(REMOTE_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
-export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
-export REMOTE_KME2_IP ?= $(shell ping -c1 $(REMOTE_KME2_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_ID ?= KME-S15-Guardian-001-Guardian
+
+# Path used only for key comparison tests, *no need to modify* if not performing out-of-band tests
+export LOCAL_KME_DIRPATH  ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
+export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
 ##########################
 ##########################
 ##########################
@@ -70,7 +47,7 @@ export REMOTE_KME2_IP ?= $(shell ping -c1 $(REMOTE_KME2_ADDRESS) | sed -nE 's/^P
 ##########################
 ##### GET DEVICE PATHS####
 ##########################
-tmst_dev := $(shell ls /dev/ioboards/usbtmst0 )
+tmst_dev := $(shell ls /dev/ioboards/usbtmst0 2>/dev/null)
 serial_devs := $(shell echo -e [ ;\
             for dev in /dev/serial/by-id/* ;\
             do echo -e "\'$$dev:$$dev\' " ; \
@@ -90,6 +67,13 @@ endif
 ##########################
 ##### LEAVE ME ALONE #####
 ##########################
+
+# Map domain name to IP address for /etc/hosts injection into containers
+export LOCAL_KME_IP2 ?= $(shell ping -c1 $(LOCAL_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP2 ?= $(shell ping -c1 $(REMOTE_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+
 LOCAL_REPO_DIRPATH := $(word 2, $(subst :, ,$(LOCAL_KME_DIRPATH)))
 SERVICES := rest
 SCRIPTS := ./scripts
@@ -102,7 +86,7 @@ $(info REMOTE_KME_ID: $(REMOTE_KME_ID))
 $(info LOCAL_SAE_ID: $(LOCAL_SAE_ID))
 $(info LOCAL_KME_IP: $(LOCAL_KME_IP))
 $(info REMOTE_KME_IP: $(REMOTE_KME_IP))
-$(info REMOTE_KME2_IP: $(REMOTE_KME2_IP))
+$(info REMOTE_KME_IP2: $(REMOTE_KME_IP2))
 $(info )
  
 # Not strictly necessary but this
@@ -123,6 +107,10 @@ rest: init dev_inject
 # KME initialization steps
 init: dev_inject
 ifeq (,$(wildcard volumes/$(LOCAL_KME_ID)))
+	@if ! [ "$(shell id -u)" = 0 ]; then \
+		echo "Operation cancelled. Please run 'make init' as 'root', in order to copy permissions correctly."; \
+		exit 1; \
+	fi
 	cp -pr volumes/kme1 volumes/$(LOCAL_KME_ID)
 	sed -i 's:{{ env "LOCAL_REPO_DIRPATH" }}:$(LOCAL_REPO_DIRPATH):g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.conf
 	sed -i 's/{{ env "LOCAL_KME_ID" }}/$(LOCAL_KME_ID)/g' ./volumes/$(LOCAL_KME_ID)/vault/logs/logrotate.conf
