@@ -95,7 +95,7 @@ services:
     extra_hosts:
       - "${LOCAL_KME_ADDRESS}:${LOCAL_KME_IP}"
       - "${REMOTE_KME_ADDRESS}:${REMOTE_KME_IP}"
-      - "${REMOTE_KME2_ADDRESS}:${REMOTE_KME2_IP}"
+      - "${REMOTE_KME_ADD_SSH}:${REMOTE_KME_IP2}"
 
 
 

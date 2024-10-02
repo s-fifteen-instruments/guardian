@@ -59,6 +59,7 @@ export REMOTE_KME_DIR_SSH ?= root@$(REMOTE_KME_ADD_SSH):/root/code/guardian
 #   they will not necessarily expand correctly in a remote context.
 export LOCAL_KME_IP2 ?= $(shell ping -c1 $(LOCAL_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export LOCAL_KME_IP ?= $(shell ping -c1 $(LOCAL_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
+export REMOTE_KME_IP2 ?= $(shell ping -c1 $(REMOTE_KME_ADD_SSH) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export REMOTE_KME_IP ?= $(shell ping -c1 $(REMOTE_KME_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 export REMOTE_KME2_IP ?= $(shell ping -c1 $(REMOTE_KME2_ADDRESS) | sed -nE 's/^PING[^(]+\(([^)]+)\).*/\1/p' )
 ##########################
