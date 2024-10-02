@@ -1,0 +1,12 @@
+# EasyRSA settings
+# Alternatively, use 'openssl'
+
+set_var EASYRSA_ALGO            ec
+set_var EASYRSA_CURVE           secp384r1
+set_var EASYRSA_CA_EXPIRE       30
+set_var EASYRSA_CERT_EXPIRE     10
+
+set_var EASYRSA_REQ_CN          "Guardian Test Root CA"
+set_var EASYRSA_NO_PASS         1
+set_var EASYRSA_BATCH           yes  
+

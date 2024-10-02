@@ -188,3 +188,9 @@ restart_qkd:
 	sleep 7
 	docker rm qkd
 	docker-compose -f docker-compose.yml up -d --build qkd
+
+generate_sample_certs: generate_config
+	$(SCRIPTS)/generate_sample_certs.sh
+
+generate_config:
+	$(SCRIPTS)/generate_config.sh

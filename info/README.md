@@ -1,5 +1,7 @@
 # Getting Started
 
+See [Quick Start](QuickStart.md) for a simple test deployment.
+
 | Document | Description |
 | --- | --- |
 | [Installation Prerequisites](Prerequisites.md) | Installation of dependencies and initial configuration options |

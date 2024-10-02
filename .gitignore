@@ -7,3 +7,10 @@ __pycache__
 SECRETS
 .permissions
 docker-compose.yml
+
+# For simplified test deployment
+common/easyrsa
+common/pki
+common/full-chain.cert.pem
+common/kme-ca.cert.pem
+common/kme-ca.key.pem
