@@ -23,22 +23,22 @@
 # Location of local and remote KME's guardian git repository
 # - For transferring REST client certificates for inter-KME communication.
 # - Passwordless SSH access must be set up to the remote directory.
-export LOCAL_KME_ADDRESS ?= qkde0002.public
-export LOCAL_KME_ADD_SSH ?= qkde0002.internal
+export LOCAL_KME_ADDRESS  ?= qkde0002.public
 export REMOTE_KME_ADDRESS ?= qkde0001.public
+export LOCAL_KME_ADD_SSH  ?= qkde0002.internal
 export REMOTE_KME_ADD_SSH ?= qkde0001.internal
-export REMOTE_KME_DIR_SSH ?= qitlab@$(REMOTE_KME_ADD_SSH):/home/qitlab/programs/software/s-fifteen/guardian
+export REMOTE_KME_DIR_SSH ?= qitlab@$(REMOTE_KME_ADD_SSH):~/programs/software/s-fifteen/guardian
 
 # Identity strings for QKDE and KME, with an initial local SAE bootstrapped, swap at remote
-export LOCAL_QKDE_ID ?= QKDE0002
-export LOCAL_KME_ID ?= KME-S15-Guardian-002-Guardian
-export LOCAL_SAE_ID ?= SAE-S15-Test-002-sae1
+export LOCAL_QKDE_ID  ?= QKDE0002
 export REMOTE_QKDE_ID ?= QKDE0001
+export LOCAL_KME_ID  ?= KME-S15-Guardian-002-Guardian
 export REMOTE_KME_ID ?= KME-S15-Guardian-001-Guardian
+export LOCAL_SAE_ID ?= SAE-S15-Test-002-sae1
 
 # Path used only for key comparison tests, *no need to modify* if not performing out-of-band tests
-export LOCAL_KME_DIRPATH  ?= s-fifteen@$(LOCAL_KME_ADDRESS):/home/s-fifteen/code/guardian
-export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):/home/s-fifteen/code/guardian
+export LOCAL_KME_DIRPATH  ?= s-fifteen@$(LOCAL_KME_ADDRESS):~/code/guardian
+export REMOTE_KME_DIRPATH ?= s-fifteen@$(REMOTE_KME_ADDRESS):~/code/guardian
 ##########################
 ##########################
 ##########################
@@ -180,8 +180,10 @@ restart_qkd:
 	docker rm qkd
 	docker-compose -f docker-compose.yml up -d --build qkd
 
+init_permissions:
+	$(SCRIPTS)/init_permissions.sh `git branch --show-current`
 generate_sample_certs: generate_config
 	$(SCRIPTS)/generate_sample_certs.sh
-
 generate_config:
 	$(SCRIPTS)/generate_config.sh
+init_test: init_permissions generate_sample_certs

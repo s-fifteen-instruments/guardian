@@ -1,12 +1,18 @@
 #!/bin/bash
+if [ -f common/kme-ca.cert.pem ]; then
+    echo "Certificates already exist. Not overwriting."
+    exit 0
+fi
+
 # Install EasyRSA automatically if unavailable
 if ! command -v ./common/easyrsa 2>&1 >/dev/null; then
-    echo "easyrsa v3.2.1 will be loaded into 'common'..."
     VER="3.2.1"
+    echo "easyrsa v${VER} will be loaded into 'common'..."
     wget https://github.com/OpenVPN/easy-rsa/releases/download/v${VER}/EasyRSA-${VER}.tgz
     tar xzvf EasyRSA-${VER}.tgz
     mv EasyRSA-${VER}/easyrsa common/
     rm EasyRSA-${VER}.tgz
+    rm -rf EasyRSA-${VER}
 fi
 
 echo "Generating certificates..."

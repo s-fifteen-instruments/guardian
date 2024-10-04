@@ -66,7 +66,7 @@ services:
   vault: &vault_label
     # Use the latest Hashicorp Vault v1.7.x image available
     #image: hashicorp/vault:${VAULT_TAG:-latest}
-    image: hashicorp/vault:1.16.3
+    image: hashicorp/vault:1.17.6
     env_file:
       - common/log.env
     ports:

@@ -1,0 +1,10 @@
+epochdir = /epoch_files
+notifypipe = /epoch_files/notify.pipe
+localconn = ${LOCAL_QKDE_ID}
+remoteconn = ${REMOTE_QKDE_ID}
+
+seed = 1
+epoch = b0000000
+length = 10
+bitrate = 1000
+verbose = 2

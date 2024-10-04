@@ -101,7 +101,7 @@ services:
 
   vault:
     # Use the latest Hashicorp Vault v1.7.x image available
-    image: hashicorp/vault:${VAULT_TAG:-latest}
+    image: hashicorp/vault:1.17.6
     #image: vault:1.7.3
     env_file:
       - common/log.env
@@ -218,6 +218,19 @@ services:
         target: /root/code/connections
         read_only: true
 
+  qkdsim:
+    #profiles: [donotstart]
+    build:
+      context: ./
+      dockerfile: ./qkd/csim/Dockerfile
+    environment:
+      - LOCAL_QKDE_ID=${LOCAL_QKDE_ID:-SETMEINMAKEFILE}
+      - REMOTE_QKDE_ID=${REMOTE_QKDE_ID:-SETMEINMAKEFILE}
+    volumes:
+      - type: bind
+        source: ./qkd/csim/simulate_keygen.py.conf.example
+        target: /root/simulate_keygen.py.conf.example
+      - epochs:/epoch_files
 
 volumes:
   epochs:
