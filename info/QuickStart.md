@@ -31,7 +31,7 @@ These interfaces are secured behind mutual TLS, so unintended firewall holes may
 
 These instructions are simplified for users running the software for the first time:
 
-- Clone the Guardian repository at each desired node, using the `nqsn_updates/2node_networksep` branch.
+- Clone the Guardian repository at each desired node, using the `2node_networksep` branch.
 - Run `make init_test` on both sides, to generate certificates and configuration.
 - Mirror the node-specific addresses and repository locations on the remote node (see below for an example diff).
 - On each side, run `make init` as root, then `make connect` once the remote side is done configuring.
@@ -40,7 +40,7 @@ These instructions are simplified for users running the software for the first t
 <summary>Corresponding commands</summary>
 
 ```bash
-git clone -b nqsn_updates/2node_networksep git@github.com:s-fifteen-instruments/guardian.git
+git clone -b 2node_networksep git@github.com:s-fifteen-instruments/guardian.git
 cd guardian
 make init_test
 vim Makefile  # edit the remote repository location (and node-specific IDs for the remote node)
