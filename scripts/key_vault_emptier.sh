@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is a script to check the number of keys in the guardian key store and
-# if the number is >95% of the max number of keys, empty out 2% of the keys
+# if the number is >95% of the max number of keys, empty out 1% of the keys
 #
 # To periodically run script, add to crontab or install as a service.
 #
@@ -11,7 +11,7 @@
 hostnameA=e.qkd.external
 hostnameB=c.qkd.external
 max_limit_percent=95
-empty_out_percent=2
+empty_out_percent=1
 sae_idB=SAE-S15-Test-003-sae3
 sae_idA=SAE-S15-Test-005-sae5
 certs_dir=~/certs
@@ -85,8 +85,8 @@ max_key_per_req_B=$(echo $qkd_statusB | jq -r .max_key_per_request?)
 
 key_compA=$(( $max_key_countA * $max_limit_percent / 100 ))
 key_compB=$(( $max_key_countB * $max_limit_percent / 100 ))
-bits_to_emptyA=$(( $max_key_countA / 10 * $key_sizeA ))
-bits_to_emptyB=$(( $max_key_countB / 10 * $key_sizeB ))
+bits_to_emptyA=$(( $max_key_countA * $empty_out_percent / 100 * $key_sizeA ))
+bits_to_emptyB=$(( $max_key_countB * $empty_out_percent / 100 * $key_sizeB ))
 num_keys_to_emptyA=$(( $bits_to_emptyA / $max_key_sizeA ))
 num_keys_to_emptyB=$(( $bits_to_emptyB / $max_key_sizeB ))
 AB_resp=
