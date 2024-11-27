@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is a script to check the number of keys in the guardian key store and
-# if the number is >95% of the max number of keys, empty out 1% of the keys
+# if the number is >95% of the max number of keys, empty out 10% of the keys
 #
 # To periodically run script, add to crontab or install as a service.
 #
@@ -11,7 +11,7 @@
 hostnameA=e.qkd.external
 hostnameB=c.qkd.external
 max_limit_percent=95
-empty_out_percent=1
+empty_out_percent=0.15
 sae_idB=SAE-S15-Test-003-sae3
 sae_idA=SAE-S15-Test-005-sae5
 certs_dir=~/certs
@@ -83,16 +83,19 @@ max_key_sizeB=$(echo $qkd_statusB | jq -r .max_key_size?)
 max_key_per_req_A=$(echo $qkd_statusA | jq -r .max_key_per_request?)
 max_key_per_req_B=$(echo $qkd_statusB | jq -r .max_key_per_request?)
 
-key_compA=$(( $max_key_countA * $max_limit_percent / 100 ))
-key_compB=$(( $max_key_countB * $max_limit_percent / 100 ))
-bits_to_emptyA=$(( $max_key_countA * $empty_out_percent / 100 * $key_sizeA ))
-bits_to_emptyB=$(( $max_key_countB * $empty_out_percent / 100 * $key_sizeB ))
+key_compA=$(echo "scale=0;$max_key_countA * $max_limit_percent / 100" | bc )
+key_compB=$(echo "scale=0;$max_key_countB * $max_limit_percent / 100" | bc )
+bits_to_emptyA=$(echo "$max_key_countA * $empty_out_percent / 100 * $key_sizeA" | bc )
+bits_to_emptyB=$(echo "$max_key_countB * $empty_out_percent / 100 * $key_sizeB" | bc )
 num_keys_to_emptyA=$(( $bits_to_emptyA / $max_key_sizeA ))
 num_keys_to_emptyB=$(( $bits_to_emptyB / $max_key_sizeB ))
 AB_resp=
 BA_resp=
 
-
+#echo $bits_to_emptyA
+#echo $bits_to_emptyB
+#echo $num_keys_to_emptyA
+#echo $num_keys_to_emptyB
 #exit 0
 if [[ ${key_countA} -gt ${key_compA} ]]; then
 	if [[ $num_keys_to_emptyA -gt 0 && $num_keys_to_emptyA -lt $max_key_per_req_A ]] ; then
@@ -109,17 +112,19 @@ if [[ ${key_countB} -gt ${key_compB} ]]; then
 fi
 
 if [[ ! -z ${AB_resp} ]] ; then
+sleep 10
 	for i in $(echo $AB_resp | jq -r ".keys[].key_ID"); do
 		AB_reply=$(${progB} ${addB_base}${dec}"?key_ID="$i)
 		echo "$date $AB_reply"
-		sleep 1
+		sleep 1.5
 	done
 fi
 
 if [[ ! -z ${BA_resp} ]] ; then
+sleep 10
 	for i in $(echo $BA_resp | jq -r ".keys[].key_ID"); do
 		BA_reply=$(${progA} ${addA_base}${dec}"?key_ID="$i)
 		echo "$date $BA_reply"
-		sleep 1
+		sleep 1.5
 	done
 fi
