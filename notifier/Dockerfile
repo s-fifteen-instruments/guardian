@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-FROM alpine
+FROM alpine:3.21.2
 LABEL author="Cyrus Proctor"
 
 # NOTE: 0 does not imply buffering
@@ -34,7 +34,7 @@ RUN apk update --no-cache \
     && apk add --no-cache \
         python3 \
         py-pip \
-    && pip install --no-cache-dir -r ${HOME}/requirements.txt
+    && pip install --no-cache-dir --break-system-packages -r ${HOME}/requirements.txt
 
 COPY ["${TOP_DIR}/notifier.py", "${HOME}/"]
 
