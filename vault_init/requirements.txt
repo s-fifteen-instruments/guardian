@@ -1,4 +1,4 @@
-hvac
-pyhcl
-pydantic
-pydantic-settings
+hvac==2.3.0
+pyhcl==0.4.5
+pydantic==2.10.6
+pydantic-settings==2.7.1
