@@ -8,6 +8,11 @@ SECRETS
 .permissions
 docker-compose.yml
 
+# Runtime-generated files
+volumes/*
+!volumes/connections.example
+!volumes/kme1
+
 # For simplified test deployment
 common/easyrsa
 common/pki
