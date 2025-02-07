@@ -29,7 +29,6 @@ ENV TOP_DIR=./rest
 COPY ["${TOP_DIR}/start.sh", "${TOP_DIR}/gunicorn_conf.py",\
       "${TOP_DIR}/start-reload.sh", "${TOP_DIR}/requirements.txt", "/"]
 RUN apk add --no-cache --virtual .build-deps gcc libc-dev make \
-    && pip install --no-cache-dir "uvicorn[standard]" gunicorn fastapi \
     && pip install --no-cache-dir -r /requirements.txt \
     && apk del .build-deps gcc libc-dev make \
     && chmod +x /start-reload.sh \
